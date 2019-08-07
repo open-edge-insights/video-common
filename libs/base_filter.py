@@ -24,6 +24,7 @@
 
 import logging
 import importlib
+import threading
 import inspect
 import queue
 from concurrent.futures import ThreadPoolExecutor
@@ -92,8 +93,9 @@ class BaseFilter:
         self.input_queue = input_queue
         self.output_queue = output_queue
         self.filter_config = filter_config
-        self.log.debug('filter_config: {}'.format(filter_config))
+        self.log.debug('filter config: {}'.format(filter_config))
         self.max_workers = filter_config["max_workers"]
+        self.stop_ev = threading.Event()
 
     def send_data(self, data):
         """Add data to the filter output queue
@@ -120,6 +122,7 @@ class BaseFilter:
         """Stops the pool of filter threads responsible for filtering frames
         and adding data to the filter output queue
         """
+        self.stop_ev.set()
         self.filter_threadpool.shutdown(wait=False)
 
     def set_name(self, name):

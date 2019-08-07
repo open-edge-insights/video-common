@@ -94,8 +94,9 @@ class BaseClassifier:
         self.input_queue = input_queue
         self.output_queue = output_queue
         self.config = classifier_config
-        self.log.debug('classifier_config: {}'.format(classifier_config))
+        self.log.debug('classifier config: {}'.format(classifier_config))
         self.max_workers = classifier_config["max_workers"]
+        self.stop_ev = threading.Event()
 
     def start(self):
         """Starts `max_workers` pool of threads to feed on the classifier
@@ -112,6 +113,7 @@ class BaseClassifier:
         """Stops the pool of classifier threads responsible for classiflying
         frames and adding data to the classifier output queue
         """
+        self.stop_ev.set()
         self.classifier_threadpool.shutdown(wait=False)
 
     def set_name(self, name):

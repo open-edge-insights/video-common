@@ -73,7 +73,7 @@ func GetMessageBusConfig(topic string, topicType string, devMode bool, cfgMgrCon
 			}
 
 			if !devMode {
-				var allowedClients []string
+				var allowedClients []interface{}
 				subscribers := strings.Split(os.Getenv("Clients"), ",")
 				for _, subscriber := range subscribers {
 					subscriber = strings.TrimSpace(subscriber)
@@ -123,7 +123,7 @@ func GetMessageBusConfig(topic string, topicType string, devMode bool, cfgMgrCon
 				topic:  hostConfig,
 			}
 			if !devMode {
-				var allowedClients []string
+				var allowedClients []interface{}
 				clients := strings.Split(os.Getenv("Clients"), ",")
 				for _, client := range clients {
 					client = strings.TrimSpace(client)

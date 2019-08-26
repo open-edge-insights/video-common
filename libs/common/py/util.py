@@ -113,8 +113,8 @@ class Util:
                         subscriber = subscriber.strip()
                         allowed_clients_keys = config_client.GetConfig(
                                         "/Publickeys/{0}".format(subscriber))
-
-                        allowed_clients.append(allowed_clients_keys)
+                        if allowed_clients_keys is not None:
+                            allowed_clients.append(allowed_clients_keys)
 
                     config["allowed_clients"] = allowed_clients
                     config["zmq_tcp_publish"]["server_secret_key"] = \
@@ -125,6 +125,7 @@ class Util:
                 config[topic] = host_port_details
                 if not dev_mode:
                     zmq_clients = zmq_clients.strip()
+
                     config[topic]["server_public_key"] = \
                         config_client.GetConfig("/Publickeys/{0}".
                                                 format(zmq_clients))
@@ -136,13 +137,13 @@ class Util:
                         config_client.GetConfig("/" + app_name +
                                                 "/private_key")
             else:
-                raise ValueError("{} type is not valid".format(topic_type))
+                log.error("{} type is not valid".format(topic_type))
         elif mode == "zmq_ipc":
             config = {
                         "type":   mode,
                         "socket_dir":   address
                     }
         else:
-            raise ValueError("{} mode is not valid".format(mode))
+            log.error("{} mode is not valid".format(mode))
 
         return config

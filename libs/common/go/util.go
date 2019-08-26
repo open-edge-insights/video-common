@@ -60,7 +60,6 @@ func GetMessageBusConfig(topic string, topicType string, devMode bool, cfgMgrCon
 		port, err := strconv.ParseInt(address[1], 10, 64)
 		if err != nil {
 			glog.Errorf("string to int64 converstion Error: %v", err)
-			os.Exit(1)
 		}
 		hostConfig := map[string]interface{}{
 			"host": hostname,
@@ -79,10 +78,12 @@ func GetMessageBusConfig(topic string, topicType string, devMode bool, cfgMgrCon
 					subscriber = strings.TrimSpace(subscriber)
 					clientPublicKey, err := cfgMgrCli.GetConfig("/Publickeys/" + subscriber)
 					if err != nil {
-						glog.Errorf("Etcd GetConfig Error %v", err)
-						os.Exit(1)
+						glog.Errorf("ConfigManager couldn't get Subscriber's Public Key %v", err)
 					}
-					allowedClients = append(allowedClients, clientPublicKey)
+
+					if clientPublicKey != ""{
+						allowedClients = append(allowedClients, clientPublicKey)
+					}
 				}
 				serverSecretKey, err := cfgMgrCli.GetConfig("/" + appName + "/private_key")
 				if err != nil {
@@ -99,19 +100,16 @@ func GetMessageBusConfig(topic string, topicType string, devMode bool, cfgMgrCon
 			if !devMode {
 				subTopics[0] = strings.TrimSpace(subTopics[0])
 				serverPublicKey, err := cfgMgrCli.GetConfig("/Publickeys/" + subTopics[0])
-				if err != nil {
-					glog.Errorf("Etcd GetConfig Error %v", err)
-					os.Exit(1)
+				if err != nil || serverPublicKey == "" {
+					glog.Errorf("ConfigManager couldn't get Publisher's Public Key")
 				}
 				clientSecretKey, err := cfgMgrCli.GetConfig("/" + appName + "/private_key")
 				if err != nil {
-					glog.Errorf("Etcd GetConfig Error %v", err)
-					os.Exit(1)
+					glog.Errorf("ConfigManager couldn't get Subscriber's Private Key %v", err)
 				}
 				clientPublicKey, err := cfgMgrCli.GetConfig("/Publickeys/" + appName)
 				if err != nil {
-					glog.Errorf("Etcd GetConfig Error %v", err)
-					os.Exit(1)
+					glog.Errorf("ConfigManager couldn't get Subscriber's Public Key %v", err)
 				}
 				hostConfig["server_public_key"] = serverPublicKey
 				hostConfig["client_secret_key"] = clientSecretKey
@@ -129,10 +127,11 @@ func GetMessageBusConfig(topic string, topicType string, devMode bool, cfgMgrCon
 					client = strings.TrimSpace(client)
 					clientPublicKey, err := cfgMgrCli.GetConfig("/Publickeys/" + client)
 					if err != nil {
-						glog.Errorf("Etcd GetConfig Error %v", err)
-						os.Exit(1)
+						glog.Errorf("ConfigManager couldn't get Client's Public Key %v", err)
 					}
-					allowedClients = append(allowedClients, clientPublicKey)
+					if clientPublicKey != ""{
+						allowedClients = append(allowedClients, clientPublicKey)
+					}
 				}
 				serverSecretKey, err := cfgMgrCli.GetConfig("/" + appName + "/private_key")
 				if err != nil {
@@ -149,8 +148,7 @@ func GetMessageBusConfig(topic string, topicType string, devMode bool, cfgMgrCon
 			if !devMode {
 				clientPublicKey, err := cfgMgrCli.GetConfig("/Publickeys/" + appName)
 				if err != nil {
-					glog.Errorf("Etcd GetConfig Error %v", err)
-					os.Exit(1)
+					glog.Errorf("ConfigManager couldn't get Client's Public Key %v", err)
 				}
 
 				clientSecretKey, err := cfgMgrCli.GetConfig("/" + appName + "/private_key")
@@ -159,9 +157,8 @@ func GetMessageBusConfig(topic string, topicType string, devMode bool, cfgMgrCon
 				}
 
 				serverPublicKey, err := cfgMgrCli.GetConfig("/Publickeys/" + topic)
-				if err != nil {
-					glog.Errorf("Etcd GetConfig Error %v", err)
-					os.Exit(1)
+				if err != nil || serverPublicKey == "" {
+					glog.Errorf("ConfigManager couldn't get Server's Public Key %v", err)
 				}
 
 				hostConfig["server_public_key"] = serverPublicKey

@@ -31,11 +31,10 @@ LOG_LEVELS = {
 }
 
 
-def configure_logging(log_level, base_log_file, log_dir, module_name):
-    """Configure logging to log to both stdout and to a rotating file. The
-    rotating file names will use the base_log_file variable as the base name,
-    where each rotating file will end with a number, except for the first log
-    file.
+def configure_logging(log_level, module_name):
+    """Configure logging to log to stdout. Since we are not logging anything to in-Container
+    file system we are just printing to console & for viewing the logs of each container from 
+    host system we reply on docker logs.
 
     The log string will be formatted as follows:
         '%(asctime)s : %(levelname)s : %(name)s : [%(filename)s] :
@@ -46,10 +45,6 @@ def configure_logging(log_level, base_log_file, log_dir, module_name):
     :param log_level: Logging level to use, must be one of the following:
            DEBUG, INFO, ERROR or WARN
     :type log_level: str
-    :param base_log_file: Base log file name to use for the rotating log files
-    :type base_log_file: str
-    :param log_dir:  Directory to save rotating log files
-    :type log_dir: str
     :param module_name: Module running logging
     :type module_name: str
     :raises Exception: If the given log level is unknown, or if max_bytes
@@ -60,13 +55,14 @@ def configure_logging(log_level, base_log_file, log_dir, module_name):
     """
     if log_level not in LOG_LEVELS:
         raise Exception('Unknown log level: {}'.format(log_level))
-    elif not os.path.exists(log_dir):
-        raise Exception('Logging directory {} does not exist'.format(log_dir))
-
+    
     fmt_str = ('%(asctime)s : %(levelname)s : %(name)s : [%(filename)s] :' +
                '%(funcName)s : in line : [%(lineno)d] : %(message)s')
 
     log_lvl = LOG_LEVELS[log_level]
+    logging.basicConfig(format=fmt_str, level=log_lvl)
+    logger = logging.getLogger(module_name)
+    logger.setLevel(log_lvl)
 
     # Do basic configuration of logging (just for stdout config)
     logging.basicConfig(format=fmt_str, level=log_lvl)
@@ -76,10 +72,5 @@ def configure_logging(log_level, base_log_file, log_dir, module_name):
     handler = logging.StreamHandler(sys.stdout)
     formatter = logging.Formatter(fmt_str)
     handler.setFormatter(formatter)
-
-    # Removing the default handler added by getLogger to avoid duplicate logs
-    if(logger.hasHandlers()):
-        logger.handlers.clear()
-    logger.addHandler(handler)
 
     return logger

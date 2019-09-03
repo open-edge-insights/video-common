@@ -27,7 +27,10 @@ import importlib
 import threading
 import inspect
 import queue
+import os
+import time
 from concurrent.futures import ThreadPoolExecutor
+from distutils.util import strtobool
 
 
 def load_filter(filter, filter_config, input_queue, output_queue):
@@ -96,6 +99,7 @@ class BaseFilter:
         self.log.debug('filter config: {}'.format(filter_config))
         self.max_workers = filter_config["max_workers"]
         self.stop_ev = threading.Event()
+        self.profiling = bool(strtobool(os.environ['PROFILING_MODE']))
 
     def send_data(self, data):
         """Add data to the filter output queue
@@ -108,6 +112,9 @@ class BaseFilter:
         self.log.debug("Data added to filter output queue...")
         self.output_queue.put(data)
 
+        if self.profiling is True:
+            data[0]['ts_vi_filter_exit'] = str(round(time.time()*1000))
+        
     def start(self):
         """Starts `max_workers` pool of threads to feed on the filter input
         queue, run through each frame from the queue with filter logic and

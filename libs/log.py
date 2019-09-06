@@ -32,9 +32,7 @@ LOG_LEVELS = {
 
 
 def configure_logging(log_level, module_name):
-    """Configure logging to log to stdout. Since we are not logging anything to in-Container
-    file system we are just printing to console & for viewing the logs of each container from 
-    host system we reply on docker logs.
+    """Configure logging to log to stdout.
 
     The log string will be formatted as follows:
         '%(asctime)s : %(levelname)s : %(name)s : [%(filename)s] :
@@ -55,7 +53,7 @@ def configure_logging(log_level, module_name):
     """
     if log_level not in LOG_LEVELS:
         raise Exception('Unknown log level: {}'.format(log_level))
-    
+
     fmt_str = ('%(asctime)s : %(levelname)s : %(name)s : [%(filename)s] :' +
                '%(funcName)s : in line : [%(lineno)d] : %(message)s')
 
@@ -72,5 +70,10 @@ def configure_logging(log_level, module_name):
     handler = logging.StreamHandler(sys.stdout)
     formatter = logging.Formatter(fmt_str)
     handler.setFormatter(formatter)
+
+    # Removing the default handler added by getLogger to avoid duplicate logs
+    if(logger.hasHandlers()):
+        logger.handlers.clear()
+    logger.addHandler(handler)
 
     return logger

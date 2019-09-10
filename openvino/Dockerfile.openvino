@@ -1,0 +1,37 @@
+ARG EIS_VERSION
+FROM ia_eisbase:$EIS_VERSION
+
+# OpenVINO install
+ENV HOME /EIS
+RUN apt-get update && \
+    apt-get install -y cpio \
+    lsb-release \
+    libgtk-3-dev
+
+# Installing openvino dependencies and openvino itself
+COPY l_openvino_toolkit*  ${HOME}/openvino_toolkit/
+RUN cd ${HOME}/openvino_toolkit && \
+    ./install_openvino_dependencies.sh && \
+    sed -i -e 's/^ACCEPT_EULA=decline/ACCEPT_EULA=accept/g' silent.cfg && \
+    ./install.sh -s silent.cfg --ignore-cpu
+
+# Configure MO and install dependencies for processor graphics
+RUN mkdir neo && \
+    cd neo && \
+    wget https://github.com/intel/compute-runtime/releases/download/19.16.12873/intel-gmmlib_19.1.1_amd64.deb && \
+    wget https://github.com/intel/compute-runtime/releases/download/19.16.12873/intel-igc-core_1.0.2-1787_amd64.deb && \
+    wget https://github.com/intel/compute-runtime/releases/download/19.16.12873/intel-igc-opencl_1.0.2-1787_amd64.deb && \
+    wget https://github.com/intel/compute-runtime/releases/download/19.16.12873/intel-opencl_19.16.12873_amd64.deb && \
+    wget https://github.com/intel/compute-runtime/releases/download/19.16.12873/intel-ocloc_19.16.12873_amd64.deb && \
+    dpkg -i *.deb
+
+# Remove OpenVINO toolkit after installation
+RUN rm -rf ${HOME}/l_openvino_toolkit*
+
+# Myriad and HDDL requirements
+RUN apt install -y libboost-all-dev libusb-1.0-0 libssl1.0.0 libudev1 libjson-c3 udev    
+COPY 97-myriad-usbboot.rules .    
+RUN echo "source /opt/intel/openvino/bin/setupvars.sh" >> ~/.bashrc && \
+    cp 97-myriad-usbboot.rules /etc/udev/rules.d/ && \
+    echo "udevadm control --reload-rules" >> ~/.bashrc && \
+    echo "udevadm trigger" >> ~/.bashrc

@@ -113,7 +113,7 @@ class BaseFilter:
         self.output_queue.put(data)
 
         if self.profiling is True:
-            data[0]['ts_vi_filter_exit'] = str(round(time.time()*1000))
+            data[0]['ts_vi_filter_exit'] = time.time()*1000
         
     def start(self):
         """Starts `max_workers` pool of threads to feed on the filter input

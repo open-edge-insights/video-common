@@ -1,0 +1,9 @@
+{
+    "udfs": [
+        {
+            "name": "example",
+            "param1": "test",
+            "param2": 123
+        }
+    ]
+}

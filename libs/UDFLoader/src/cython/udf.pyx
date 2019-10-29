@@ -175,17 +175,7 @@ cdef extern from "eis/udf/udfretcodes.h" namespace "eis::udf":
     ctypedef enum UdfRetCode:
         UDF_OK = 0
         UDF_DROP_FRAME = 1
-        UDF_MODIFIED_FRAME = 2
-        UDF_ERROR = 3
-
-
-# cdef extern from "eis/utils/frame.h" namespace "eis::utils":
-#     cdef cppclass Frame:
-#         int get_width()
-#         int get_height()
-#         int get_channels()
-#         void* get_data()
-#         msg_envelope_t* get_meta_data()
+        UDF_ERROR = 255
 
 
 cdef class ConfigurationObject:
@@ -329,7 +319,7 @@ cdef public UdfRetCode call_udf(
     cdef content_type_t ct
     cdef char* key = NULL
 
-    drop, ret_frame, new_meta = udf.process(frame)
+    drop, new_meta = udf.process(frame)
 
     if drop:
         return UDF_DROP_FRAME

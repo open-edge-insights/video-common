@@ -30,9 +30,16 @@
 using namespace eis::udf;
 using namespace eis::utils;
 
+#define CFG_UDFS            "udfs"
+#define CFG_MAX_JOBS        "max_jobs"
+#define CFG_MAX_WORKERS     "max_workers"
+#define DEFAULT_MAX_WORKERS 4 // Default 4 threads to submit jobs to
+#define DEFAULT_MAX_JOBS   -1 // Default to having unlimited job queue
+
 
 void free_fn(void* ptr) {
-    // Do nothing..
+    config_value_t* obj = (config_value_t*) ptr;
+    config_value_destroy(obj);
 }
 
 config_value_t* get_config_value(const void* cfg, const char* key) {
@@ -48,7 +55,7 @@ UdfManager::UdfManager(
     m_loader = new UdfLoader();
 
     LOG_DEBUG_0("Loading UDFs");
-    config_value_t* udfs = config_get(m_config, "udfs");
+    config_value_t* udfs = config_get(m_config, CFG_UDFS);
     if(udfs == NULL) {
         delete m_loader;
         throw "Failed to get UDFs";
@@ -58,6 +65,35 @@ UdfManager::UdfManager(
         config_value_destroy(udfs);
         throw "\"udfs\" must be an array";
     }
+
+    // Get maximum jobs (if it exists)
+    int max_jobs = DEFAULT_MAX_JOBS;
+    config_value_t* cfg_max_jobs = config_get(m_config, CFG_MAX_JOBS);
+    if(cfg_max_jobs != NULL) {
+        if(cfg_max_jobs->type != CVT_INTEGER) {
+            config_value_destroy(cfg_max_jobs);
+            config_value_destroy(udfs);
+            throw "\"max_jobs\" must be an integer";
+        }
+        max_jobs = cfg_max_jobs->body.integer;
+        config_value_destroy(cfg_max_jobs);
+    }
+
+    // Get the maximum number of workers
+    int max_workers = DEFAULT_MAX_WORKERS;
+    config_value_t* cfg_max_workers = config_get(m_config, CFG_MAX_JOBS);
+    if(cfg_max_workers != NULL) {
+        if(cfg_max_workers->type != CVT_INTEGER) {
+            config_value_destroy(cfg_max_workers);
+            config_value_destroy(udfs);
+            throw "\"max_jobs\" must be an integer";
+        }
+        max_workers = cfg_max_jobs->body.integer;
+        config_value_destroy(cfg_max_workers);
+    }
+
+    // Initialize thread pool
+    m_pool = new ThreadPool(max_workers, max_jobs);
 
     int len = (int) config_value_array_len(udfs);
     for(int i = 0; i < len; i++) {
@@ -103,9 +139,11 @@ UdfManager::~UdfManager() {
     if(m_th != NULL) {
         delete m_th;
     }
+
     for(auto handle : m_udfs) {
         delete handle;
     }
+
     // Clear queues and delete them
     while(!m_udf_input_queue->empty()) {
         Frame* frame = m_udf_input_queue->front();
@@ -120,9 +158,76 @@ UdfManager::~UdfManager() {
         delete frame;
     }
     delete m_udf_output_queue;
+
     delete m_loader;
+    delete m_pool;
     config_destroy(m_config);
 }
+
+/**
+ * Context object for the worker function to get it's frame, UDF handle, and
+ * the output queue for resulting frames.
+ */
+class UdfWorker {
+public:
+    // UDF to be ran by the worker
+    UdfHandle* handle;
+
+    // Frame for the UDF to process
+    Frame* frame;
+
+    // Output queue for the frame (if it not dropped)
+    FrameQueue* output_queue;
+
+    /**
+     * Constructor
+     *
+     * @param handle       - UDF handle
+     * @param frame        - Frame to process
+     * @param output_queue - Output queue to put processed frames into
+     */
+    UdfWorker(UdfHandle* handle, Frame* frame, FrameQueue* output_queue) :
+        handle(handle), frame(frame), output_queue(output_queue)
+    {};
+
+    /**
+     * Destructor
+     */
+    ~UdfWorker() {};
+
+    /**
+     * UDF worker run method to be executed in a thread pool. This method is
+     * static so that it can be passed to the thread pool as a function
+     * pointer.
+     */
+    static void run(void* vargs) {
+        UdfWorker* ctx = (UdfWorker*) vargs;
+
+        UdfRetCode ret = ctx->handle->process(ctx->frame);
+        switch(ret) {
+            case UdfRetCode::UDF_DROP_FRAME:
+                LOG_DEBUG_0("Dropping frame");
+                delete ctx->frame;
+                break;
+            case UdfRetCode::UDF_ERROR:
+                LOG_ERROR_0("Failed to process frame");
+                delete ctx->frame;
+                break;
+            case UdfRetCode::UDF_OK:
+                ctx->output_queue->push(ctx->frame);
+                break;
+            default:
+                LOG_ERROR_0("Reached default case, this should not happen");
+                delete ctx->frame;
+                break;
+        }
+
+        delete ctx;
+
+        LOG_DEBUG_0("Done running worker function");
+    };
+};
+
 
 void UdfManager::run() {
     LOG_INFO_0("UDFManager thread started");
@@ -134,27 +239,17 @@ void UdfManager::run() {
         if(m_udf_input_queue->wait_for(duration)) {
             Frame* frame = m_udf_input_queue->front();
             m_udf_input_queue->pop();
-            // TODO: Use thread queue...
+
             for(auto handle : m_udfs) {
-                UdfRetCode ret = handle->process(frame);
-                switch(ret) {
-                    case UdfRetCode::UDF_DROP_FRAME:
-                        LOG_DEBUG_0("Dropping frame");
-                        delete frame;
-                        break;
-                    case UdfRetCode::UDF_ERROR:
-                        LOG_ERROR_0("Failed to process frame");
-                        delete frame;
-                        break;
-                    case UdfRetCode::UDF_OK:
-                        m_udf_output_queue->push(frame);
-                        break;
-                    case UdfRetCode::UDF_MODIFIED_FRAME: // This ret code should be removed
-                    default:
-                        LOG_ERROR_0("Reached default case, this should not happen");
-                        delete frame;
-                        break;
-                }
+                // Create worker for executing the UDF on the frame
+                UdfWorker* ctx = new UdfWorker(
+                        handle, frame, m_udf_output_queue);
+
+                // Submit the worker to the thread pool
+                JobHandle* job_handle = m_pool->submit(&UdfWorker::run, ctx);
+                // The job handle is not actually needed in this use of the
+                // thread pool
+                delete job_handle;
             }
         }
     }
@@ -174,5 +269,6 @@ void UdfManager::stop() {
     if(m_th != NULL && !m_stop.load()) {
         m_stop.store(true);
         m_th->join();
+        m_pool->stop();
     }
 }

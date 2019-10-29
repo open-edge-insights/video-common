@@ -32,4 +32,4 @@ class Udf:
     def process(self, frame):
         """Process frame.
         """
-        return (False, frame, None)
+        return False, None

@@ -31,3 +31,7 @@ file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/.socks")
 add_executable(load-example "load_example.cpp")
 target_link_libraries(load-example udfloader ${EISMessageBus_LIBRARIES})
 target_include_directories(load-example PRIVATE ${EISMessageBus_INCLUDE})
+
+add_library(native_example SHARED "native_example.cpp")
+target_link_libraries(native_example udfloader ${EISMessageBus_LIBRARIES})
+target_include_directories(native_example PRIVATE ${EISMessageBus_INCLUDE})

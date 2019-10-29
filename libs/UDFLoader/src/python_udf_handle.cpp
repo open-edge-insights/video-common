@@ -28,6 +28,7 @@
 
 #include <vector>
 #include <atomic>
+#include <mutex>
 #include <numpy/ndarrayobject.h>
 
 #include <eis/utils/logger.h>
@@ -39,8 +40,8 @@ using namespace eis::utils;
 
 #define EIS_UDF_PROCESS "process"
 
-// Global reference count for UDFs using Python
-std::atomic<int> g_py_refs(0);
+// Cython lock, errors with the GIL occur if this does not exist
+std::mutex g_cython_mtx;
 
 PythonUdfHandle::PythonUdfHandle(std::string name, int max_workers) :
     UdfHandle(name, max_workers)
@@ -60,13 +61,6 @@ PythonUdfHandle::~PythonUdfHandle() {
     if(m_udf_obj != NULL && m_udf_obj != Py_None)
         Py_DECREF(m_udf_obj);
 
-    // g_py_refs.store(g_py_refs.load() - 1);
-    // if(g_py_refs.load() == 0) {
-    //     LOG_DEBUG_0("Finalizing the Python interpreter");
-    //     // if(Py_FinalizeEx() != 0) {
-    //     //     LOG_ERROR_0("Error finalizing Python interpreter");
-    //     // }
-    // }
     LOG_DEBUG_0("Finshed destroying the Python UDF");
 }
 
@@ -76,20 +70,9 @@ bool PythonUdfHandle::initialize(config_t* config) {
         return false;
 
     LOG_DEBUG("Loading Python UDF: %s", get_name().c_str());
-
-    // Initialize the Python interpreter if it is not already
-    // if(!Py_IsInitialized()) {
-    //     LOG_DEBUG_0("Initializing python");
-    //     PyImport_AppendInittab("udf", PyInit_udf);
-    //     Py_Initialize();
-    //     if(PyArray_API == NULL) {
-    //         import_array();
-    //     }
-    // }
     if(PyArray_API == NULL) {
         import_array();
     }
-    //g_py_refs.store(g_py_refs.load() + 1);
 
     // Import Cython module
     LOG_DEBUG_0("Importing UDF library");
@@ -103,8 +86,8 @@ bool PythonUdfHandle::initialize(config_t* config) {
     // Load the Python UDF
     LOG_DEBUG_0("Loading the UDF");
     m_udf_obj = load_udf(get_name().c_str(), config);
+
     // Module no longer needed
-    //Py_DECREF(module);
     if(m_udf_obj == Py_None || PyErr_Occurred() != NULL) {
         LOG_ERROR_0("Failed to load UDF");
         if(PyErr_Occurred() != NULL) {
@@ -129,6 +112,9 @@ bool PythonUdfHandle::initialize(config_t* config) {
 }
 
 UdfRetCode PythonUdfHandle::process(Frame* frame) {
+    // Get the lock to call cython
+    std::lock_guard<std::mutex> lk(g_cython_mtx);
+
     // Create NumPy array shape
     std::vector<npy_intp> sizes;
     sizes.push_back(frame->get_height());

@@ -85,7 +85,7 @@ public:
      *                after the UDF executes over it.
      * @return @c UdfRetCode
      */
-    virtual UdfRetCode process(cv::Mat frame, msg_envelope_t*& meta) = 0;
+    virtual UdfRetCode process(cv::Mat* frame, msg_envelope_t* meta) = 0;
 };
 
 } // udf

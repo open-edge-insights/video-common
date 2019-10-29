@@ -20,29 +20,59 @@
 
 /**
  * @file
- * @brief Return values for UDFs.
- * @author Kevin Midkiff (kevin.midkiff@intel.com)
+ * @brief C++ UDF
+ * @author Caleb McMillan <caleb.m.mcmillan@intel.com>
  */
 
-#ifndef _EIS_UDF_UDF_RET_CODES_H
-#define _EIS_UDF_UDF_RET_CODES_H
+#ifndef _EIS_UDF_NATIVE_UDF_H
+#define _EIS_UDF_NATIVE_UDF_H
+
+
+#include <eis/utils/frame.h>
+#include "eis/udf/udf_handle.h"
+#include "eis/udf/base_udf.h"
 
 namespace eis {
 namespace udf {
 
-enum UdfRetCode {
-    // Specifies that the UDF has processed and all is good, no action needed
-    // by the caller
-    UDF_OK = 1,
+class NativeUdfHandle : public UdfHandle {
+private:
+	//References needed after init
+	void* m_lib_handle;
+	void* (*m_func_initialize_udf)();
+	BaseUdf* m_udf;
 
-    // Specifies that the frame given to the process() method should dropped
-    UDF_DROP_FRAME = 2,
+public:
+    /**
+     * Constructor
+     *
+     * @param name - Name of the Native UDF
+     */
+    NativeUdfHandle(std::string name, int max_workers);
 
-    // The UDF encountered an error
-    UDF_ERROR = 255,
+    /**
+     * Destructor
+     */
+    ~NativeUdfHandle();
+
+    /**
+     * Overridden initialization method
+     *
+     * @param config - UDF configuration
+     * @return bool
+     */
+    bool initialize(config_t* config) override;
+
+    /**
+     * Overridden frame processing method.
+     *
+     * @param frame - Frame to process
+     * @return UdfRetCode
+     */
+    UdfRetCode process(utils::Frame* frame) override;		
 };
 
-} // udf
 } // eis
+} // udf
 
-#endif // _EIS_UDF_UDF_RET_CODES_H
+#endif // _EIS_UDF_NATIVE_UDF_H

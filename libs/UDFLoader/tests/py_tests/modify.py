@@ -33,4 +33,4 @@ class Udf:
         """Change all the values in the frame to 1 and return meta-data.
         """
         frame.fill(1)
-        return False, frame, {'ADDED': 55}
+        return False, {'ADDED': 55}

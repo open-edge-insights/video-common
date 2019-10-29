@@ -74,23 +74,34 @@ int main(int argc, char** argv) {
         FrameQueue* input_queue = new FrameQueue(-1);
         FrameQueue* output_queue = new FrameQueue(-1);
 
+        LOG_INFO_0("Initializing UDFManager");
+        UdfManager* manager = new UdfManager(config, input_queue, output_queue);
+        manager->start();
+
+        LOG_INFO_0("Initializing Publisher thread");
         Publisher* publisher = new Publisher(
                 msgbus_config, "example", (InputMessageQueue*) output_queue);
         publisher->start();
 
-        UdfManager* manager = new UdfManager(config, input_queue, output_queue);
-        manager->start();
-
+        LOG_INFO_0("Adding frames to input queue");
         for(int i = 0; i < 30; i++) {
             input_queue->push(init_frame());
         }
 
-        while(!input_queue->empty() && !output_queue->empty()) {}
+        LOG_INFO_0("Waiting for input queue to be empty");
+        // while(!input_queue->empty() && !output_queue->empty()) {}
+        std::this_thread::sleep_for(std::chrono::seconds(10));
 
+        LOG_INFO_0("Stopping the publisher");
         publisher->stop();
+
+        LOG_INFO_0("Stopping the UDFManager");
         manager->stop();
 
+        LOG_INFO_0("Cleaning up publisher");
         delete publisher;
+
+        LOG_INFO_0("Cleaning up UDFManager");
         delete manager;
     } catch(const char* ex) {
         LOG_INFO("Failed to load exception: %s", ex);

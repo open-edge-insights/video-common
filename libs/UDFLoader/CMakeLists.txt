@@ -200,8 +200,8 @@ write_basic_package_version_file(
     COMPATIBILITY AnyNewerVersion)
 
 configure_package_config_file(
-    ${CMAKE_CURRENT_LIST_DIR}/cmake/UDFLoaderConfig.cmake.in
-    ${CMAKE_CURRENT_BINARY_DIR}/EISMsgEnvConfig.cmake
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/UDFLoaderConfig.cmake.in
+    ${CMAKE_CURRENT_BINARY_DIR}/UDFLoaderConfig.cmake
     INSTALL_DESTINATION ${INSTALL_CONFIGDIR})
 
 # Install the config, configversion and custom find modules

@@ -31,4 +31,4 @@ class Udf:
     def process(self, frame):
         """Change all the values in the frame to 1 and return meta-data.
         """
-        return False, None, None
+        return False, None

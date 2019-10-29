@@ -32,6 +32,7 @@
 #include <eis/utils/frame.h>
 #include <eis/utils/config.h>
 #include <eis/utils/thread_safe_queue.h>
+#include <eis/utils/thread_pool.h>
 
 #include "eis/udf/udf_handle.h"
 #include "eis/udf/loader.h"
@@ -63,6 +64,9 @@ private:
 
     // UDF Loader
     UdfLoader* m_loader;
+
+    // Thread pool
+    utils::ThreadPool* m_pool;
 
     // UDF Handles
     std::vector<UdfHandle*> m_udfs;

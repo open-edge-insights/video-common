@@ -25,6 +25,7 @@
 
 #include "eis/udf/loader.h"
 #include "eis/udf/python_udf_handle.h"
+#include "eis/udf/native_udf_handle.h"
 #include <eis/utils/logger.h>
 #include "cython/udf.h"
 
@@ -45,16 +46,38 @@ UdfLoader::~UdfLoader() {
 UdfHandle* UdfLoader::load(
         std::string name, config_t* config, int max_workers)
 {
+	//TODO remove strcompare and convert to an enum?
+	config_value_t* type = config_get(config, "type");
+
+	if(type == NULL) {
+		LOG_ERROR_0("Error retreiving UDF type");
+		return NULL;
+	}	
+
+	if(type->type != CVT_STRING) {
+		LOG_ERROR_0("UDF type should be a string!");
+		return NULL;
+	}
+
     UdfHandle* udf = NULL;
 
-    // TODO: Add attempting to load a native UDF
-
-    // Attempt to load Python UDF
-    udf = new PythonUdfHandle(name, max_workers);
-    if(!udf->initialize(config)) {
-        delete udf;
-        udf = NULL;
-    }
+	if(strcmp(type->body.string, "python") == 0) {
+	    // Attempt to load Python UDF
+    	udf = new PythonUdfHandle(name, max_workers);
+    	if(!udf->initialize(config)) {
+        	delete udf;
+        	udf = NULL;
+    	}
+    } else if (strcmp(type->body.string, "native") == 0) {
+		//Attempt to load native UDF
+		udf = new NativeUdfHandle(name, max_workers);
+		if(!udf->initialize(config)) {
+			delete udf;
+			udf = NULL;
+		}
+	}
+	
+	config_value_destroy(type);
 
     return udf;
 }

@@ -102,10 +102,10 @@ add_custom_target(cython-udf
     WORKING_DIRECTORY
         ${CMAKE_CURRENT_SOURCE_DIR}/src/cython
     VERBATIM)
-# execute_process(
-#     COMMAND ${CYTHON_EXECUTABLE} udf.pyx
-#     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/src/cython"
-#     RESULT_VARIABLE cython_result)
+execute_process(
+    COMMAND ${CYTHON_EXECUTABLE} udf.pyx
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/src/cython"
+    RESULT_VARIABLE cython_result)
 
 # Get all source files
 file(GLOB SOURCES "src/*.cpp" "src/cython/udf.cpp")
@@ -118,6 +118,7 @@ target_link_libraries(udfloader
         ${EISMsgEnv_LIBRARIES}
         ${EISUtils_LIBRARIES}
         ${OpenCV_LIBS}
+        pthread
     PRIVATE
         ${Python3_LIBRARIES}
         safestring_static)

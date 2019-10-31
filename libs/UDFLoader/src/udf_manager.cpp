@@ -50,7 +50,8 @@ config_value_t* get_config_value(const void* cfg, const char* key) {
 UdfManager::UdfManager(
         config_t* udf_cfg, FrameQueue* input_queue, FrameQueue* output_queue) :
     m_th(NULL), m_stop(false), m_config(udf_cfg),
-    m_udf_input_queue(input_queue), m_udf_output_queue(output_queue)
+    m_udf_input_queue(input_queue), m_udf_output_queue(output_queue),
+    m_loader(NULL)
 {
     m_loader = new UdfLoader();
 
@@ -171,13 +172,16 @@ UdfManager::~UdfManager() {
 class UdfWorker {
 public:
     // UDF to be ran by the worker
-    UdfHandle* handle;
+    // UdfHandle* handle;
 
     // Frame for the UDF to process
     Frame* frame;
 
     // Output queue for the frame (if it not dropped)
     FrameQueue* output_queue;
+
+    // UDF pipeline to continue
+    std::vector<UdfHandle*>* udfs;
 
     /**
      * Constructor
@@ -186,8 +190,9 @@ public:
      * @param frame        - Frame to process
      * @param output_queue - Output queue to put processed frames into
      */
-    UdfWorker(UdfHandle* handle, Frame* frame, FrameQueue* output_queue) :
-        handle(handle), frame(frame), output_queue(output_queue)
+    UdfWorker(Frame* frame, std::vector<UdfHandle*>* udfs,
+              FrameQueue* output_queue) :
+        frame(frame), output_queue(output_queue), udfs(udfs)
     {};
 
     /**
@@ -203,31 +208,33 @@ public:
     static void run(void* vargs) {
         UdfWorker* ctx = (UdfWorker*) vargs;
 
-        UdfRetCode ret = ctx->handle->process(ctx->frame);
-        switch(ret) {
-            case UdfRetCode::UDF_DROP_FRAME:
-                LOG_DEBUG_0("Dropping frame");
-                delete ctx->frame;
-                break;
-            case UdfRetCode::UDF_ERROR:
-                LOG_ERROR_0("Failed to process frame");
-                delete ctx->frame;
-                break;
-            case UdfRetCode::UDF_OK:
-                ctx->output_queue->push(ctx->frame);
-                break;
-            default:
-                LOG_ERROR_0("Reached default case, this should not happen");
-                delete ctx->frame;
-                break;
+        for(auto handle : *ctx->udfs) {
+            UdfRetCode ret = handle->process(ctx->frame);
+            // TODO: Should probably have better error reporting here...
+            switch(ret) {
+                case UdfRetCode::UDF_DROP_FRAME:
+                    LOG_DEBUG_0("Dropping frame");
+                    delete ctx->frame;
+                    return;
+                case UdfRetCode::UDF_ERROR:
+                    LOG_ERROR_0("Failed to process frame");
+                    delete ctx->frame;
+                    return;
+                case UdfRetCode::UDF_OK:
+                    break;
+                default:
+                    LOG_ERROR_0("Reached default case, this should not happen");
+                    delete ctx->frame;
+                    return;
+            }
         }
 
+        ctx->output_queue->push(ctx->frame);
         delete ctx;
 
         LOG_DEBUG_0("Done running worker function");
     };
 };
-
 
 void UdfManager::run() {
     LOG_INFO_0("UDFManager thread started");
@@ -240,17 +247,16 @@ void UdfManager::run() {
             Frame* frame = m_udf_input_queue->front();
             m_udf_input_queue->pop();
 
-            for(auto handle : m_udfs) {
-                // Create worker for executing the UDF on the frame
-                UdfWorker* ctx = new UdfWorker(
-                        handle, frame, m_udf_output_queue);
+            // Create the worker to execute the UDF pipeline on the given frame
+            UdfWorker* ctx = new UdfWorker(
+                    frame, &m_udfs, m_udf_output_queue);
 
-                // Submit the worker to the thread pool
-                JobHandle* job_handle = m_pool->submit(&UdfWorker::run, ctx);
-                // The job handle is not actually needed in this use of the
-                // thread pool
-                delete job_handle;
-            }
+            // Submit the job to run in the thread pool
+            JobHandle* job_handle = m_pool->submit(&UdfWorker::run, ctx);
+
+            // The job handle is not actually needed in this use of the
+            // thread pool
+            delete job_handle;
         }
     }
 

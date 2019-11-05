@@ -80,7 +80,7 @@ int main(int argc, char** argv) {
 
         LOG_INFO_0("Initializing Publisher thread");
         Publisher* publisher = new Publisher(
-                msgbus_config, "example", (InputMessageQueue*) output_queue);
+                msgbus_config, "example", (MessageQueue*) output_queue);
         publisher->start();
 
         LOG_INFO_0("Adding frames to input queue");

@@ -139,27 +139,15 @@ if(WITH_TESTS)
 endif()
 
 ##
-## -------------------
-##
-
-##
-## Ignoring pkg-config, since no libraries require this at the time
-##
-
-##
 ## Configure pkg-config file to be installed for the EIS Message Envelope lib
 ##
 
-# set(PKG_CONFIG_IN  "${CMAKE_CURRENT_SOURCE_DIR}/cmake/libudfloader.pc.in")
-# set(PKG_CONFIG_OUT "${CMAKE_CURRENT_BINARY_DIR}/libudfloader.pc")
-# set(DEST_DIR       "${CMAKE_INSTALL_PREFIX}")
-# set(PRIVATE_LIBS   "-l")
-#
-# configure_file(${PKG_CONFIG_IN} ${PKG_CONFIG_OUT} @ONLY)
+set(PKG_CONFIG_IN  "${CMAKE_CURRENT_SOURCE_DIR}/cmake/libudfloader.pc.in")
+set(PKG_CONFIG_OUT "${CMAKE_CURRENT_BINARY_DIR}/libudfloader.pc")
+set(DEST_DIR       "${CMAKE_INSTALL_PREFIX}")
+set(PRIVATE_LIBS   "-l")
 
-##
-## -------------------
-##
+configure_file(${PKG_CONFIG_IN} ${PKG_CONFIG_OUT} @ONLY)
 
 ##
 ## Add CMake configuration for installing the library including files for other

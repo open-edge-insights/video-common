@@ -1,17 +1,17 @@
 {
+
+  "max_jobs": 1,
   "udfs": [
     {
       "name": "example",
       "param1": "test",
       "param2": 123,
-      "max_jobs": 1,
       "type": "python"
     },
     {
       "name": "native_example",
       "param1": "test",
       "param2": 123,
-      "max_jobs": 1,
       "type": "native"
     }
   ]

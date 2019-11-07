@@ -61,8 +61,8 @@ bool NativeUdfHandle::initialize(config_t* config) {
 	bool res = this->UdfHandle::initialize(config);
 	if(!res)
 		return false;
-	std::string name = get_name().c_str();
-	LOG_DEBUG("Loading native UDF: %s", name);
+	std::string name = get_name();
+	LOG_DEBUG("Loading native UDF: %s", name.c_str());
 
 	LOG_DEBUG_0("Retrieving LD_LIBRARY_PATH");
     char* ld_library_path = getenv("LD_LIBRARY_PATH");

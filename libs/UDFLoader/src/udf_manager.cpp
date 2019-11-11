@@ -93,6 +93,7 @@ UdfManager::UdfManager(
         config_value_destroy(cfg_max_workers);
     }
 
+    LOG_DEBUG("Max workers: %d, max jobs: %d", max_workers, max_jobs);
     // Initialize thread pool
     m_pool = new ThreadPool(max_workers, max_jobs);
 
@@ -124,6 +125,7 @@ UdfManager::UdfManager(
         if(cfg == NULL) {
             throw "Failed to initialize configuration for UDF";
         }
+        LOG_DEBUG("Loading UDF...");
         UdfHandle* handle = m_loader->load(name->body.string, cfg, 1);
         if(handle == NULL) {
             throw "Failed to load UDF";
@@ -252,7 +254,10 @@ void UdfManager::run() {
                     frame, &m_udfs, m_udf_output_queue);
 
             // Submit the job to run in the thread pool
-            JobHandle* job_handle = m_pool->submit(&UdfWorker::run, ctx);
+            JobHandle* job_handle = NULL;
+            do {
+                job_handle = m_pool->submit(&UdfWorker::run, ctx);
+            } while(job_handle == NULL);
 
             // The job handle is not actually needed in this use of the
             // thread pool

@@ -33,8 +33,8 @@ using namespace eis::utils;
 #define CFG_UDFS            "udfs"
 #define CFG_MAX_JOBS        "max_jobs"
 #define CFG_MAX_WORKERS     "max_workers"
-#define DEFAULT_MAX_WORKERS 4 // Default 4 threads to submit jobs to
-#define DEFAULT_MAX_JOBS   -1 // Default to having unlimited job queue
+#define DEFAULT_MAX_WORKERS 4  // Default 4 threads to submit jobs to
+#define DEFAULT_MAX_JOBS    20 // Default for the number of queued jobs
 
 
 void free_fn(void* ptr) {
@@ -253,9 +253,10 @@ void UdfManager::run() {
             UdfWorker* ctx = new UdfWorker(
                     frame, &m_udfs, m_udf_output_queue);
 
-            // Submit the job to run in the thread pool
             JobHandle* job_handle = NULL;
+
             do {
+                // Submit the job to run in the thread pool
                 job_handle = m_pool->submit(&UdfWorker::run, ctx);
             } while(job_handle == NULL);
 

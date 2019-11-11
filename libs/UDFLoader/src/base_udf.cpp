@@ -28,28 +28,12 @@
 
 using namespace eis::udf;
 
-BaseUdf::BaseUdf() :
-    m_initialized(false), m_config(NULL)
+BaseUdf::BaseUdf(config_t* config) :
+    m_config(config)
 {}
 
 BaseUdf::~BaseUdf() {
     // NOTE: The m_config value is not freed here because this should always
     // be internally wrapped by a @c UdfHandle which manages the memory for
     // the configuration object.
-}
-
-bool BaseUdf::is_initialized() {
-    return m_initialized.load();
-}
-
-bool BaseUdf::initialize(config_t* config) {
-    if(m_initialized.load()) {
-        LOG_WARN_0("Initialize called twice for a given UDF");
-        return true;
-    }
-
-    m_initialized.store(true);
-    m_config = config;
-
-    return true;
 }

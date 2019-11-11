@@ -114,15 +114,13 @@ bool NativeUdfHandle::initialize(config_t* config) {
 			LOG_DEBUG_0("Successfully found initialize_udf symbol");
 		}
 
-		void* udf = m_func_initialize_udf();
-		m_udf = (BaseUdf*) udf;
-
-		if(!m_udf->initialize(config)) {
-			LOG_ERROR_0("Failed to initialize UDF");
-			return false;
-		}
-		else
-			LOG_DEBUG_0("Successfully initialized UDF");
+        try {
+            void* udf = m_func_initialize_udf();
+            m_udf = (BaseUdf*) udf;
+        } catch(const std::exception& exc) {
+            LOG_ERROR("Failed to initialize UDF: %s", exc.what());
+            return false;
+        }
 
         return true;
     }

@@ -37,11 +37,6 @@ namespace eis {
 namespace udf {
 
 class BaseUdf {
-private:
-    // Atomic boolean flag for if the UDF has already been initialized or
-    // not
-    std::atomic<bool> m_initialized;
-
 protected:
     // UDF configuration
     //
@@ -53,29 +48,12 @@ public:
     /**
      * Constructor
      */
-    BaseUdf();
+    BaseUdf(config_t* config);
 
     /**
      * Destructor
      */
     virtual ~BaseUdf();
-
-    /**
-     * Return whether or not the UDF has been initialized.
-     *
-     * @return bool
-     */
-    bool is_initialized();
-
-    /**
-     * Initialize the UDF. This method should be overriden by subclasses,
-     * however, the subclass MUST still call this method for the state of
-     * the UDF to be set correctly.
-     *
-     * @param config - Configuration for the UDF
-     * @return bool
-     */
-    virtual bool initialize(config_t* config);
 
     /**
      * Process the given frame.

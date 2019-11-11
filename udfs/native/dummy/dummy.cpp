@@ -37,23 +37,11 @@ namespace eis {
      */
         class DummyUdf : public BaseUdf {
             public:
-                DummyUdf() : BaseUdf() {};
+                DummyUdf(config_t* config) : BaseUdf(config) {};
 
                 ~DummyUdf() {};
 
-                bool initialize(config_t* config) override {
-                    bool ret = this->BaseUdf::initialize(config);
-                    if(!ret)
-                        return false;
-
-                    // TODO: Get some parameters out of the conig
-
-                    return true;
-                };
-
                 UdfRetCode process(cv::Mat* frame, msg_envelope_t* meta) override {
-            //        cv::Mat temp;
-            //		cv::resize(frame, temp, cv::Size(5,5));
                     LOG_DEBUG("In %s method...", __PRETTY_FUNCTION__);
                     return UdfRetCode::UDF_OK;
                 };
@@ -68,8 +56,8 @@ extern "C" {
  *
  * @return void*
  */
-void* initialize_udf() {
-    eis::udfsamples::DummyUdf* udf = new eis::udfsamples::DummyUdf();
+void* initialize_udf(config_t* config) {
+    eis::udfsamples::DummyUdf* udf = new eis::udfsamples::DummyUdf(config);
     return (void*) udf;
 }
 

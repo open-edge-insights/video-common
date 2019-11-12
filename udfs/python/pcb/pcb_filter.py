@@ -48,7 +48,9 @@ class Udf:
         -------
         Filter object
         """
+        print("Beggining of filter ctor")
         self.log = logging.getLogger('PCB_FILTER')
+        self.log.debug("In ctor")
         # Initialize background subtractor
         self.fgbg = cv2.createBackgroundSubtractorMOG2()
         # Total white pixel # on MOG applied
@@ -63,7 +65,10 @@ class Udf:
         # Flag to lock trigger from forwarding frames to classifier
         self.filter_lock = False
         self.training_mode = training_mode
+        self.profiling = False
         self.count = 0
+        self.lock_frame_count = 0
+        print("Done filter ctor")
 
     def _check_frame(self, frame):
         """Determines if the given frame is the key frame of interest for
@@ -78,16 +83,25 @@ class Udf:
         -------
         True if the given frame is a key frame, else False
         """
+        print("start of _check_frame]]]...")
         # Apply background subtractor on frame
+        # self.count = self.count + 1
+        # cv2.imwrite("/EIS/test_videos/"+str(self.count)+".png", frame)
+        print("before fgbg.apply...")
+        # frame = cv2.imread("/EIS/test_videos/0.png")     
         fgmask = self.fgbg.apply(frame)
+        print("after fgbg.apply...")
         rows, columns = fgmask.shape
         if self.filter_lock is False:
             # Applying morphological operations
+            print("filter_lock is false")
             kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (20, 20))
+            print("cv2.getStructuring returned...")
             ret, thresh = cv2.threshold(fgmask, 0, 255,
                                         cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+            print("cv2.threshold returned...")
             thresh = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
-
+            print("cv2.morphology returned...")
             # Crop left and right edges of frame
             left = thresh[:, 0:10]
             right = thresh[:, (columns - 10):(columns)]
@@ -101,10 +115,13 @@ class Udf:
             if (n_total > self.n_total_px) & \
                 (n_left < self.n_left_px) & \
                     (n_right < self.n_right_px):
+                print("Before cv2.findContours...")
                 # Find the PCB contour
                 contours, hier = cv2.findContours(thresh.copy(),
                                                       cv2.RETR_EXTERNAL,
                                                       cv2.CHAIN_APPROX_NONE)
+                print("After cv2.findContours...")
+                print("Contours: {}".format(contours))
                 if len(contours) != 0:
                     # Contour with largest area would be bounding the PCB
                     c = max(contours, key=cv2.contourArea)
@@ -128,22 +145,47 @@ class Udf:
         """Runs video frames from filter input queue and adds only the key
         frames to filter output queue based on the filter logic used
         """
+        print("In process start, frame:", frame)
         metadata = {}
 
         if self.profiling is True:
             metadata['ts_vi_filter_entry'] = time.time()*1000
 
         if self.training_mode is True:
+            print("training mode true")
+            print(frame)
+            print("Frame: {}".format(frame))
+            cv2.imwrite("/EIS/test_videos/"+str(self.count)+".png", frame)
+            print("cv2.imwrite successful")
             self.count = self.count + 1
-            cv2.imwrite("./frames/"+str(self.count)+".numpy", frame)
+            return True, None
         else:
-            if self._check_frame(frame):
-                self.log.debug("Sending frame")
-                metadata["user_data"] = 1
-                return False, metadata
+            if self.filter_lock is False:
+                print("filter_lock is False")
+                if self._check_frame(frame):
+                    print("Sending frame")
+                    metadata["user_data"] = 1
+                    print("In process check_frame true")
+                    self.filter_lock = True
+                    # Re-initialize frame count during trigger lock to 0
+                    self.lock_frame_count = 0
+                    return False, metadata
             else:
+                print("filter_lock is True")
                 # Continue applying background subtractor to
                 # keep track of PCB positions
                 self._check_frame(frame)
-                return True, None
+                # Increment frame count during trigger lock phase
+                self.lock_frame_count = self.lock_frame_count + 1
+                if self.lock_frame_count == 7:
+                    # Clear trigger lock after timeout
+                    # period (measured in frame count here)
+                    self.filter_lock = False
+                # else:
+                #     # Continue applying background subtractor to
+                #     # keep track of PCB positions
+                #     print("Continue applying background")
+                #     self._check_frame(frame)
+                #     print("In process check_frame false")
+                #     return True, None
 

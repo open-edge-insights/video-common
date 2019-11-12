@@ -308,7 +308,9 @@ cdef public object load_udf(const char* name, config_t* config):
         raise AttributeError(f'{py_name} module is missing the Udf class')
     except ImportError:
         raise ImportError(f'Failed to load UDF: {py_name}')
-
+    except Exception as ex:
+        print("Exception : {}".format(ex))
+        raise
 
 cdef public UdfRetCode call_udf(
         object udf, object frame, msg_envelope_t* meta) except *:
@@ -318,8 +320,10 @@ cdef public UdfRetCode call_udf(
     cdef msg_envelope_elem_body_t* body
     cdef content_type_t ct
     cdef char* key = NULL
-
+    
+    #print("In cython call_udf before")
     drop, new_meta = udf.process(frame)
+    #print("In cython call_udf after")
 
     if drop:
         return UDF_DROP_FRAME

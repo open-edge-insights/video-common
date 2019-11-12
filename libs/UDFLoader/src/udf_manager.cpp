@@ -82,7 +82,7 @@ UdfManager::UdfManager(
 
     // Get the maximum number of workers
     int max_workers = DEFAULT_MAX_WORKERS;
-    config_value_t* cfg_max_workers = config_get(m_config, CFG_MAX_JOBS);
+    config_value_t* cfg_max_workers = config_get(m_config, CFG_MAX_WORKERS);
     if(cfg_max_workers != NULL) {
         if(cfg_max_workers->type != CVT_INTEGER) {
             config_value_destroy(cfg_max_workers);
@@ -208,9 +208,11 @@ public:
      * pointer.
      */
     static void run(void* vargs) {
+        LOG_DEBUG_0("UdfWorker::run()");
         UdfWorker* ctx = (UdfWorker*) vargs;
 
         for(auto handle : *ctx->udfs) {
+            LOG_DEBUG_0("Running UdfHandle::process()");
             UdfRetCode ret = handle->process(ctx->frame);
             // TODO: Should probably have better error reporting here...
             switch(ret) {
@@ -223,15 +225,18 @@ public:
                     delete ctx->frame;
                     return;
                 case UdfRetCode::UDF_OK:
+                    LOG_DEBUG_0("UDF_OK");
                     break;
                 default:
                     LOG_ERROR_0("Reached default case, this should not happen");
                     delete ctx->frame;
                     return;
             }
+            LOG_DEBUG_0("Done with UDF handle");
         }
 
-        ctx->output_queue->push(ctx->frame);
+        LOG_DEBUG_0("Pushing frame to output queue");
+        ctx->output_queue->push_wait(ctx->frame);
         delete ctx;
 
         LOG_DEBUG_0("Done running worker function");
@@ -246,6 +251,7 @@ void UdfManager::run() {
 
     while(!m_stop.load()) {
         if(m_udf_input_queue->wait_for(duration)) {
+            LOG_DEBUG_0("Popping frame from input queue");
             Frame* frame = m_udf_input_queue->front();
             m_udf_input_queue->pop();
 
@@ -253,12 +259,12 @@ void UdfManager::run() {
             UdfWorker* ctx = new UdfWorker(
                     frame, &m_udfs, m_udf_output_queue);
 
+            LOG_DEBUG_0("Submitting job to job pool")
             JobHandle* job_handle = NULL;
 
-            do {
-                // Submit the job to run in the thread pool
-                job_handle = m_pool->submit(&UdfWorker::run, ctx);
-            } while(job_handle == NULL);
+            // Submit the job to run in the thread pool
+            job_handle = m_pool->submit(&UdfWorker::run, ctx);
+            LOG_DEBUG_0("Done submitting the job")
 
             // The job handle is not actually needed in this use of the
             // thread pool

@@ -28,7 +28,6 @@
 
 #include <vector>
 #include <atomic>
-#include <mutex>
 #include <numpy/ndarrayobject.h>
 
 #include <eis/utils/logger.h>
@@ -40,9 +39,6 @@ using namespace eis::utils;
 
 #define EIS_UDF_PROCESS "process"
 
-// Cython lock, errors with the GIL occur if this does not exist
-std::mutex g_cython_mtx;
-
 PythonUdfHandle::PythonUdfHandle(std::string name, int max_workers) :
     UdfHandle(name, max_workers)
 {
@@ -53,6 +49,11 @@ PythonUdfHandle::PythonUdfHandle(std::string name, int max_workers) :
 PythonUdfHandle::~PythonUdfHandle() {
     LOG_DEBUG_0("Destroying Python UDF");
 
+    LOG_DEBUG_0("Aquiring the GIL");
+    PyGILState_STATE gstate;
+    gstate = PyGILState_Ensure();
+    LOG_DEBUG_0("Acquired GIL");
+
     LOG_DEBUG_0("Releasing process the function");
     if(m_udf_func != NULL && m_udf_func != Py_None)
         Py_DECREF(m_udf_func);
@@ -61,6 +62,7 @@ PythonUdfHandle::~PythonUdfHandle() {
     if(m_udf_obj != NULL && m_udf_obj != Py_None)
         Py_DECREF(m_udf_obj);
 
+    PyGILState_Release(gstate);
     LOG_DEBUG_0("Finshed destroying the Python UDF");
 }
 
@@ -68,6 +70,12 @@ bool PythonUdfHandle::initialize(config_t* config) {
     bool res = this->UdfHandle::initialize(config);
     if(!res)
         return false;
+
+    LOG_DEBUG("Has GIL: %d", PyGILState_Check());
+    LOG_DEBUG_0("Aquiring the GIL");
+    PyGILState_STATE gstate;
+    gstate = PyGILState_Ensure();
+    LOG_DEBUG_0("GIL acquired");
 
     LOG_DEBUG("Loading Python UDF: %s", get_name().c_str());
     if(PyArray_API == NULL) {
@@ -80,12 +88,14 @@ bool PythonUdfHandle::initialize(config_t* config) {
     if(module == NULL) {
         LOG_ERROR_0("Failed to import udf Python module");
         PyErr_Print();
+        PyGILState_Release(gstate);
         return false;
     }
 
     // Load the Python UDF
     LOG_DEBUG_0("Loading the UDF");
     m_udf_obj = load_udf(get_name().c_str(), config);
+    LOG_DEBUG_0("UDF Loaded");
 
     // Module no longer needed
     if(m_udf_obj == Py_None || PyErr_Occurred() != NULL) {
@@ -93,6 +103,7 @@ bool PythonUdfHandle::initialize(config_t* config) {
         if(PyErr_Occurred() != NULL) {
             PyErr_Print();
         }
+        PyGILState_Release(gstate);
         return false;
     }
 
@@ -103,17 +114,22 @@ bool PythonUdfHandle::initialize(config_t* config) {
         if(PyErr_Occurred() != NULL) {
             PyErr_Print();
         }
+        PyGILState_Release(gstate);
         // No need to call Py_DECREF() on the object since it will be taken
         // care of in the destructor of this object.
         return false;
     }
 
+    PyGILState_Release(gstate);
+
     return true;
 }
 
 UdfRetCode PythonUdfHandle::process(Frame* frame) {
-    // Get the lock to call cython
-    std::lock_guard<std::mutex> lk(g_cython_mtx);
+    LOG_DEBUG_0("Aquiring the GIL");
+    PyGILState_STATE gstate;
+    gstate = PyGILState_Ensure();
+    LOG_DEBUG_0("Acquired GIL");
 
     // Create NumPy array shape
     std::vector<npy_intp> sizes;
@@ -125,7 +141,7 @@ UdfRetCode PythonUdfHandle::process(Frame* frame) {
     // Create new NumPy Array
     PyObject* py_frame = PyArray_SimpleNewFromData(
             3, dims, NPY_UINT8, (void*) frame->get_data());
-    
+
     LOG_DEBUG_0("Before process call");
     // Call the UDF process method
     UdfRetCode ret = call_udf(m_udf_obj, py_frame, frame->get_meta_data());
@@ -137,5 +153,10 @@ UdfRetCode PythonUdfHandle::process(Frame* frame) {
         return UdfRetCode::UDF_ERROR;
     }
     LOG_DEBUG_0("process done");
+
+    LOG_DEBUG_0("Releasing the GIL");
+    PyGILState_Release(gstate);
+    LOG_DEBUG_0("Released");
+
     return ret;
 }

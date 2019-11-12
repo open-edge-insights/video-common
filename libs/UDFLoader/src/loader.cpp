@@ -31,11 +31,19 @@
 
 using namespace eis::udf;
 
+// Globals for Python interpreter
+// PyInterpreterState* g_state;
+PyThreadState* g_th_state;
+
 UdfLoader::UdfLoader() {
     if(!Py_IsInitialized()) {
         LOG_DEBUG_0("Initializing python");
         PyImport_AppendInittab("udf", PyInit_udf);
         Py_Initialize();
+        PyEval_InitThreads();
+        g_th_state = PyThreadState_Get();
+        PyEval_SaveThread();
+        LOG_DEBUG("Has GIL: %d", PyGILState_Check());
     }
 }
 
@@ -52,7 +60,7 @@ UdfHandle* UdfLoader::load(
 	if(type == NULL) {
 		LOG_ERROR_0("Error retreiving UDF type");
 		return NULL;
-	}	
+	}
 
 	if(type->type != CVT_STRING) {
 		LOG_ERROR_0("UDF type should be a string!");
@@ -63,11 +71,16 @@ UdfHandle* UdfLoader::load(
 
 	if(strcmp(type->body.string, "python") == 0) {
 	    // Attempt to load Python UDF
+        PyEval_RestoreThread(g_th_state);
+
     	udf = new PythonUdfHandle(name, max_workers);
     	if(!udf->initialize(config)) {
         	delete udf;
         	udf = NULL;
     	}
+
+        PyEval_SaveThread();
+        LOG_DEBUG("Has GIL: %d", PyGILState_Check());
     } else if (strcmp(type->body.string, "native") == 0) {
 		//Attempt to load native UDF
 		udf = new NativeUdfHandle(name, max_workers);
@@ -76,7 +89,7 @@ UdfHandle* UdfLoader::load(
 			udf = NULL;
 		}
 	}
-	
+
 	config_value_destroy(type);
 
     return udf;

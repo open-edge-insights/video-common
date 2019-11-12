@@ -271,7 +271,7 @@ cdef object cfv_to_object(config_value_t* value):
     return ret_val
 
 
-cdef public object load_udf(const char* name, config_t* config):
+cdef public object load_udf(const char* name, config_t* config) with gil:
     """Load Python UDF.
 
     :param name: Name of the UDF to load (can be full package path)
@@ -313,7 +313,7 @@ cdef public object load_udf(const char* name, config_t* config):
         raise
 
 cdef public UdfRetCode call_udf(
-        object udf, object frame, msg_envelope_t* meta) except *:
+        object udf, object frame, msg_envelope_t* meta) with gil:
     """Call UDF
     """
     cdef msgbus_ret_t ret

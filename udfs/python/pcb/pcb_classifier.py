@@ -54,15 +54,11 @@ class Udf:
         :rtype: Object
         """
         self.log = logging.getLogger('PCB_DEFECT_DETECTION')
-        cwd = os.getcwd()
-        print("path: {}".format(cwd))
         self.ref_img = ref_img
         self.ref_config_roi = ref_config_roi
         self.model_xml = model_xml
         self.model_bin = model_bin
         self.device = device
-
-        print("full path: {}".format(os.path.join(cwd, self.ref_img)))
 
         # Assert all input parameters exist
         assert os.path.exists(self.ref_img), \
@@ -179,9 +175,9 @@ class Udf:
         """Reads the image frame from input queue for classifier
         and classifies against the specified reference image.
         """
-        
+
         metadata = {}
-            
+
         if self.profiling is True:
             metadata['ts_va_classify_entry'] = time.time()*1000
 
@@ -295,7 +291,7 @@ class Udf:
         # overcome probabilistic nature of Flann matcher. This might
         # need to be changed.
         cv2.setRNGSeed(0)
-        
+
         metadata["defects"] = defects
 
         if self.profiling is True:

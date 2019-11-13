@@ -126,12 +126,10 @@ class Udf:
                         return False
         return False
 
-    def process(self, frame):
+    def process(self, frame, metadata):
         """Runs video frames from filter input queue and adds only the key
         frames to filter output queue based on the filter logic used
         """
-        metadata = {}
-
         if self.profiling is True:
             metadata['ts_vi_filter_entry'] = time.time()*1000
 

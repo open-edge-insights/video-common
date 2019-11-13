@@ -48,6 +48,7 @@ UdfLoader::UdfLoader() {
 }
 
 UdfLoader::~UdfLoader() {
+    PyEval_RestoreThread(g_th_state);
     Py_FinalizeEx();
 }
 

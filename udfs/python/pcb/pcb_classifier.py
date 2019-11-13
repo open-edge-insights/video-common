@@ -171,12 +171,10 @@ class Udf:
         return bndbx
 
     # Main classification algorithm
-    def process(self, frame):
+    def process(self, frame, metadata):
         """Reads the image frame from input queue for classifier
         and classifies against the specified reference image.
         """
-        metadata = {'defects': []}
-
         if self.profiling is True:
             metadata['ts_va_classify_entry'] = time.time()*1000
 
@@ -256,10 +254,10 @@ class Udf:
                 coord = np.asarray([[[x, y], [x1, y1]]], dtype="float32")
                 new_coord = cv2.perspectiveTransform(coord,
                                                      np.linalg.inv(mat))[0]
-                x = new_coord[0][0]
-                y = new_coord[0][1]
-                x1 = new_coord[1][0]
-                y1 = new_coord[1][1]
+                x = float(new_coord[0][0])
+                y = float(new_coord[0][1])
+                x1 = float(new_coord[1][0])
+                y1 = float(new_coord[1][1])
                 # Defect class of 0 => BP defect
                 # (x,y) -> top left bounding box coordinates
                 # (x1,y1) -> bottom right bounding box coordinates
@@ -276,10 +274,10 @@ class Udf:
                 coord = np.asarray([[[x, y], [x1, y1]]], dtype="float32")
                 new_coord = cv2.perspectiveTransform(coord,
                                                      np.linalg.inv(mat))[0]
-                x = new_coord[0][0]
-                y = new_coord[0][1]
-                x1 = new_coord[1][0]
-                y1 = new_coord[1][1]
+                x = float(new_coord[0][0])
+                y = float(new_coord[0][1])
+                x1 = float(new_coord[1][0])
+                y1 = float(new_coord[1][1])
                 # Defect class of 1 => MR defect
                 # (x,y) -> top left bounding box coordinates
                 # (x1,y1) -> bottom right bounding box coordinates

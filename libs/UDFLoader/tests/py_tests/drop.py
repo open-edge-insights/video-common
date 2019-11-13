@@ -27,7 +27,7 @@ class Udf:
         """
         pass
 
-    def process(self, frame):
+    def process(self, frame, meta):
         """Change all the values in the frame to 1 and return meta-data.
         """
         return True, None

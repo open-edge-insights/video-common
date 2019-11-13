@@ -29,8 +29,9 @@ class Udf:
         """
         pass
 
-    def process(self, frame):
+    def process(self, frame, meta):
         """Change all the values in the frame to 1 and return meta-data.
         """
+        meta['ADDED'] = 55
         frame.fill(1)
-        return False, {'ADDED': 55}
+        return False, meta

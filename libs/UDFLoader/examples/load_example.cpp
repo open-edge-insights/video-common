@@ -26,6 +26,7 @@
 #include <thread>
 #include <atomic>
 #include <chrono>
+#include <condition_variable>
 #include <eis/utils/logger.h>
 #include <eis/utils/json_config.h>
 #include <eis/msgbus/msgbus.h>
@@ -79,8 +80,9 @@ int main(int argc, char** argv) {
         manager->start();
 
         LOG_INFO_0("Initializing Publisher thread");
+        std::condition_variable err_cv;
         Publisher* publisher = new Publisher(
-                msgbus_config, "example", (MessageQueue*) output_queue);
+                msgbus_config, err_cv, "example", (MessageQueue*) output_queue);
         publisher->start();
 
         LOG_INFO_0("Adding frames to input queue");

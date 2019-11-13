@@ -25,6 +25,8 @@ from libc.stdint cimport *
 from cpython cimport bool
 
 # Python imports
+import json
+import warnings
 import inspect
 import importlib
 import numpy as np
@@ -157,7 +159,12 @@ cdef extern from "eis/msgbus/msg_envelope.h":
         msg_envelope_elem_body_body_t body
 
     ctypedef struct msg_envelope_t:
-        pass
+        content_type_t content_type
+
+    ctypedef struct msg_envelope_serialized_part_t:
+        owned_blob_t* shared;
+        size_t len
+        char* bytes
 
     msg_envelope_t* msgbus_msg_envelope_new(content_type_t ct)
     msg_envelope_elem_body_t* msgbus_msg_envelope_new_string(
@@ -188,6 +195,17 @@ cdef extern from "eis/msgbus/msg_envelope.h":
     msgbus_ret_t msgbus_msg_envelope_put(
             msg_envelope_t* env, const char* key,
             msg_envelope_elem_body_t* data)
+    msgbus_ret_t msgbus_msg_envelope_remove(
+            msg_envelope_t* env, const char* key)
+    int msgbus_msg_envelope_serialize(
+            msg_envelope_t* env, msg_envelope_serialized_part_t** parts)
+    msgbus_ret_t msgbus_msg_envelope_deserialize(
+            content_type_t ct, msg_envelope_serialized_part_t* data,
+            size_t num_parts, msg_envelope_t** env)
+    msgbus_ret_t msgbus_msg_envelope_serialize_parts_new(
+            int num_parts, msg_envelope_serialized_part_t** parts)
+    void msgbus_msg_envelope_serialize_destroy(
+            msg_envelope_serialized_part_t* parts, int num_parts)
 
 
 cdef extern from "eis/udf/udfretcodes.h" namespace "eis::udf":
@@ -332,6 +350,16 @@ cdef public object load_udf(const char* name, config_t* config) with gil:
         raise
 
 
+cdef object char_to_bytes(const char* data, int length):
+    """Helper function to convert char* to byte array without stopping on a
+    NULL termination.
+
+    NOTE: This is workaround for Cython's built-in way of doing this which will
+    automatically stop when it hits a NULL byte.
+    """
+    return <bytes> data[:length]
+
+
 cdef msg_envelope_elem_body_t* python_to_msg_env_elem_body(data):
     """Helper function to recursively convert a python object to
     msg_envelope_elem_body_t.
@@ -386,6 +414,32 @@ cdef msg_envelope_elem_body_t* python_to_msg_env_elem_body(data):
     return elem
 
 
+cdef object msg_envelope_to_python(msg_envelope_t* msg):
+    """Convert msg_envelope_t to Python dictionary or bytes object.
+
+    :param msg: Message envelope to convert
+    :type: msg_envelope_t*
+    """
+    cdef msg_envelope_serialized_part_t* parts = NULL
+
+    num_parts = msgbus_msg_envelope_serialize(msg, &parts)
+    if num_parts <= 0:
+        raise RuntimeError('Error serializing to Python representation')
+
+    if num_parts > 2:
+        warnings.warn('The Python library only supports 2 parts!')
+
+    try:
+        if num_parts == 2:
+            parts[1].shared.owned = False
+
+        data = None
+        data = json.loads(char_to_bytes(parts[0].bytes, parts[0].len))
+        return data
+    finally:
+        msgbus_msg_envelope_serialize_destroy(parts, num_parts)
+
+
 cdef public UdfRetCode call_udf(
         object udf, object frame, msg_envelope_t* meta) except * with gil:
     """Call UDF
@@ -393,7 +447,13 @@ cdef public UdfRetCode call_udf(
     cdef msgbus_ret_t ret = MSG_SUCCESS
     cdef msg_envelope_elem_body_t* body
 
-    pret = udf.process(frame)
+    # Convert current meta-data to Python dictionary
+    py_meta = msg_envelope_to_python(meta)
+
+    # Create copy for later
+    py_meta_cpy = dict(py_meta)
+
+    pret = udf.process(frame, py_meta)
 
     # Verify UDF return value
     assert pret is not None, 'UDF return NoneType, must return tuple'
@@ -413,6 +473,14 @@ cdef public UdfRetCode call_udf(
 
     if new_meta is not None:
         for k,v in new_meta.items():
+            # Check if key is in the message envelope
+            if k in py_meta_cpy:
+                # Value was pre-existing in the message envelope, remove it
+                # in case it changed
+                remove_key = bytes(k, 'utf-8')
+                ret = msgbus_msg_envelope_remove(meta, <char*> remove_key)
+                assert ret == MSG_SUCCESS, 'Failed to remove element'
+
             body = python_to_msg_env_elem_body(v)
             if body == NULL:
                 raise RuntimeError(f'Failed to convert: {k} to envelope')

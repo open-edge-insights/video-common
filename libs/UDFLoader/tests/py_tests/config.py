@@ -35,7 +35,7 @@ class Udf:
         assert arr == ['test', True]
         assert obj['string'] == 'Hello, from object'
 
-    def process(self, frame):
+    def process(self, frame, meta):
         """Change all the values in the frame to 1 and return meta-data.
         """
         return False, None

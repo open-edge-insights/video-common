@@ -122,12 +122,21 @@ cdef extern from "eis/msgbus/msg_envelope.h":
         CT_JSON = 0
         CT_BLOB = 1
 
+    ctypedef struct hashmap_t:
+        pass
+
+    ctypedef struct linkedlist_t:
+        pass
+
     ctypedef enum msg_envelope_data_type_t:
         MSG_ENV_DT_INT      = 0
         MSG_ENV_DT_FLOATING = 1
         MSG_ENV_DT_STRING   = 2
         MSG_ENV_DT_BOOLEAN  = 3
         MSG_ENV_DT_BLOB     = 4
+        MSG_ENV_DT_OBJECT   = 5
+        MSG_ENV_DT_ARRAY    = 6
+        MSG_ENV_DT_NONE     = 7
 
     ctypedef struct msg_envelope_blob_t:
         owned_blob_t* shared
@@ -140,31 +149,41 @@ cdef extern from "eis/msgbus/msg_envelope.h":
         char* string
         c_bool boolean
         msg_envelope_blob_t* blob
+        hashmap_t* object
+        linkedlist_t* array
 
     ctypedef struct msg_envelope_elem_body_t:
         msg_envelope_data_type_t type
         msg_envelope_elem_body_body_t body
 
-    ctypedef struct msg_envelope_elem_t:
-        char* key
-        c_bool in_use
-        msg_envelope_elem_body_t* body
-
     ctypedef struct msg_envelope_t:
-        char* correlation_id
-        content_type_t content_type
-        int size
-        int max_size
-        msg_envelope_elem_t* elems
-        msg_envelope_elem_body_t* blob
+        pass
 
+    msg_envelope_t* msgbus_msg_envelope_new(content_type_t ct)
     msg_envelope_elem_body_t* msgbus_msg_envelope_new_string(
             const char* string)
+    msg_envelope_elem_body_t* msgbus_msg_envelope_new_none()
+    msg_envelope_elem_body_t* msgbus_msg_envelope_new_array()
+    msg_envelope_elem_body_t* msgbus_msg_envelope_new_object()
     msg_envelope_elem_body_t* msgbus_msg_envelope_new_integer(int64_t integer)
     msg_envelope_elem_body_t* msgbus_msg_envelope_new_floating(double floating)
-    msg_envelope_elem_body_t* msgbus_msg_envelope_new_bool(c_bool boolean)
+    msg_envelope_elem_body_t* msgbus_msg_envelope_new_bool(bool boolean)
     msg_envelope_elem_body_t* msgbus_msg_envelope_new_blob(
             const char* data, size_t len)
+    msgbus_ret_t msgbus_msg_envelope_elem_object_put(
+            msg_envelope_elem_body_t* obj, const char* key,
+            msg_envelope_elem_body_t* value)
+    msg_envelope_elem_body_t* msgbus_msg_envelope_elem_object_get(
+            msg_envelope_elem_body_t* obj, const char* key)
+    msgbus_ret_t msgbus_msg_envelope_elem_object_remove(
+            msg_envelope_elem_body_t* obj, const char* key)
+    msgbus_ret_t msgbus_msg_envelope_elem_array_add(
+            msg_envelope_elem_body_t* arr,
+            msg_envelope_elem_body_t* value)
+    msg_envelope_elem_body_t* msgbus_msg_envelope_elem_array_get_at(
+            msg_envelope_elem_body_t* arr, int idx)
+    msgbus_ret_t msgbus_msg_envelope_elem_array_remove_at(
+            msg_envelope_elem_body_t* arr, int idx)
     void msgbus_msg_envelope_elem_destroy(msg_envelope_elem_body_t* elem)
     msgbus_ret_t msgbus_msg_envelope_put(
             msg_envelope_t* env, const char* key,
@@ -312,35 +331,91 @@ cdef public object load_udf(const char* name, config_t* config) with gil:
         print("Exception : {}".format(ex))
         raise
 
+
+cdef msg_envelope_elem_body_t* python_to_msg_env_elem_body(data):
+    """Helper function to recursively convert a python object to
+    msg_envelope_elem_body_t.
+    """
+    cdef msg_envelope_elem_body_t* elem = NULL
+    cdef msg_envelope_elem_body_t* subelem = NULL
+    cdef msgbus_ret_t ret = MSG_SUCCESS
+
+    if isinstance(data, str):
+        bv = bytes(data, 'utf-8')
+        elem = msgbus_msg_envelope_new_string(bv)
+    elif isinstance(data, int):
+        elem = msgbus_msg_envelope_new_integer(<int64_t> data)
+    elif isinstance(data, float):
+        elem = msgbus_msg_envelope_new_floating(<double> data)
+    elif isinstance(data, bool):
+        elem = msgbus_msg_envelope_new_bool(<bint> data)
+    elif isinstance(data, dict):
+        elem = msgbus_msg_envelope_new_object()
+        for k, v in data.items():
+            # Convert the python element to a msg envelope element
+            subelem = python_to_msg_env_elem_body(v)
+            if subelem == NULL:
+                msgbus_msg_envelope_elem_destroy(elem)
+                return NULL
+
+            # Add the element to the nested object
+            k = bytes(k, 'utf-8')
+            ret = msgbus_msg_envelope_elem_object_put(elem, <char*> k, subelem)
+            if ret != MSG_SUCCESS:
+                msgbus_msg_envelope_elem_destroy(subelem)
+                msgbus_msg_envelope_elem_destroy(elem)
+                return NULL
+    elif isinstance(data, (list, tuple,)):
+        elem = msgbus_msg_envelope_new_array()
+        for v in data:
+            # Convert the python element to a msg envelope element
+            subelem = python_to_msg_env_elem_body(v)
+            if subelem == NULL:
+                msgbus_msg_envelope_elem_destroy(elem)
+                return NULL
+
+            # Add the element to the array
+            ret = msgbus_msg_envelope_elem_array_add(elem, subelem)
+            if ret != MSG_SUCCESS:
+                msgbus_msg_envelope_elem_destroy(subelem)
+                msgbus_msg_envelope_elem_destroy(elem)
+                return NULL
+    elif data is None:
+        elem = msgbus_msg_envelope_new_none()
+
+    return elem
+
+
 cdef public UdfRetCode call_udf(
-        object udf, object frame, msg_envelope_t* meta) with gil:
+        object udf, object frame, msg_envelope_t* meta) except * with gil:
     """Call UDF
     """
-    cdef msgbus_ret_t ret
+    cdef msgbus_ret_t ret = MSG_SUCCESS
     cdef msg_envelope_elem_body_t* body
-    cdef content_type_t ct
-    cdef char* key = NULL
-    
-    #print("In cython call_udf before")
-    drop, new_meta = udf.process(frame)
-    #print("In cython call_udf after")
+
+    pret = udf.process(frame)
+
+    # Verify UDF return value
+    assert pret is not None, 'UDF return NoneType, must return tuple'
+    assert isinstance(pret, (list, tuple,)), f'UDF returned {type(ret)}, must be tuple'
+    assert len(pret) == 2, f'Return tuple must only have 2 elements'
+
+    # Break apart tuple
+    drop, new_meta = pret
+
+    # Verifying data types in return tuple
+    assert isinstance(drop, bool), 'First elem in return tuple must be a bool'
+    if new_meta is not None:
+        assert isinstance(new_meta, dict), 'Meta data must be a dict'
 
     if drop:
         return UDF_DROP_FRAME
 
     if new_meta is not None:
         for k,v in new_meta.items():
-            if isinstance(v, str):
-                bv = bytes(v, 'utf-8')
-                body = msgbus_msg_envelope_new_string(bv)
-            elif isinstance(v, int):
-                body = msgbus_msg_envelope_new_integer(<int64_t> v)
-            elif isinstance(v, float):
-                body = msgbus_msg_envelope_new_floating(<double> v)
-            elif isinstance(v, bool):
-                body = msgbus_msg_envelope_new_bool(<bint> v)
-            else:
-                raise ValueError(f'Unknown data type in dict: {type(v)}')
+            body = python_to_msg_env_elem_body(v)
+            if body == NULL:
+                raise RuntimeError(f'Failed to convert: {k} to envelope')
 
             k = bytes(k, 'utf-8')
             ret = msgbus_msg_envelope_put(meta, <char*> k, body)
@@ -351,6 +426,5 @@ cdef public UdfRetCode call_udf(
                 # The message envelope takes ownership of the memory allocated
                 # for these elements. Setting to NULL to keep the state clean.
                 body = NULL
-                key = NULL
 
     return UDF_OK

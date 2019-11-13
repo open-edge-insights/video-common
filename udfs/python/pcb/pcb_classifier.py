@@ -175,8 +175,7 @@ class Udf:
         """Reads the image frame from input queue for classifier
         and classifies against the specified reference image.
         """
-
-        metadata = {}
+        metadata = {'defects': []}
 
         if self.profiling is True:
             metadata['ts_va_classify_entry'] = time.time()*1000
@@ -195,8 +194,7 @@ class Udf:
 
         if score is None:
             self.log.debug("Low homography score. Skipping frame")
-            defects = []
-            return False, defects
+            return False, metadata
 
         h_ref, w_ref, z_ref = ref_img.shape
         pts = np.float32([

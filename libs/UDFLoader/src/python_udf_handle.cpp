@@ -142,14 +142,18 @@ UdfRetCode PythonUdfHandle::process(Frame* frame) {
     PyObject* py_frame = PyArray_SimpleNewFromData(
             3, dims, NPY_UINT8, (void*) frame->get_data());
 
-    LOG_DEBUG_0("Before process call");
     // Call the UDF process method
+    LOG_DEBUG_0("Before process call");
     UdfRetCode ret = call_udf(m_udf_obj, py_frame, frame->get_meta_data());
     LOG_DEBUG_0("process call done");
     Py_DECREF(py_frame);
+
     if(PyErr_Occurred() != NULL) {
         LOG_ERROR_0("Error in UDF process() method");
         PyErr_Print();
+        LOG_DEBUG_0("Releasing the GIL");
+        PyGILState_Release(gstate);
+        LOG_DEBUG_0("Released");
         return UdfRetCode::UDF_ERROR;
     }
     LOG_DEBUG_0("process done");

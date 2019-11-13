@@ -147,6 +147,8 @@ class Udf:
                     # Re-initialize frame count during trigger lock to 0
                     self.lock_frame_count = 0
                     return False, metadata
+                else:
+                    return True, None
             else:
                 # Continue applying background subtractor to
                 # keep track of PCB positions
@@ -157,3 +159,4 @@ class Udf:
                     # Clear trigger lock after timeout
                     # period (measured in frame count here)
                     self.filter_lock = False
+                return True, None

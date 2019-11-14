@@ -148,29 +148,36 @@ UdfManager::~UdfManager() {
     if(m_th != NULL) {
         delete m_th;
     }
-
+    LOG_DEBUG("Deleting all handles");
     for(auto handle : m_udfs) {
         delete handle;
     }
 
+    LOG_DEBUG("Clearing udf input queue");
     // Clear queues and delete them
     while(!m_udf_input_queue->empty()) {
         Frame* frame = m_udf_input_queue->front();
         m_udf_input_queue->pop();
         delete frame;
     }
+    LOG_DEBUG("Cleared udf input queue");
     delete m_udf_input_queue;
 
+    LOG_DEBUG("Clearing udf output queue");
     while(!m_udf_output_queue->empty()) {
         Frame* frame = m_udf_output_queue->front();
         m_udf_output_queue->pop();
         delete frame;
     }
-    delete m_udf_output_queue;
+    LOG_DEBUG("Cleared udf output queue");
+    //TODO: Commenting the below line as the operation is taking
+    //      too much time
+    // delete m_udf_output_queue;
 
     delete m_loader;
     delete m_pool;
     config_destroy(m_config);
+    LOG_DEBUG("Done with ~UdfManager()");
 }
 
 /**

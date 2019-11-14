@@ -254,10 +254,16 @@ class Udf:
                 coord = np.asarray([[[x, y], [x1, y1]]], dtype="float32")
                 new_coord = cv2.perspectiveTransform(coord,
                                                      np.linalg.inv(mat))[0]
-                x = float(new_coord[0][0])
-                y = float(new_coord[0][1])
-                x1 = float(new_coord[1][0])
-                y1 = float(new_coord[1][1])
+
+                # Converting all np.float32 to Python integers. This is
+                # because the returning meta-data dictionary from UDFs
+                # MUST only return with base Python types (list, tuple, int,
+                # float, str, etc.)
+                x = int(new_coord[0][0])
+                y = int(new_coord[0][1])
+                x1 = int(new_coord[1][0])
+                y1 = int(new_coord[1][1])
+
                 # Defect class of 0 => BP defect
                 # (x,y) -> top left bounding box coordinates
                 # (x1,y1) -> bottom right bounding box coordinates
@@ -274,10 +280,16 @@ class Udf:
                 coord = np.asarray([[[x, y], [x1, y1]]], dtype="float32")
                 new_coord = cv2.perspectiveTransform(coord,
                                                      np.linalg.inv(mat))[0]
-                x = float(new_coord[0][0])
-                y = float(new_coord[0][1])
-                x1 = float(new_coord[1][0])
-                y1 = float(new_coord[1][1])
+
+                # Converting all np.float32 to Python integers. This is
+                # because the returning meta-data dictionary from UDFs
+                # MUST only return with base Python types (list, tuple, int,
+                # float, str, etc.)
+                x = int(new_coord[0][0])
+                y = int(new_coord[0][1])
+                x1 = int(new_coord[1][0])
+                y1 = int(new_coord[1][1])
+
                 # Defect class of 1 => MR defect
                 # (x,y) -> top left bounding box coordinates
                 # (x1,y1) -> bottom right bounding box coordinates

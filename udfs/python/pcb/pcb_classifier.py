@@ -192,7 +192,7 @@ class Udf:
 
         if score is None:
             self.log.debug("Low homography score. Skipping frame")
-            return False, metadata
+            return False, None, metadata
 
         h_ref, w_ref, z_ref = ref_img.shape
         pts = np.float32([
@@ -304,5 +304,5 @@ class Udf:
 
         if self.profiling is True:
             metadata['ts_va_classify_exit'] = time.time()*1000
-        return False, metadata
+        return False, None, metadata
 

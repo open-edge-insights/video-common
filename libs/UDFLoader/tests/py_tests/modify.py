@@ -34,4 +34,4 @@ class Udf:
         """
         meta['ADDED'] = 55
         frame.fill(1)
-        return False, meta
+        return False, None, meta

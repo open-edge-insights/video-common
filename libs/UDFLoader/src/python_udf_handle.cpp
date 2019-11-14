@@ -125,6 +125,21 @@ bool PythonUdfHandle::initialize(config_t* config) {
     return true;
 }
 
+void free_np_frame(void* varg) {
+    LOG_DEBUG_0("Freeing Numpy array");
+    LOG_DEBUG_0("Aquiring the GIL");
+    PyGILState_STATE gstate;
+    gstate = PyGILState_Ensure();
+    LOG_DEBUG_0("Acquired GIL");
+
+    PyObject* obj = (PyObject*) varg;
+    Py_DECREF(obj);
+
+    LOG_DEBUG_0("Releasing the GIL");
+    PyGILState_Release(gstate);
+    LOG_DEBUG_0("Released");
+}
+
 UdfRetCode PythonUdfHandle::process(Frame* frame) {
     LOG_DEBUG_0("Aquiring the GIL");
     PyGILState_STATE gstate;
@@ -142,13 +157,15 @@ UdfRetCode PythonUdfHandle::process(Frame* frame) {
     PyObject* py_frame = PyArray_SimpleNewFromData(
             3, dims, NPY_UINT8, (void*) frame->get_data());
 
+    PyObject* output = Py_None;
+
     // Call the UDF process method
     LOG_DEBUG_0("Before process call");
-    UdfRetCode ret = call_udf(m_udf_obj, py_frame, frame->get_meta_data());
+    UdfRetCode ret = call_udf(m_udf_obj, py_frame, output, frame->get_meta_data());
     LOG_DEBUG_0("process call done");
-    Py_DECREF(py_frame);
 
     if(PyErr_Occurred() != NULL) {
+        Py_DECREF(py_frame);
         LOG_ERROR_0("Error in UDF process() method");
         PyErr_Print();
         LOG_DEBUG_0("Releasing the GIL");
@@ -157,6 +174,33 @@ UdfRetCode PythonUdfHandle::process(Frame* frame) {
         return UdfRetCode::UDF_ERROR;
     }
     LOG_DEBUG_0("process done");
+
+    if(ret == UDF_FRAME_MODIFIED) {
+        LOG_DEBUG_0("Python modified frame");
+        PyArrayObject* py_array = (PyArrayObject*) output;
+
+        int dims = PyArray_NDIM(py_array);
+        if(dims < 3 || dims > 3) {
+            LOG_ERROR("NumPy array has too many dimensions must be 3 not %d",
+                      dims);
+            Py_DECREF(output);
+            Py_DECREF(py_frame);
+
+            LOG_DEBUG_0("Releasing the GIL");
+            PyGILState_Release(gstate);
+            LOG_DEBUG_0("Released");
+
+            return UdfRetCode::UDF_ERROR;
+        }
+
+        npy_intp* shape = PyArray_SHAPE(py_array);
+        frame->set_data((void*) output, shape[1], shape[0], shape[2],
+                        PyArray_DATA(py_array), free_np_frame);
+
+        ret = UDF_OK;
+    }
+
+    Py_DECREF(py_frame);
 
     LOG_DEBUG_0("Releasing the GIL");
     PyGILState_Release(gstate);

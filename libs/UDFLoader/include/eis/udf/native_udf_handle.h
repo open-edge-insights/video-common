@@ -39,7 +39,7 @@ class NativeUdfHandle : public UdfHandle {
 private:
 	//References needed after init
 	void* m_lib_handle;
-	void* (*m_func_initialize_udf)();
+	void* (*m_func_initialize_udf)(config_t*);
 	BaseUdf* m_udf;
 
 public:
@@ -69,7 +69,7 @@ public:
      * @param frame - Frame to process
      * @return UdfRetCode
      */
-    UdfRetCode process(utils::Frame* frame) override;		
+    UdfRetCode process(utils::Frame* frame) override;
 };
 
 } // eis

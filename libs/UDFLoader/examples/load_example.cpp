@@ -30,6 +30,7 @@
 #include <eis/utils/logger.h>
 #include <eis/utils/json_config.h>
 #include <eis/msgbus/msgbus.h>
+#include <opencv2/opencv.hpp>
 #include "eis/udf/udf_manager.h"
 
 #define ORIG_FRAME_DATA "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -66,6 +67,9 @@ Frame* init_frame() {
     return frame;
 }
 
+void free_cv_frame(void* frame) {
+}
+
 int main(int argc, char** argv) {
     try {
         set_log_level(LOG_LVL_DEBUG);
@@ -86,13 +90,22 @@ int main(int argc, char** argv) {
         publisher->start();
 
         LOG_INFO_0("Adding frames to input queue");
-        for(int i = 0; i < 30; i++) {
-            input_queue->push(init_frame());
-        }
+        cv::Mat cv_frame = cv::imread("0.png");
+        Frame* frame = new Frame(
+                (void*) &cv_frame, cv_frame.cols, cv_frame.rows,
+                cv_frame.channels(), cv_frame.data, free_cv_frame);
+        //input_queue->push(frame);
+        msg_envelope_t* msg = frame->serialize();
+        Frame* deserial_frame = new Frame(msg);
+        input_queue->push(deserial_frame);
+
+        // for(int i = 0; i < 30; i++) {
+        //     input_queue->push(init_frame());
+        // }
 
         LOG_INFO_0("Waiting for input queue to be empty");
         // while(!input_queue->empty() && !output_queue->empty()) {}
-        std::this_thread::sleep_for(std::chrono::seconds(10));
+        std::this_thread::sleep_for(std::chrono::seconds(3));
 
         LOG_INFO_0("Stopping the publisher");
         publisher->stop();

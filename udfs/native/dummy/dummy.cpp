@@ -41,7 +41,7 @@ namespace eis {
 
                 ~DummyUdf() {};
 
-                UdfRetCode process(cv::Mat* frame, msg_envelope_t* meta) override {
+                UdfRetCode process(cv::Mat& frame, cv::Mat& output, msg_envelope_t* meta) override {
                     LOG_DEBUG("In %s method...", __PRETTY_FUNCTION__);
                     return UdfRetCode::UDF_OK;
                 };

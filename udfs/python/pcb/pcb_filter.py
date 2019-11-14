@@ -136,7 +136,7 @@ class Udf:
         if self.training_mode is True:
             self.count = self.count + 1
             cv2.imwrite("/EIS/test_videos/"+str(self.count)+".png", frame)
-            return True, None
+            return True, None, None
         else:
             if self.filter_lock is False:
                 if self._check_frame(frame):
@@ -144,9 +144,9 @@ class Udf:
                     self.filter_lock = True
                     # Re-initialize frame count during trigger lock to 0
                     self.lock_frame_count = 0
-                    return False, metadata
+                    return False, None, metadata
                 else:
-                    return True, None
+                    return True, None, None
             else:
                 # Continue applying background subtractor to
                 # keep track of PCB positions
@@ -157,4 +157,4 @@ class Udf:
                     # Clear trigger lock after timeout
                     # period (measured in frame count here)
                     self.filter_lock = False
-                return True, None
+                return True, None, None

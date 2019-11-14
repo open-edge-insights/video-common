@@ -23,6 +23,7 @@
 # Cython imports
 from libc.stdint cimport *
 from cpython cimport bool
+from cpython.ref cimport PyObject, Py_INCREF
 
 # Python imports
 import json
@@ -212,8 +213,13 @@ cdef extern from "eis/udf/udfretcodes.h" namespace "eis::udf":
     ctypedef enum UdfRetCode:
         UDF_OK = 0
         UDF_DROP_FRAME = 1
+        UDF_FRAME_MODIFIED = 2
         UDF_ERROR = 255
 
+# cdef extern from "eis/udf/python_udf_handle.h" namespace "eis::udf":
+#     ctypedef struct PythonUdfRet:
+#         UdfRetCode return_code
+#         object updated_frame
 
 cdef class ConfigurationObject:
     """Wrapper object around a config_value_t structure which is a CVT_OBJECT
@@ -441,11 +447,12 @@ cdef object msg_envelope_to_python(msg_envelope_t* msg):
 
 
 cdef public UdfRetCode call_udf(
-        object udf, object frame, msg_envelope_t* meta) except * with gil:
+        object udf, object frame, PyObject*& output, msg_envelope_t* meta) except * with gil:
     """Call UDF
     """
     cdef msgbus_ret_t ret = MSG_SUCCESS
     cdef msg_envelope_elem_body_t* body
+    cdef UdfRetCode ret_code = UDF_OK
 
     # Convert current meta-data to Python dictionary
     py_meta = msg_envelope_to_python(meta)
@@ -458,10 +465,10 @@ cdef public UdfRetCode call_udf(
     # Verify UDF return value
     assert pret is not None, 'UDF return NoneType, must return tuple'
     assert isinstance(pret, (list, tuple,)), f'UDF returned {type(ret)}, must be tuple'
-    assert len(pret) == 2, f'Return tuple must only have 2 elements'
+    assert len(pret) == 3, f'Return tuple must only have 3 elements'
 
     # Break apart tuple
-    drop, new_meta = pret
+    drop, updated_frame, new_meta = pret
 
     # Verifying data types in return tuple
     assert isinstance(drop, bool), 'First elem in return tuple must be a bool'
@@ -470,6 +477,13 @@ cdef public UdfRetCode call_udf(
 
     if drop:
         return UDF_DROP_FRAME
+
+    if updated_frame is not None:
+        assert isinstance(updated_frame, np.ndarray), 'Frame must be NumPy'
+        Py_INCREF(updated_frame)
+        (&output)[0] = <PyObject*> updated_frame
+        # print(output)
+        ret_code = UDF_FRAME_MODIFIED
 
     if new_meta is not None:
         for k,v in new_meta.items():
@@ -495,4 +509,4 @@ cdef public UdfRetCode call_udf(
                 # for these elements. Setting to NULL to keep the state clean.
                 body = NULL
 
-    return UDF_OK
+    return ret_code

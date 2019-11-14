@@ -33,10 +33,13 @@ namespace udf {
 enum UdfRetCode {
     // Specifies that the UDF has processed and all is good, no action needed
     // by the caller
-    UDF_OK = 1,
+    UDF_OK = 0,
 
     // Specifies that the frame given to the process() method should dropped
-    UDF_DROP_FRAME = 2,
+    UDF_DROP_FRAME = 1,
+
+    // Return value used specifically for Python UDFs
+    UDF_FRAME_MODIFIED = 2,
 
     // The UDF encountered an error
     UDF_ERROR = 255,

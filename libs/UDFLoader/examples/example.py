@@ -19,7 +19,7 @@
 # IN THE SOFTWARE.
 """Simple example UDF.
 """
-
+import cv2
 
 class Udf:
     """Example UDF
@@ -29,7 +29,8 @@ class Udf:
         """
         print(f'[PYTHON::INFO] param1={param1}, param2={param2}')
 
-    def process(self, frame):
+    def process(self, frame, meta):
         """Process frame.
         """
+        frame = cv2.resize(frame, (960, 600))
         return False, None

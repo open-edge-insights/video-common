@@ -35,6 +35,18 @@ namespace eis {
 namespace udf {
 
 /**
+ * Return value for a Python UDF.
+ *
+ * \note This is only used between the @c PythonUdfHandle and the Cython shim
+ */
+typedef struct {
+    // UDF return code (i.e. UDF_OK, UDF_ERROR, etc.)
+    UdfRetCode return_code;
+    // Updated frame (if needed)
+    PyObject* updated_frame;
+} PythonUdfRet;
+
+/**
  * Python UDF wrapper object
  */
 class PythonUdfHandle : public UdfHandle {

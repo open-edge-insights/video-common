@@ -224,6 +224,7 @@ public:
                     LOG_ERROR_0("Failed to process frame");
                     delete ctx->frame;
                     return;
+                case UdfRetCode::UDF_FRAME_MODIFIED:
                 case UdfRetCode::UDF_OK:
                     LOG_DEBUG_0("UDF_OK");
                     break;

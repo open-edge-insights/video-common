@@ -38,33 +38,33 @@ using namespace eis::udf;
 using namespace eis::utils;
 
 NativeUdfHandle::NativeUdfHandle(std::string name, int max_workers) :
-	UdfHandle(name, max_workers)
+    UdfHandle(name, max_workers)
 {
-	m_lib_handle = NULL;
-	m_func_initialize_udf = NULL;
-	m_udf = NULL;
+    m_lib_handle = NULL;
+    m_func_initialize_udf = NULL;
+    m_udf = NULL;
 }
 
 NativeUdfHandle::~NativeUdfHandle() {
-	LOG_DEBUG_0("Destroying Native UDF");
+    LOG_DEBUG_0("Destroying Native UDF");
 
     m_func_initialize_udf = NULL;
     if(m_udf != NULL){
-		delete m_udf;
-		m_udf = NULL;
-	}
-	if(m_lib_handle != NULL)
-		dlclose(m_lib_handle);
+        delete m_udf;
+        m_udf = NULL;
+    }
+    if(m_lib_handle != NULL)
+        dlclose(m_lib_handle);
 }
 
 bool NativeUdfHandle::initialize(config_t* config) {
-	bool res = this->UdfHandle::initialize(config);
-	if(!res)
-		return false;
-	std::string name = get_name();
-	LOG_DEBUG("Loading native UDF: %s", name.c_str());
+    bool res = this->UdfHandle::initialize(config);
+    if(!res)
+        return false;
+    std::string name = get_name();
+    LOG_DEBUG("Loading native UDF: %s", name.c_str());
 
-	LOG_DEBUG_0("Retrieving LD_LIBRARY_PATH");
+    LOG_DEBUG_0("Retrieving LD_LIBRARY_PATH");
     char* ld_library_path = getenv("LD_LIBRARY_PATH");
 
     if(ld_library_path == NULL) {
@@ -75,14 +75,14 @@ bool NativeUdfHandle::initialize(config_t* config) {
     std::stringstream stream(ld_library_path);
     std::string path;
 
-	bool found = false;
-	std::ostringstream os;
+    bool found = false;
+    std::ostringstream os;
 
-	os << "lib" << name << ".so";
-	std::string lib = os.str();
-	os.str("");
+    os << "lib" << name << ".so";
+    std::string lib = os.str();
+    os.str("");
 
-	while(std::getline(stream, path, DELIM)) {
+    while(std::getline(stream, path, DELIM)) {
         if(path.empty())
             continue;
         os << path << "/" << lib;
@@ -97,25 +97,25 @@ bool NativeUdfHandle::initialize(config_t* config) {
 
     if(found) {
         LOG_DEBUG("Found native UDF: %s", lib.c_str());
-		m_lib_handle = dlopen(lib.c_str(), RTLD_LAZY);
+        m_lib_handle = dlopen(lib.c_str(), RTLD_LAZY);
 
-		if(!m_lib_handle) {
-			LOG_ERROR("Failed to load UDF library: %s", dlerror());
-			return false;
-		} else {
-			LOG_DEBUG_0("Successfully loaded UDF library");
-			*(void**)(&m_func_initialize_udf) = dlsym(m_lib_handle, "initialize_udf");
+        if(!m_lib_handle) {
+            LOG_ERROR("Failed to load UDF library: %s", dlerror());
+            return false;
+        } else {
+            LOG_DEBUG_0("Successfully loaded UDF library");
+            *(void**)(&m_func_initialize_udf) = dlsym(m_lib_handle, "initialize_udf");
 
-			if(!m_func_initialize_udf) {
-				LOG_ERROR("Failed to find initialize_udf symbol: %s", dlerror());
-				dlclose(m_lib_handle);
-				return false;
-			}
-			LOG_DEBUG_0("Successfully found initialize_udf symbol");
-		}
+            if(!m_func_initialize_udf) {
+                LOG_ERROR("Failed to find initialize_udf symbol: %s", dlerror());
+                dlclose(m_lib_handle);
+                return false;
+            }
+            LOG_DEBUG_0("Successfully found initialize_udf symbol");
+        }
 
         try {
-            void* udf = m_func_initialize_udf();
+            void* udf = m_func_initialize_udf(config);
             m_udf = (BaseUdf*) udf;
         } catch(const std::exception& exc) {
             LOG_ERROR("Failed to initialize UDF: %s", exc.what());
@@ -125,24 +125,39 @@ bool NativeUdfHandle::initialize(config_t* config) {
         return true;
     }
 
-	return false;
+    return false;
+}
+
+void free_cv_frame(void* varg) {
+    // Does nothing... Memory will be automatically cleaned up by OpenCV
 }
 
 UdfRetCode NativeUdfHandle::process(Frame* frame) {
-	int w = frame->get_width();
-	int h = frame->get_height();
-	int c = frame->get_channels();
-	//TODO: Do we want to default to 8bit?
-	cv::Mat* mat_frame = new cv::Mat(h, w, CV_8UC(c), frame->get_data());
-	msg_envelope_t* meta_data = frame->get_meta_data();
+    int w = frame->get_width();
+    int h = frame->get_height();
+    int c = frame->get_channels();
 
-	UdfRetCode ret = m_udf->process(mat_frame, meta_data);
-	delete mat_frame;
-	mat_frame = NULL;
-	if (ret == UdfRetCode::UDF_ERROR)
-		LOG_ERROR_0("Error in UDF process() method");
+    //TODO: Do we want to default to 8bit?
 
-	return ret;
+    cv::Mat* mat_frame = new cv::Mat(h, w, CV_8UC(c), frame->get_data());
+    cv::Mat output;
+
+    msg_envelope_t* meta_data = frame->get_meta_data();
+
+    UdfRetCode ret = m_udf->process(*mat_frame, output, meta_data);
+
+    if(!output.empty()) {
+        frame->set_data(
+                (void*) &output, output.cols, output.rows, output.channels(),
+                (void*) output.data, free_cv_frame);
+    }
+
+    delete mat_frame;
+
+    if (ret == UdfRetCode::UDF_ERROR)
+        LOG_ERROR_0("Error in UDF process() method");
+
+    return ret;
 }
 
 

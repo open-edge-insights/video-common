@@ -28,7 +28,6 @@
 #define _EIS_UDF_NATIVE_UDF_H
 
 
-#include <eis/utils/frame.h>
 #include "eis/udf/udf_handle.h"
 #include "eis/udf/base_udf.h"
 
@@ -69,7 +68,7 @@ public:
      * @param frame - Frame to process
      * @return UdfRetCode
      */
-    UdfRetCode process(utils::Frame* frame) override;
+    UdfRetCode process(Frame* frame) override;
 };
 
 } // eis

@@ -39,8 +39,7 @@ public:
 
     UdfRetCode process(cv::Mat& frame, cv::Mat& output, msg_envelope_t* meta) override {
         LOG_INFO_0("NativeExampleUdf::process()");
-        // cv::resize(frame, output, cv::Size(), 0.50, 0.50);
-        cv::putText(frame, "opencv-hub", cv::Point(5,100), cv::FONT_HERSHEY_DUPLEX, 1, cv::Scalar(0,143,143), 2);
+        cv::resize(frame, output, cv::Size(), 0.50, 0.50);
 		return UdfRetCode::UDF_OK;
     };
 };

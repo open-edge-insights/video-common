@@ -33,4 +33,4 @@ class Udf:
         """Process frame.
         """
         frame = cv2.resize(frame, (960, 600))
-        return False, None
+        return False, frame, None

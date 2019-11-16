@@ -24,7 +24,6 @@
  */
 
 #include <gtest/gtest.h>
-#include <eis/utils/frame.h>
 #include <eis/utils/logger.h>
 #include <eis/utils/json_config.h>
 #include "eis/udf/loader.h"
@@ -33,7 +32,6 @@
 #define NEW_FRAME_DATA  "\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01"
 #define DATA_LEN 10
 
-using namespace eis::utils;
 using namespace eis::udf;
 
 #define ASSERT_NULL(val) { \

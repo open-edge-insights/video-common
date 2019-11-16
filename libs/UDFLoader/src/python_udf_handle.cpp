@@ -35,7 +35,6 @@
 #include "cython/udf.h"
 
 using namespace eis::udf;
-using namespace eis::utils;
 
 #define EIS_UDF_PROCESS "process"
 

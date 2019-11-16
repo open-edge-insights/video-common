@@ -28,7 +28,6 @@
 #define _EIS_UDF_PYTHON_UDF_H
 
 #include <Python.h>
-#include <eis/utils/frame.h>
 #include "eis/udf/udf_handle.h"
 
 namespace eis {
@@ -84,7 +83,7 @@ public:
      * @param frame - Frame to process
      * @return UdfRetCode
      */
-    UdfRetCode process(utils::Frame* frame) override;
+    UdfRetCode process(Frame* frame) override;
 };
 
 } // udf

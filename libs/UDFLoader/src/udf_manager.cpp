@@ -26,6 +26,7 @@
 #include <chrono>
 #include <eis/utils/logger.h>
 #include "eis/udf/udf_manager.h"
+#include "eis/udf/frame.h"
 
 using namespace eis::udf;
 using namespace eis::utils;
@@ -48,11 +49,16 @@ config_value_t* get_config_value(const void* cfg, const char* key) {
 }
 
 UdfManager::UdfManager(
-        config_t* udf_cfg, FrameQueue* input_queue, FrameQueue* output_queue) :
+        config_t* udf_cfg, FrameQueue* input_queue, FrameQueue* output_queue,
+        EncodeType enc_type, int enc_lvl) :
     m_th(NULL), m_stop(false), m_config(udf_cfg),
     m_udf_input_queue(input_queue), m_udf_output_queue(output_queue),
-    m_loader(NULL)
+    m_loader(NULL), m_enc_type(enc_type), m_enc_lvl(enc_lvl)
 {
+    // if(!verify_encoding_level(m_enc_type, m_enc_lvl)) {
+    //     throw "Invalid encoding level for the encoding type";
+    // }
+
     m_loader = new UdfLoader();
 
     LOG_DEBUG_0("Loading UDFs");
@@ -255,6 +261,12 @@ void UdfManager::run() {
             LOG_DEBUG_0("Popping frame from input queue");
             Frame* frame = m_udf_input_queue->front();
             m_udf_input_queue->pop();
+
+            // Note: the encoding level is only changed on the frame if the
+            // UDF Manager has a different encoding
+            if(m_enc_type != EncodeType::NONE) {
+                frame->set_encoding(m_enc_type, m_enc_lvl);
+            }
 
             // Create the worker to execute the UDF pipeline on the given frame
             UdfWorker* ctx = new UdfWorker(

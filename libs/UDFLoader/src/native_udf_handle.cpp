@@ -35,7 +35,6 @@
 #define DELIM ':'
 
 using namespace eis::udf;
-using namespace eis::utils;
 
 NativeUdfHandle::NativeUdfHandle(std::string name, int max_workers) :
     UdfHandle(name, max_workers)
@@ -129,7 +128,8 @@ bool NativeUdfHandle::initialize(config_t* config) {
 }
 
 void free_cv_frame(void* varg) {
-    // Does nothing... Memory will be automatically cleaned up by OpenCV
+    cv::Mat* frame = (cv::Mat*) varg;
+    delete frame;
 }
 
 UdfRetCode NativeUdfHandle::process(Frame* frame) {
@@ -140,19 +140,27 @@ UdfRetCode NativeUdfHandle::process(Frame* frame) {
     //TODO: Do we want to default to 8bit?
 
     cv::Mat* mat_frame = new cv::Mat(h, w, CV_8UC(c), frame->get_data());
-    cv::Mat output;
+
+    // Output frame must be initialized to an empty frame
+    cv::Mat* output = new cv::Mat();
+
+    // Keeping a pointer to the original empty output cv::Mat, because if the
+    // UDF assigns this value, then the address will be overwritten and this
+    // initial "new" call will be leaked
+    cv::Mat* orig = output;
 
     msg_envelope_t* meta_data = frame->get_meta_data();
 
-    UdfRetCode ret = m_udf->process(*mat_frame, output, meta_data);
+    UdfRetCode ret = m_udf->process(*mat_frame, *output, meta_data);
 
-    if(!output.empty()) {
+    if(!output->empty()) {
         frame->set_data(
-                (void*) &output, output.cols, output.rows, output.channels(),
-                (void*) output.data, free_cv_frame);
+                (void*) output, output->cols, output->rows, output->channels(),
+                (void*) output->data, free_cv_frame);
     }
 
     delete mat_frame;
+    delete orig;
 
     if (ret == UdfRetCode::UDF_ERROR)
         LOG_ERROR_0("Error in UDF process() method");

@@ -29,18 +29,18 @@
 #include <thread>
 #include <atomic>
 #include <vector>
-#include <eis/utils/frame.h>
 #include <eis/utils/config.h>
 #include <eis/utils/thread_safe_queue.h>
 #include <eis/utils/thread_pool.h>
 
 #include "eis/udf/udf_handle.h"
 #include "eis/udf/loader.h"
+#include "eis/udf/frame.h"
 
 namespace eis {
 namespace udf {
 
-typedef utils::ThreadSafeQueue<utils::Frame*> FrameQueue;
+typedef utils::ThreadSafeQueue<Frame*> FrameQueue;
 
 /**
  * UdfManager class
@@ -71,6 +71,10 @@ private:
     // UDF Handles
     std::vector<UdfHandle*> m_udfs;
 
+    // Encoding details
+    EncodeType m_enc_type;
+    int m_enc_lvl;
+
     /**
      * @c UDFManager private thread run method.
      */
@@ -83,9 +87,14 @@ public:
      * @param udf_cfg      - UDF configurations
      * @param input_queue  - Input frame queue
      * @param output_queue - Output frame queue
+     * @param enc_type     - Encoding to use on all frames put into the output
+     *                       queue. (df: EncodeType::NONE)
+     * @param enc_lvl      - Encoding level, must be between 0 and 9 for PNG
+     *                       and 0 and 100 for JPEG (df: 0)
      */
     UdfManager(config_t* udf_cfg, FrameQueue* input_queue,
-               FrameQueue* output_queue);
+               FrameQueue* output_queue, EncodeType enc_type=EncodeType::NONE,
+               int enc_lvl=0);
 
     /**
      * Destructor

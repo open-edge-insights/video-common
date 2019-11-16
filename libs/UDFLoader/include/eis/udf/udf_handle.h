@@ -30,7 +30,7 @@
 #include <atomic>
 #include <string>
 #include <eis/utils/config.h>
-#include <eis/utils/frame.h>
+#include "eis/udf/frame.h"
 #include "eis/udf/udfretcodes.h"
 
 namespace eis {
@@ -98,7 +98,7 @@ public:
      * @param frame - Frame to process
      * @return @c UdfRetCode
      */
-    virtual UdfRetCode process(utils::Frame* frame) = 0;
+    virtual UdfRetCode process(Frame* frame) = 0;
 
     /**
      * Get the name of the UDF.

@@ -48,6 +48,7 @@ set(CMAKE_SHARED_LINKER_FLAGS "-z noexecstack -z relro -z now")
 find_package(OpenCV REQUIRED)
 find_package(EISMsgEnv REQUIRED)
 find_package(EISUtils REQUIRED)
+find_package(IntelSafeString REQUIRED)
 find_package(Python3 COMPONENTS Development NumPy REQUIRED)
 
 # Export compile commands
@@ -59,28 +60,6 @@ if(EXISTS "${CMAKE_CURRENT_BINARY_DIR}/compile_commands.json")
     )
 endif()
 
-# Include Intel safestring library
-configure_file(
-    "${EIS_COMMON_CMAKE}/IntelSafeString.txt.in"
-    "${CMAKE_CURRENT_BINARY_DIR}/safestring-download/CMakeLists.txt")
-execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
-                RESULT_VARIABLE ss_result
-                WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/safestring-download)
-if(ss_result)
-    message(FATAL_ERROR "CMake step for safestring failed: ${ss_result}")
-endif()
-
-execute_process(COMMAND ${CMAKE_COMMAND} --build .
-    RESULT_VARIABLE ss_result
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/safestring-download)
-if(result)
-    message(FATAL_ERROR "Build step for safestring failed: ${ss_result}")
-endif()
-
-add_subdirectory(${CMAKE_CURRENT_BINARY_DIR}/safestring-src
-                 ${CMAKE_CURRENT_BINARY_DIR}/safestring-build
-                 EXCLUDE_FROM_ALL)
-
 # Include header directories
 include_directories(
     include/
@@ -89,7 +68,7 @@ include_directories(
     ${EISUtils_INCLUDE}
     ${Python3_INCLUDE_DIRS}
     ${Python3_NumPy_INCLUDE_DIRS}
-    ${safestring_SOURCE_DIR}/include)
+    ${IntelSafeString_INCLUDE})
 
 # Generate Cython sources
 find_program(CYTHON_EXECUTABLE "cythonize"
@@ -121,7 +100,7 @@ target_link_libraries(udfloader
         pthread
     PRIVATE
         ${Python3_LIBRARIES}
-        safestring_static)
+        ${IntelSafeString_LIBRARIES})
 
 # If compile in debug mode, set DEBUG flag for C code
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")

@@ -48,25 +48,15 @@ endif()
 find_package(EISUtils REQUIRED)
 find_package(EISMsgEnv REQUIRED)
 find_package(UDFLoader REQUIRED)
+find_package(OpenCV REQUIRED)
+find_package(IntelSafeString REQUIRED)
 
-# Include Intel safestring library
-configure_file(${EIS_COMMON_CMAKE}/IntelSafeString.txt.in safestring-download/CMakeLists.txt)
-execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
-                RESULT_VARIABLE ss_result
-                WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/safestring-download)
-if(ss_result)
-    message(FATAL_ERROR "CMake step for safestring failed: ${ss_result}")
-endif()
-
-execute_process(COMMAND ${CMAKE_COMMAND} --build .
-    RESULT_VARIABLE ss_result
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/safestring-download)
-if(result)
-    message(FATAL_ERROR "Build step for safestring failed: ${ss_result}")
-endif()
-
-add_subdirectory(${CMAKE_CURRENT_BINARY_DIR}/safestring-src
-                 ${CMAKE_CURRENT_BINARY_DIR}/safestring-build
-                 EXCLUDE_FROM_ALL)
+# Set include directories
+include_directories(
+    ${OpenCV_INCLUDE_DIRS}
+    ${EISMsgEnv_INCLUDE}
+    ${EISUtils_INCLUDE}
+    ${UDFLoader_INCLUDE}
+    ${IntelSafeString_INCLUDE})
 
 add_subdirectory(dummy/)

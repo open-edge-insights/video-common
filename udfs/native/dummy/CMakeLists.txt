@@ -22,16 +22,12 @@ cmake_minimum_required(VERSION 3.12)
 project(eis-udf-samples VERSION 1.0.0 LANGUAGES C CXX)
 
 add_library(dummy SHARED "dummy.cpp")
-target_include_directories(dummy
-    PRIVATE
-        ${EISMsgEnv_INCLUDE}
-        ${EISUtils_INCLUDE}
-    )
 target_link_libraries(dummy
     PUBLIC
         udfloader
         ${EISMsgEnv_LIBRARIES}
         ${EISUtils_LIBRARIES}
     PRIVATE
-        safestring_static
+        ${IntelSafeString_LIBRARIES}
+        ${OpenCV_LIBRARIES}
     )

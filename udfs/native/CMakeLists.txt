@@ -28,7 +28,8 @@ set(EIS_COMMON_CMAKE "${CMAKE_CURRENT_SOURCE_DIR}/../../cmake")
 set(CMAKE_CXX_STANDARD 11)
 
 # Set CFLAGS
-set(CMAKE_CXX_FLAGS "-fPIE -fPIC -O2 -Wall -pedantic -fstack-protector-strong -D_FORTIFY_SOURCE=2")
+#set(CMAKE_CXX_FLAGS "-fPIE -fPIC -O2 -Wall -pedantic -fstack-protector-strong -D_FORTIFY_SOURCE=2")
+set(CMAKE_CXX_FLAGS "-fPIE -fPIC -O2 -Wall -fstack-protector-strong -D_FORTIFY_SOURCE=2")
 
 # Set LDFLAGS
 set(CMAKE_SHARED_LINKER_FLAGS "-z noexecstack -z relro -z now")
@@ -50,6 +51,7 @@ find_package(EISMsgEnv REQUIRED)
 find_package(UDFLoader REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(IntelSafeString REQUIRED)
+find_package(InferenceEngine 2.1 REQUIRED)
 
 # Set include directories
 include_directories(
@@ -60,3 +62,4 @@ include_directories(
     ${IntelSafeString_INCLUDE})
 
 add_subdirectory(dummy/)
+add_subdirectory(safety_gear_demo/)

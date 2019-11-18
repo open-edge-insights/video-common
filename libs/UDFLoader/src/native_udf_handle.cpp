@@ -147,7 +147,7 @@ UdfRetCode NativeUdfHandle::process(Frame* frame) {
     // Keeping a pointer to the original empty output cv::Mat, because if the
     // UDF assigns this value, then the address will be overwritten and this
     // initial "new" call will be leaked
-    cv::Mat* orig = output;
+    //cv::Mat* orig = output;
 
     msg_envelope_t* meta_data = frame->get_meta_data();
 
@@ -160,7 +160,7 @@ UdfRetCode NativeUdfHandle::process(Frame* frame) {
     }
 
     delete mat_frame;
-    delete orig;
+    //delete orig;
 
     if (ret == UdfRetCode::UDF_ERROR)
         LOG_ERROR_0("Error in UDF process() method");

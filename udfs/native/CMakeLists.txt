@@ -63,3 +63,4 @@ include_directories(
 
 add_subdirectory(dummy/)
 add_subdirectory(safety_gear_demo/)
+add_subdirectory(resize/)

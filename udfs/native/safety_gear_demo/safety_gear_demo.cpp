@@ -52,7 +52,7 @@ SafetyDemo::SafetyDemo(config_t *config) : BaseUdf(config) {
         const char *err = " Config passed to UDF is NULL";
         LOG_ERROR("%s", err);
         throw err;
-    }
+   }
 
     path_to_xml = config_get(config, "model_xml");
     if(path_to_xml != NULL) {
@@ -225,12 +225,10 @@ SafetyDemo::SafetyDemo(config_t *config) : BaseUdf(config) {
 SafetyDemo::~SafetyDemo() {}
 
 UdfRetCode SafetyDemo::process(cv::Mat &frame, cv::Mat &output, msg_envelope_t *meta) {
+
     LOG_DEBUG_0("Entered Native Safety Demo Udf::process() function...");
     
     msgbus_ret_t ret;
-    std::string label_map[5] = {"Unknown", "Safety Helmet", "Safety Jacket", "No-violations", "violation"};
-
-    // --------------------------- Prepare input --------------------------------------------------------
     /** Collect images data ptrs **/
     unsigned char* imagesData = nullptr;
     size_t imageWidths = 0;
@@ -243,8 +241,8 @@ UdfRetCode SafetyDemo::process(cv::Mat &frame, cv::Mat &output, msg_envelope_t *
     resize(frame, dst_image, size);
     if (dst_image.data != NULL) {
         imagesData = dst_image.data;
-        imageWidths = m_input_info->getTensorDesc().getDims()[3];
-        imageHeights = m_input_info->getTensorDesc().getDims()[2];
+        imageWidths = frame.size().width;
+        imageHeights = frame.size().height;
     }
 
     /** Creating input blob **/
@@ -321,7 +319,7 @@ UdfRetCode SafetyDemo::process(cv::Mat &frame, cv::Mat &output, msg_envelope_t *
              * {
              *      "defects": [
              *          {
-             *              "type": "Safety Helmet",
+             *              "type": label,
              *              "tl": [xmin, ymin],
              *              "br": [xmax, ymax]
              *          }
@@ -437,9 +435,9 @@ UdfRetCode SafetyDemo::process(cv::Mat &frame, cv::Mat &output, msg_envelope_t *
                 return UdfRetCode::UDF_ERROR;
             }
 
-            msg_envelope_elem_body_t *type = msgbus_msg_envelope_new_string(label_map[label].c_str());
+            msg_envelope_elem_body_t *type = msgbus_msg_envelope_new_integer(label);
             if (type == NULL) {
-                LOG_ERROR_0("Failed to allocate defect type string");
+                LOG_ERROR_0("Failed to allocate defect type specifying integer");
                 msgbus_msg_envelope_elem_destroy(defects_arr);
                 msgbus_msg_envelope_elem_destroy(roi);
                 return UdfRetCode::UDF_ERROR;

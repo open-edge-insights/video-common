@@ -34,7 +34,6 @@
 #include <eis/utils/thread_pool.h>
 
 #include "eis/udf/udf_handle.h"
-#include "eis/udf/loader.h"
 #include "eis/udf/frame.h"
 
 namespace eis {
@@ -61,9 +60,6 @@ private:
 
     // UDF output queue
     FrameQueue* m_udf_output_queue;
-
-    // UDF Loader
-    UdfLoader* m_loader;
 
     // Thread pool
     utils::ThreadPool* m_pool;

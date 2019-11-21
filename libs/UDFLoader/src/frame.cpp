@@ -295,6 +295,7 @@ void Frame::set_data(
 
     // Release old data
     if(m_msg == NULL) {
+        LOG_DEBUG("Setting new free_Frame");
         // Initialized from the first constructor
         this->m_free_frame(this->m_frame);
         this->m_free_frame = free_frame;
@@ -440,6 +441,7 @@ msg_envelope_t* Frame::get_meta_data() {
 }
 
 void Frame::encode_frame() {
+    LOG_DEBUG("Encoding the frame");
     std::vector<uchar>* encoded_bytes = new std::vector<uchar>();
     std::vector<int> compression_params;
     std::string ext;

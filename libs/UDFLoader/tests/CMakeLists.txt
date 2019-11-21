@@ -54,6 +54,8 @@ endif()
 # Now simply link against gtest or gtest_main as needed. Eg
 file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/test_config.json"
      DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
+file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/test_udf_mgr_config.json"
+     DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
 file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/py_tests/"
     DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/py_tests")
 add_executable(udfloader-tests "udfloader_tests.cpp")

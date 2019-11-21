@@ -68,6 +68,7 @@ Frame* init_frame() {
 }
 
 void free_cv_frame(void* frame) {
+    LOG_DEBUG_0("Freeing load-example frame");
 }
 
 int main(int argc, char** argv) {

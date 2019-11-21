@@ -27,6 +27,7 @@
 #include <eis/utils/logger.h>
 #include <eis/utils/json_config.h>
 #include "eis/udf/loader.h"
+#include "eis/udf/udf_manager.h"
 
 #define ORIG_FRAME_DATA "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 #define NEW_FRAME_DATA  "\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01"
@@ -191,6 +192,30 @@ TEST(udfloader_tests, py_process_error) {
     // Clean up
     delete frame;
     delete handle;
+}
+
+TEST(udfloader_tests, reinitialize) {
+    try {
+        config_t* config = json_config_new("test_udf_mgr_config.json");
+        ASSERT_NOT_NULL(config);
+
+        FrameQueue* input_queue = new FrameQueue(-1);
+        FrameQueue* output_queue = new FrameQueue(-1);
+
+        UdfManager* manager = new UdfManager(config, input_queue, output_queue);
+        manager->start();
+
+        delete manager;
+
+        input_queue = new FrameQueue(-1);
+        output_queue = new FrameQueue(-1);
+        config = json_config_new("test_udf_mgr_config.json");
+        manager = new UdfManager(config, input_queue, output_queue);
+        manager->start();
+        delete manager;
+    } catch(const std::exception& ex) {
+        FAIL() << ex.what();
+    }
 }
 
 /**

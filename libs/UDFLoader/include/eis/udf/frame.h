@@ -30,6 +30,7 @@
 #include <atomic>
 
 #include <eis/msgbus/msg_envelope.h>
+#include <eis/utils/logger.h>
 
 namespace eis {
 namespace udf {
@@ -96,11 +97,13 @@ private:
      * it has been transmitted over the bus.
      */
     static void msg_free_frame(void* hint) {
+        LOG_DEBUG("Freeing frame...");
         // Cast to a frame pointer
         Frame* frame = (Frame*) hint;
 
         // Free frame data (if given a free function)
         if(frame->m_free_frame != NULL) {
+            LOG_DEBUG("Calling m_free_frame");
             frame->m_free_frame(frame->m_frame);
         }
 

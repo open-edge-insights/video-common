@@ -48,8 +48,12 @@ UdfLoader::UdfLoader() {
 }
 
 UdfLoader::~UdfLoader() {
-    PyEval_RestoreThread(g_th_state);
-    Py_FinalizeEx();
+    LOG_DEBUG_0("Destroying UDF Loader");
+    if(g_th_state != NULL) {
+        PyEval_RestoreThread(g_th_state);
+        Py_FinalizeEx();
+        g_th_state = NULL;
+    }
 }
 
 UdfHandle* UdfLoader::load(

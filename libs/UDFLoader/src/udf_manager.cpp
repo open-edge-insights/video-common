@@ -27,6 +27,7 @@
 #include <eis/utils/logger.h>
 #include "eis/udf/udf_manager.h"
 #include "eis/udf/frame.h"
+#include "eis/udf/loader.h"
 
 using namespace eis::udf;
 using namespace eis::utils;
@@ -36,6 +37,8 @@ using namespace eis::utils;
 #define CFG_MAX_WORKERS     "max_workers"
 #define DEFAULT_MAX_WORKERS 4  // Default 4 threads to submit jobs to
 #define DEFAULT_MAX_JOBS    20 // Default for the number of queued jobs
+
+UdfLoader g_loader;
 
 
 void free_fn(void* ptr) {
@@ -53,25 +56,18 @@ UdfManager::UdfManager(
         EncodeType enc_type, int enc_lvl, bool udfs_key_exists) :
     m_th(NULL), m_stop(false), m_config(udf_cfg),
     m_udf_input_queue(input_queue), m_udf_output_queue(output_queue),
-    m_loader(NULL), m_enc_type(enc_type), m_enc_lvl(enc_lvl),
-    m_udfs_key_exists(udfs_key_exists)
+    m_udfs_key_exists(udfs_key_exists), m_enc_type(enc_type),
+    m_enc_lvl(enc_lvl)
 {
-    // if(!verify_encoding_level(m_enc_type, m_enc_lvl)) {
-    //     throw "Invalid encoding level for the encoding type";
-    // }
-
     config_value_t* udfs = NULL;
 
     if(m_udfs_key_exists) {
-        m_loader = new UdfLoader();
         LOG_DEBUG_0("Loading UDFs");
         udfs = config_get(m_config, CFG_UDFS);
         if(udfs == NULL) {
-            delete m_loader;
             throw "Failed to get UDFs";
         }
         if(udfs->type != CVT_ARRAY) {
-            delete m_loader;
             config_value_destroy(udfs);
             throw "\"udfs\" must be an array";
         }
@@ -103,8 +99,8 @@ UdfManager::UdfManager(
         config_value_destroy(cfg_max_workers);
     }
 
-    LOG_DEBUG("Max workers: %d, max jobs: %d", max_workers, max_jobs);
     // Initialize thread pool
+    LOG_DEBUG("Max workers: %d, max jobs: %d", max_workers, max_jobs);
     m_pool = new ThreadPool(max_workers, max_jobs);
 
     int len = 0;
@@ -139,7 +135,7 @@ UdfManager::UdfManager(
             throw "Failed to initialize configuration for UDF";
         }
         LOG_DEBUG("Loading UDF...");
-        UdfHandle* handle = m_loader->load(name->body.string, cfg, 1);
+        UdfHandle* handle = g_loader.load(name->body.string, cfg, 1);
         if(handle == NULL) {
             throw "Failed to load UDF";
         }
@@ -177,11 +173,8 @@ UdfManager::~UdfManager() {
         delete frame;
     }
     LOG_DEBUG("Cleared udf output queue");
-    //TODO: Commenting the below line as the operation is taking
-    //      too much time
-    // delete m_udf_output_queue;
+    delete m_udf_output_queue;
 
-    delete m_loader;
     delete m_pool;
     config_destroy(m_config);
     LOG_DEBUG("Done with ~UdfManager()");

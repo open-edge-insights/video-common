@@ -157,6 +157,7 @@ UdfRetCode NativeUdfHandle::process(Frame* frame) {
     }
 
     delete mat_frame;
+    delete output;
 
     if (ret == UdfRetCode::UDF_ERROR)
         LOG_ERROR_0("Error in UDF process() method");

@@ -220,7 +220,6 @@ Frame::Frame(msg_envelope_t* msg) :
             uchar* buf = (uchar*) blob->body.blob->data;
             size_t len = (size_t) blob->body.blob->len;
             data.assign(buf, buf + len);
-
             // Decode the frame
             // TODO: Should we always decode as color?
             cv::Mat* decoded = new cv::Mat();
@@ -228,7 +227,7 @@ Frame::Frame(msg_envelope_t* msg) :
             if(decoded->empty()) {
                 throw "Failed to decode the encoded frame";
             }
-
+            data.clear();
             this->set_data((void*) decoded, decoded->cols, decoded->rows,
                            decoded->channels(), decoded->data, free_decoded);
         } else {

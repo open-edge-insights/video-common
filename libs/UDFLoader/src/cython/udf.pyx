@@ -20,6 +20,8 @@
 # distutils: language = c++
 """UDF Cython code to interface with Python
 """
+# cython: language_level=3, boundscheck=False
+
 # Cython imports
 from libc.stdint cimport *
 from cpython cimport bool
@@ -31,6 +33,8 @@ import warnings
 import inspect
 import importlib
 import numpy as np
+from distutils.util import strtobool
+from util.log import configure_logging
 
 
 cdef extern from "stdbool.h":
@@ -312,6 +316,25 @@ cdef object cfv_to_object(config_value_t* value):
 
     config_value_destroy(value)
     return ret_val
+
+
+cdef public void cython_initialize(char* dev_mode, char* log_lvl):
+    """Initialize the Cython Python environment
+    """
+    if dev_mode == NULL:
+        py_dev_mode = False
+    else:
+        py_dev_mode = <bytes> dev_mode
+        py_dev_mode = py_dev_mode.decode('utf-8')
+        py_dev_mode = bool(strtobool(py_dev_mode))
+
+    if log_lvl == NULL:
+        py_log_lvl = 'ERROR'
+    else:
+        py_log_lvl = <bytes> log_lvl
+        py_log_lvl = py_log_lvl.decode('utf-8').upper()
+
+    configure_logging(py_log_lvl, 'UDFLoader', py_dev_mode)
 
 
 cdef public object load_udf(const char* name, config_t* config) with gil:

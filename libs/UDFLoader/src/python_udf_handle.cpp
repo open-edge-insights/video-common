@@ -28,6 +28,7 @@
 
 #include <vector>
 #include <atomic>
+#include <cstdlib>
 #include <numpy/ndarrayobject.h>
 
 #include <eis/utils/logger.h>
@@ -90,6 +91,10 @@ bool PythonUdfHandle::initialize(config_t* config) {
         PyGILState_Release(gstate);
         return false;
     }
+
+    char* dev_mode = getenv("DEV_MODE");
+    char* log_level = getenv("PY_LOG_LEVEL");
+    cython_initialize(dev_mode, log_level);
 
     // Load the Python UDF
     LOG_DEBUG_0("Loading the UDF");

@@ -38,8 +38,8 @@ using namespace eis::utils;
 #define DEFAULT_MAX_WORKERS 4  // Default 4 threads to submit jobs to
 #define DEFAULT_MAX_JOBS    20 // Default for the number of queued jobs
 
+// Globals
 UdfLoader g_loader;
-
 
 void free_fn(void* ptr) {
     config_value_t* obj = (config_value_t*) ptr;
@@ -151,6 +151,9 @@ UdfManager::~UdfManager() {
     if(m_th != NULL) {
         delete m_th;
     }
+
+    delete m_pool;
+
     LOG_DEBUG("Deleting all handles");
     for(auto handle : m_udfs) {
         delete handle;
@@ -175,7 +178,6 @@ UdfManager::~UdfManager() {
     LOG_DEBUG("Cleared udf output queue");
     delete m_udf_output_queue;
 
-    delete m_pool;
     config_destroy(m_config);
     LOG_DEBUG("Done with ~UdfManager()");
 }

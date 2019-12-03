@@ -33,19 +33,9 @@ using namespace eis::udf;
 
 // Globals for Python interpreter
 // PyInterpreterState* g_state;
-PyThreadState* g_th_state;
+PyThreadState* g_th_state = NULL;
 
-UdfLoader::UdfLoader() {
-    if(!Py_IsInitialized()) {
-        LOG_DEBUG_0("Initializing python");
-        PyImport_AppendInittab("udf", PyInit_udf);
-        Py_Initialize();
-        PyEval_InitThreads();
-        g_th_state = PyThreadState_Get();
-        PyEval_SaveThread();
-        LOG_DEBUG("Has GIL: %d", PyGILState_Check());
-    }
-}
+UdfLoader::UdfLoader() {}
 
 UdfLoader::~UdfLoader() {
     LOG_DEBUG_0("Destroying UDF Loader");
@@ -75,8 +65,16 @@ UdfHandle* UdfLoader::load(
     UdfHandle* udf = NULL;
 
 	if(strcmp(type->body.string, "python") == 0) {
-	    // Attempt to load Python UDF
-        PyEval_RestoreThread(g_th_state);
+        if(!Py_IsInitialized()) {
+            LOG_DEBUG_0("Initializing python");
+            PyImport_AppendInittab("udf", PyInit_udf);
+            Py_Initialize();
+            PyEval_InitThreads();
+            g_th_state = PyThreadState_Get();
+        } else {
+            // Attempt to load Python UDF
+            PyEval_RestoreThread(g_th_state);
+        }
 
     	udf = new PythonUdfHandle(name, max_workers);
     	if(!udf->initialize(config)) {

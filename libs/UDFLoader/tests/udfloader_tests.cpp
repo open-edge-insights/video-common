@@ -23,6 +23,7 @@
  * @author Kevin Midkiff (kevin.midkiff@intel.com)
  */
 
+#include <chrono>
 #include <gtest/gtest.h>
 #include <eis/utils/logger.h>
 #include <eis/utils/json_config.h>
@@ -205,6 +206,13 @@ TEST(udfloader_tests, reinitialize) {
         UdfManager* manager = new UdfManager(config, input_queue, output_queue);
         manager->start();
 
+        Frame* frame = init_frame();
+        ASSERT_NOT_NULL(frame);
+
+        input_queue->push(frame);
+
+        std::this_thread::sleep_for(std::chrono::seconds(3));
+
         delete manager;
 
         input_queue = new FrameQueue(-1);
@@ -212,6 +220,7 @@ TEST(udfloader_tests, reinitialize) {
         config = json_config_new("test_udf_mgr_config.json");
         manager = new UdfManager(config, input_queue, output_queue);
         manager->start();
+        std::this_thread::sleep_for(std::chrono::seconds(3));
         delete manager;
     } catch(const std::exception& ex) {
         FAIL() << ex.what();

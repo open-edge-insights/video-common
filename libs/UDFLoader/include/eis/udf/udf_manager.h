@@ -67,9 +67,6 @@ private:
     // UDF Handles
     std::vector<UdfHandle*> m_udfs;
 
-    // `udfs` key exists in config
-    bool m_udfs_key_exists;
-
     // Encoding details
     EncodeType m_enc_type;
     int m_enc_lvl;
@@ -93,7 +90,7 @@ public:
      */
     UdfManager(config_t* udf_cfg, FrameQueue* input_queue,
                FrameQueue* output_queue, EncodeType enc_type=EncodeType::NONE,
-               int enc_lvl=0, bool udfs_key_exists=true);
+               int enc_lvl=0);
 
     /**
      * Destructor

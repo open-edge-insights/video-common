@@ -147,6 +147,19 @@ public:
     ~Frame();
 
     /**
+    * Get frame encoding type
+    *
+    * @return EncodeType
+    */
+    EncodeType get_encode_type();
+
+    /**
+    * Get frame encoding level
+    * @return int
+    */
+    int get_encode_level();
+
+    /**
      * Get frame width.
      *
      * @return int

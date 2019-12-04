@@ -272,6 +272,14 @@ int Frame::get_channels() {
     return m_channels;
 }
 
+EncodeType Frame::get_encode_type() {
+    return m_encode_type;
+}
+
+int Frame::get_encode_level(){
+    return m_encode_level;
+}
+
 void* Frame::get_data() {
     if(m_serialized.load()) {
         LOG_ERROR_0(
@@ -388,10 +396,8 @@ void Frame::set_encoding(EncodeType encode_type, int encode_level) {
     if(!verify_encoding_level(encode_type, encode_level)) {
         throw "Invalid encoding level for the encoding type";
     }
-
     this->m_encode_type = encode_type;
     this->m_encode_level = encode_level;
-
     msg_envelope_elem_body_t* encoding = NULL;
     msgbus_ret_t ret = msgbus_msg_envelope_get(
             m_meta_data, "encoding", &encoding);
@@ -400,7 +406,6 @@ void Frame::set_encoding(EncodeType encode_type, int encode_level) {
         if(ret != MSG_SUCCESS)
             throw "Failed to remove \"encoding\" from the meta-data";
     }
-
     // Add encoding (if type is not NONE)
     if(encode_type != EncodeType::NONE) {
         msg_envelope_elem_body_t* e_enc_type = NULL;
@@ -412,18 +417,15 @@ void Frame::set_encoding(EncodeType encode_type, int encode_level) {
         if(e_enc_type == NULL) {
             throw "Failed initialize encoding type meta-data";
         }
-
         msg_envelope_elem_body_t* e_enc_lvl = msgbus_msg_envelope_new_integer(
                 encode_level);
         if(e_enc_lvl == NULL) {
             throw "Failed to initialize encoding level meta-data";
         }
-
         ret = msgbus_msg_envelope_put(m_meta_data, "encoding_type", e_enc_type);
         if(ret != MSG_SUCCESS) {
             throw "Failed to put encoding type in object";
         }
-
         ret = msgbus_msg_envelope_put(m_meta_data, "encoding_level", e_enc_lvl);
         if(ret != MSG_SUCCESS) {
             throw "Failed to put encoding level in object";

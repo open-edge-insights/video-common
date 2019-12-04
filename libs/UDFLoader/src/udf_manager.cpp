@@ -53,24 +53,21 @@ config_value_t* get_config_value(const void* cfg, const char* key) {
 
 UdfManager::UdfManager(
         config_t* udf_cfg, FrameQueue* input_queue, FrameQueue* output_queue,
-        EncodeType enc_type, int enc_lvl, bool udfs_key_exists) :
+        EncodeType enc_type, int enc_lvl) :
     m_th(NULL), m_stop(false), m_config(udf_cfg),
-    m_udf_input_queue(input_queue), m_udf_output_queue(output_queue),
-    m_udfs_key_exists(udfs_key_exists), m_enc_type(enc_type),
+    m_udf_input_queue(input_queue), m_udf_output_queue(output_queue), m_enc_type(enc_type),
     m_enc_lvl(enc_lvl)
 {
     config_value_t* udfs = NULL;
 
-    if(m_udfs_key_exists) {
-        LOG_DEBUG_0("Loading UDFs");
-        udfs = config_get(m_config, CFG_UDFS);
-        if(udfs == NULL) {
-            throw "Failed to get UDFs";
-        }
-        if(udfs->type != CVT_ARRAY) {
-            config_value_destroy(udfs);
-            throw "\"udfs\" must be an array";
-        }
+    LOG_DEBUG_0("Loading UDFs");
+    udfs = config_get(m_config, CFG_UDFS);
+    if(udfs == NULL) {
+        throw "Failed to get UDFs";
+    }
+    if(udfs->type != CVT_ARRAY) {
+        config_value_destroy(udfs);
+        throw "\"udfs\" must be an array";
     }
 
     // Get maximum jobs (if it exists)
@@ -104,9 +101,9 @@ UdfManager::UdfManager(
     m_pool = new ThreadPool(max_workers, max_jobs);
 
     int len = 0;
-    if(m_udfs_key_exists) {
-        len = (int) config_value_array_len(udfs);
-    }
+
+    len = (int) config_value_array_len(udfs);
+
     for(int i = 0; i < len; i++) {
         config_value_t* cfg_obj = config_value_array_get(udfs, i);
         if(cfg_obj == NULL) {
@@ -284,27 +281,29 @@ void UdfManager::run() {
 
             // Note: the encoding level is only changed on the frame if the
             // UDF Manager has a different encoding
-            if(m_enc_type != EncodeType::NONE) {
-                frame->set_encoding(m_enc_type, m_enc_lvl);
+            EncodeType enc_type = frame->get_encode_type();
+            int enc_level = frame->get_encode_level();
+                if(enc_type != m_enc_type){
+                    if(m_enc_type != EncodeType::NONE){  
+                        frame->set_encoding(m_enc_type, m_enc_lvl);
+                    }
             }
 
-            if(m_udfs_key_exists) {
-                // Create the worker to execute the UDF pipeline on the given frame
-                UdfWorker* ctx = new UdfWorker(
-                        frame, &m_udfs, m_udf_output_queue);
+            // Create the worker to execute the UDF pipeline on the given frame
+            UdfWorker* ctx = new UdfWorker(
+                    frame, &m_udfs, m_udf_output_queue);
 
-                LOG_DEBUG_0("Submitting job to job pool")
-                JobHandle* job_handle = NULL;
+            LOG_DEBUG_0("Submitting job to job pool")
+            JobHandle* job_handle = NULL;
 
-                // Submit the job to run in the thread pool
-                job_handle = m_pool->submit(&UdfWorker::run, ctx, free_udf_worker);
-                LOG_DEBUG_0("Done submitting the job")
+            // Submit the job to run in the thread pool
+            job_handle = m_pool->submit(&UdfWorker::run, ctx, free_udf_worker);
+            LOG_DEBUG_0("Done submitting the job")
 
-                // The job handle is not actually needed in this use of the
-                // thread pool
-                //delete job_handle;
-                ctx->handle = job_handle;
-            }
+            // The job handle is not actually needed in this use of the
+            // thread pool
+            //delete job_handle;
+            ctx->handle = job_handle;
         }
     }
 

@@ -39,7 +39,7 @@ public:
 
     UdfRetCode process(cv::Mat& frame, cv::Mat& output, msg_envelope_t* meta) override {
         LOG_INFO_0("NativeExampleUdf::process()");
-        cv::resize(frame, output, cv::Size(), 0.50, 0.50);
+        //cv::resize(frame, output, cv::Size(), 0.50, 0.50);
 		return UdfRetCode::UDF_OK;
     };
 };

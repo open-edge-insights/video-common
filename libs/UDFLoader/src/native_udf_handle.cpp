@@ -134,6 +134,7 @@ void free_native_cv_frame(void* varg) {
 }
 
 UdfRetCode NativeUdfHandle::process(Frame* frame) {
+    UdfRetCode ret = UdfRetCode::UDF_OK;
     int w = frame->get_width();
     int h = frame->get_height();
     int c = frame->get_channels();
@@ -147,20 +148,28 @@ UdfRetCode NativeUdfHandle::process(Frame* frame) {
 
     msg_envelope_t* meta_data = frame->get_meta_data();
 
-    UdfRetCode ret = m_udf->process(*mat_frame, *output, meta_data);
+    try {
+        ret = m_udf->process(*mat_frame, *output, meta_data);
 
-    if(!output->empty()) {
-        LOG_DEBUG("Setting frame with new UDF frame");
-        frame->set_data(
-                (void*) output, output->cols, output->rows, output->channels(),
-                (void*) output->data, free_native_cv_frame);
+        if(!output->empty()) {
+            LOG_DEBUG("Setting frame with new UDF frame");
+            frame->set_data(
+                    (void*) output, output->cols, output->rows,
+                    output->channels(), (void*) output->data,
+                    free_native_cv_frame);
+        } else {
+            delete output;
+        }
+
+        if (ret == UdfRetCode::UDF_ERROR)
+            LOG_ERROR_0("Error in UDF process() method");
+    } catch(const std::exception& exc) {
+        LOG_ERROR("Error in UDF process() method: %s", exc.what());
+        ret = UdfRetCode::UDF_ERROR;
+        delete output;
     }
 
     delete mat_frame;
-    delete output;
-
-    if (ret == UdfRetCode::UDF_ERROR)
-        LOG_ERROR_0("Error in UDF process() method");
 
     return ret;
 }

@@ -27,6 +27,8 @@ file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/config.json"
      DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
 file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/msgbus_config.json"
      DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
+file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/load_example_frame.png"
+     DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
 file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/.socks")
 add_executable(load-example "load_example.cpp")
 target_link_libraries(load-example udfloader ${EISMessageBus_LIBRARIES})

@@ -165,6 +165,7 @@ cdef extern from "eis/msgbus/msg_envelope.h":
 
     ctypedef struct msg_envelope_t:
         content_type_t content_type
+        msg_envelope_elem_body_t* blob
 
     ctypedef struct msg_envelope_serialized_part_t:
         owned_blob_t* shared;
@@ -461,6 +462,7 @@ cdef object msg_envelope_to_python(msg_envelope_t* msg):
     try:
         if num_parts == 2:
             parts[1].shared.owned = False
+            msg.blob.body.blob.shared.owned = True
 
         data = None
         data = json.loads(char_to_bytes(parts[0].bytes, parts[0].len))

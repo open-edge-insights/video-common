@@ -34,41 +34,17 @@
 #include "eis/udf/udf_manager.h"
 #include "eis/udf/frame.h"
 
-#define ORIG_FRAME_DATA "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-#define DATA_LEN 10
-
 using namespace eis::udf;
 using namespace eis::msgbus;
 
-class TestFrame {
-public:
-    uint8_t* data;
-
-    TestFrame(uint8_t* data) : data(data)
-    {};
-
-    ~TestFrame() { delete[] data; };
-};
-
-void test_frame_free(void* hint) {
-    TestFrame* tf = (TestFrame*) hint;
-    delete tf;
-}
-
-Frame* init_frame() {
-    uint8_t* data = new uint8_t[DATA_LEN];
-    memcpy(data, ORIG_FRAME_DATA, DATA_LEN);
-
-    TestFrame* tf = new TestFrame(data);
-
-    Frame* frame = new Frame(
-            (void*) tf, DATA_LEN, 1, 1, (void*) data, test_frame_free);
-
-    return frame;
-}
-
+/**
+ * Free method to free the underlying @c cv::Mat wrapped by the udf::Frame
+ * object.
+ */
 void free_cv_frame(void* frame) {
     LOG_DEBUG_0("Freeing load-example frame");
+    cv::Mat* mat = (cv::Mat*) frame;
+    delete mat;
 }
 
 int main(int argc, char** argv) {
@@ -78,72 +54,69 @@ int main(int argc, char** argv) {
         config_t* msgbus_config = json_config_new("msgbus_config.json");
         config_t* sub_config = json_config_new("msgbus_config.json");
 
+        LOG_INFO_0("Initializing queues");
         FrameQueue* input_queue = new FrameQueue(-1);
         FrameQueue* output_queue = new FrameQueue(-1);
         FrameQueue* sub_queue = new FrameQueue(-1);
 
         LOG_INFO_0("Initializing UDFManager");
-        UdfManager* manager = new UdfManager(config, input_queue, output_queue);
+        UdfManager* manager = new UdfManager(config, sub_queue, output_queue);
         manager->start();
 
         LOG_INFO_0("Initializing Publisher thread");
         std::condition_variable err_cv;
         Publisher* publisher = new Publisher(
-                msgbus_config, err_cv, "example", (MessageQueue*) output_queue);
+                msgbus_config, err_cv, "example", (MessageQueue*) input_queue);
         publisher->start();
-        std::this_thread::sleep_for(std::chrono::milliseconds(250));
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
         Subscriber<Frame>* subscriber = new Subscriber<Frame>(
                 sub_config, err_cv, "example", (MessageQueue*) sub_queue);
         subscriber->start();
 
         LOG_INFO_0("Adding frames to input queue");
-        cv::Mat cv_frame = cv::imread("0.png");
+
+        // Load OpenCV frame
+        cv::Mat* cv_frame = new cv::Mat();
+        *cv_frame = cv::imread("load_example_frame.png");
+
+        // Create udf::Frame object from the cv::Mat and push into publisher
         Frame* frame = new Frame(
-                (void*) &cv_frame, cv_frame.cols, cv_frame.rows,
-                cv_frame.channels(), cv_frame.data, free_cv_frame,
+                (void*) cv_frame, cv_frame->cols, cv_frame->rows,
+                cv_frame->channels(), cv_frame->data, free_cv_frame,
                 EncodeType::JPEG, 50);
         input_queue->push(frame);
-        //msg_envelope_t* msg = frame->serialize();
-        //Frame* deserial_frame = new Frame(msg);
-        //input_queue->push(deserial_frame);
 
-        sub_queue->wait();
-        Frame* received = sub_queue->front();
-        sub_queue->pop();
+        LOG_INFO_0("Waiting for processed frame...");
+        output_queue->wait();
+        Frame* processed = output_queue->front();
+        output_queue->pop();
 
-        int w = received->get_width();
-        int h = received->get_height();
-        int c = received->get_channels();
+        // ---- Uncomment to save processed frame
 
-        //TODO: Do we want to default to 8bit?
+        //int w = processed->get_width();
+        //int h = processed->get_height();
+        //int c = processed->get_channels();
 
-        cv::Mat mat_frame(h, w, CV_8UC(c), received->get_data());
-        cv::imwrite("received.jpg", mat_frame);
+        //cv::Mat mat_frame(h, w, CV_8UC(c), processed->get_data());
+        //cv::imwrite("received.jpg", mat_frame);
 
+        //----
+
+        // Free processed frame
+        delete processed;
+
+        LOG_INFO_0("Stopping subscriber");
         subscriber->stop();
         delete subscriber;
-        delete received;
-        delete sub_queue;
-
-        // for(int i = 0; i < 30; i++) {
-        //     input_queue->push(init_frame());
-        // }
-
-        //LOG_INFO_0("Waiting for input queue to be empty");
-        // while(!input_queue->empty() && !output_queue->empty()) {}
-        //std::this_thread::sleep_for(std::chrono::seconds(3));
-
-        LOG_INFO_0("Stopping the publisher");
-        publisher->stop();
-
-        LOG_INFO_0("Stopping the UDFManager");
-        manager->stop();
 
         LOG_INFO_0("Cleaning up publisher");
         delete publisher;
 
         LOG_INFO_0("Cleaning up UDFManager");
         delete manager;
+        delete input_queue;
     } catch(const char* ex) {
         LOG_INFO("Failed to load exception: %s", ex);
         return -1;

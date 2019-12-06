@@ -200,6 +200,8 @@ public:
     // UDF pipeline to continue
     std::vector<UdfHandle*>* udfs;
 
+    JobHandle* handle;
+
     /**
      * Constructor
      *
@@ -209,13 +211,17 @@ public:
      */
     UdfWorker(Frame* frame, std::vector<UdfHandle*>* udfs,
               FrameQueue* output_queue) :
-        frame(frame), output_queue(output_queue), udfs(udfs)
+        frame(frame), output_queue(output_queue), udfs(udfs), handle(NULL)
     {};
 
     /**
      * Destructor
      */
-    ~UdfWorker() {};
+    ~UdfWorker() {
+        if(handle != NULL) {
+            delete handle;
+        }
+    };
 
     /**
      * UDF worker run method to be executed in a thread pool. This method is
@@ -253,11 +259,16 @@ public:
 
         LOG_DEBUG_0("Pushing frame to output queue");
         ctx->output_queue->push_wait(ctx->frame);
-        delete ctx;
+        //delete ctx;
 
         LOG_DEBUG_0("Done running worker function");
     };
 };
+
+static void free_udf_worker(void* varg) {
+    UdfWorker* ctx = (UdfWorker*) varg;
+    delete ctx;
+}
 
 void UdfManager::run() {
     LOG_INFO_0("UDFManager thread started");
@@ -286,12 +297,13 @@ void UdfManager::run() {
                 JobHandle* job_handle = NULL;
 
                 // Submit the job to run in the thread pool
-                job_handle = m_pool->submit(&UdfWorker::run, ctx);
+                job_handle = m_pool->submit(&UdfWorker::run, ctx, free_udf_worker);
                 LOG_DEBUG_0("Done submitting the job")
 
                 // The job handle is not actually needed in this use of the
                 // thread pool
-                delete job_handle;
+                //delete job_handle;
+                ctx->handle = job_handle;
             }
         }
     }

@@ -343,7 +343,7 @@ TEST_F(frame_tests, encode_decode_png) {
     // Write frame for visual inspection of decoding
     cv::Mat mat_decoded_frame(
             decoded->get_height(), decoded->get_width(),
-            CV_8UC(frame->get_channels()), decoded->get_data());
+            CV_8UC(decoded->get_channels()), decoded->get_data());
     cv::imwrite("frame_tests_encode_decode_png.png", mat_decoded_frame);
 
     // Clean up
@@ -374,9 +374,13 @@ TEST_F(frame_tests, encode_decode_jpeg) {
     // Write frame for visual inspection of decoding
     cv::Mat mat_decoded_frame(
             decoded->get_height(), decoded->get_width(),
-            CV_8UC(frame->get_channels()), decoded->get_data());
+            CV_8UC(decoded->get_channels()), decoded->get_data());
     cv::imwrite("frame_tests_encode_decode_jpeg.jpeg", mat_decoded_frame);
 
+    // Re-encode
+    msg_envelope_t* serialized = decoded->serialize();
+
     // Clean up
-    delete decoded;
+    //delete decoded;
+    msgbus_msg_envelope_destroy(serialized);
 }

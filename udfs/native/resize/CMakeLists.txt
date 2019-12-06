@@ -31,3 +31,8 @@ target_link_libraries(resize
         ${IntelSafeString_LIBRARIES}
         ${OpenCV_LIBRARIES}
     )
+
+install(
+    TARGETS resize
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})

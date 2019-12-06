@@ -47,3 +47,8 @@ target_link_libraries(safety_gear_demo
     PRIVATE
         ${IntelSafeString_LIBRARIES}
     )
+
+install(
+    TARGETS safety_gear_demo
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})

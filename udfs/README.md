@@ -212,24 +212,3 @@ Example UDF configuration:
       "model_bin": "common/udfs/python/pcb/ref/model_2.bin"
   }
   ```
-
-  ----
-  **NOTE**:
-  The above config works for both "CPU" and "GPU" devices after setting
-  appropriate `device` value. If the device in the above config is "HDDL" or
-  "MYRIAD", please use the below config where the model_xml and model_bin
-  files are different. Please set the "device" value appropriately based on
-  the device used for inferencing.
-
-  ```javascript
-  {
-    "name": "pcb.pcb_classifier",
-    "type": "python",
-    "device": "HDDL",
-    "ref_img": "common/udfs/python/pcb/ref/ref.png",
-    "ref_config_roi": "common/udfs/python/pcb/ref/roi_1.json",
-    "model_xml": "common/udfs/python/pcb/ref/pcb_fp16.xml",
-    "model_bin": "common/udfs/python/pcb/ref/pcb_fp16.bin"
-  }
-  ```
-  ----

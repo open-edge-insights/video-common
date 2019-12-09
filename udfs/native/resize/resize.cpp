@@ -42,11 +42,7 @@ namespace eis {
                 int m_height;
 
             public:
-                ResizeUdf(config_t* config): BaseUdf(config) {};
-
-                ~ResizeUdf() {};
-
-                UdfRetCode process(cv::Mat& frame, cv::Mat& output, msg_envelope_t* meta) override {
+                ResizeUdf(config_t* config): BaseUdf(config) {
                     config_value_t* width = m_config->get_config_value(m_config->cfg,"width");
                     if(width == NULL) {
                         throw "Failed to get width";
@@ -67,33 +63,12 @@ namespace eis {
                     m_width = width->body.integer;
                     m_height = height->body.integer;
 
+                };
+
+                ~ResizeUdf() {};
+
+                UdfRetCode process(cv::Mat& frame, cv::Mat& output, msg_envelope_t* meta) override {
                     cv::resize(frame,output, cv::Size(m_width,m_height));
-
-                    msgbus_ret_t ret = MSG_SUCCESS;
-
-                    // Add width
-                    msg_envelope_elem_body_t* e_width = msgbus_msg_envelope_new_integer(m_width);
-                    if(e_width == NULL) {
-                        LOG_ERROR_0("Failed to initialize width meta-data");
-                    }
-                    ret = msgbus_msg_envelope_put(meta, "resize_width", e_width);
-                    if(ret != MSG_SUCCESS) {
-                        LOG_ERROR_0("Failed to put width meta-data");
-                        return UdfRetCode::UDF_ERROR;
-                    }
-
-                    // Add height
-                    msg_envelope_elem_body_t* e_height = msgbus_msg_envelope_new_integer(m_height);
-                    if(e_height == NULL) {
-                        LOG_ERROR_0("Failed to initialize height meta-data");
-                    }
-                    ret = msgbus_msg_envelope_put(meta, "resize_height", e_height);
-                    if(ret != MSG_SUCCESS) {
-                        LOG_ERROR_0("Failed to put height meta-data");
-                        msgbus_msg_envelope_elem_destroy(e_width);
-                        return UdfRetCode::UDF_ERROR;
-                    }
-
                     return UdfRetCode::UDF_OK;
             };
         };

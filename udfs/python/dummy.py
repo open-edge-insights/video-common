@@ -20,16 +20,25 @@
 """Simple example UDF.
 """
 
+import logging
 
 class Udf:
     """Example UDF
     """
-    def __init__(self, param1, param2):
+    def __init__(self):
         """Constructor
         """
-        print(f'[PYTHON::INFO] param1={param1}, param2={param2}')
+        self.log = logging.getLogger('DUMMY')
+        self.log.debug(f"In {__name__}...")
 
     def process(self, frame):
-        """Process frame.
+        """[summary]
+
+        :param frame: frame blob
+        :type frame: numpy.ndarray
+        :return:  (should the frame be dropped, has the frame been updated,
+                   new metadata for the frame if any)
+        :rtype: (bool, numpy.ndarray, str)
         """
+        self.log.debug(f"In process() method...")
         return False, None, None

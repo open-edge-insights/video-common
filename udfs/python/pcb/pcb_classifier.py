@@ -172,8 +172,15 @@ class Udf:
 
     # Main classification algorithm
     def process(self, frame, metadata):
-        """Reads the image frame from input queue for classifier
-        and classifies against the specified reference image.
+        """Processes every frame it receives based on the classifier logic used
+
+        :param frame: frame blob
+        :type frame: numpy.ndarray
+        :param metadata: frame's metadata
+        :type metadata: str
+        :return:  (should the frame be dropped, has the frame been updated,
+                   new metadata for the frame if any)
+        :rtype: (bool, numpy.ndarray, str)
         """
         if self.profiling is True:
             metadata['ts_va_classify_entry'] = time.time()*1000

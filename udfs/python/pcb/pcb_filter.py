@@ -30,23 +30,16 @@ class Udf:
     """PCB anomaly detection trigger object.
     """
     def __init__(self, n_right_px, n_left_px, n_total_px, training_mode):
-        """Constructor
+        """Udf constructor
 
-        Parameters
-        ----------
-		n_right_px : minimum number of pixels to the right of PCB mask (default 1000)
-			type   : int
-		m_left_px : minimum number of pixels to the left of the PCB mask (default 1000)
-        	type   : int
-		n_total_px : minimum number of pixels in the PCB mask (default 300000)
-			type   : int
-		training_mode : flag to save image ROI's for training (default false)
-			type   : bool
-
-
-		Returns
-        -------
-        Filter object
+        :param n_right_px: minimum number of pixels to the right of PCB mask (default 1000)
+        :type n_right_px: int
+        :param n_left_px: minimum number of pixels to the left of the PCB mask (default 1000)
+        :type n_left_px: int
+        :param n_total_px: minimum number of pixels in the PCB mask (default 300000)
+        :type n_total_px: int
+        :param training_mode: flag to save image ROI's for training (default false)
+        :type training_mode: bool
         """
         self.log = logging.getLogger('PCB_FILTER')
         self.log.debug("In ctor")
@@ -72,14 +65,10 @@ class Udf:
         """Determines if the given frame is the key frame of interest for
         further processing or not
 
-        Parameters
-        ----------
-        frame : numpy array
-            frame blob
-
-        Returns
-        -------
-        True if the given frame is a key frame, else False
+        :param frame: frame blob
+        :type frame: numpy.ndarray
+        :return: True if the given frame is a key frame, else False
+        :rtype: bool
         """
         # Apply background subtractor on frame
         fgmask = self.fgbg.apply(frame)
@@ -127,8 +116,15 @@ class Udf:
         return False
 
     def process(self, frame, metadata):
-        """Runs video frames from filter input queue and adds only the key
-        frames to filter output queue based on the filter logic used
+        """Processes every frame it receives based on the filter logic used
+
+        :param frame: frame blob
+        :type frame: numpy.ndarray
+        :param metadata: frame's metadata
+        :type metadata: str
+        :return:  (should the frame be dropped, has the frame been updated,
+                   new metadata for the frame if any)
+        :rtype: (bool, numpy.ndarray, str)
         """
         if self.profiling is True:
             metadata['ts_vi_filter_entry'] = time.time()*1000

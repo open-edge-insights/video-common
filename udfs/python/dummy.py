@@ -31,11 +31,13 @@ class Udf:
         self.log = logging.getLogger('DUMMY')
         self.log.debug(f"In {__name__}...")
 
-    def process(self, frame):
+    def process(self, frame, metadata):
         """[summary]
 
         :param frame: frame blob
         :type frame: numpy.ndarray
+        :param metadata: frame's metadata
+        :type metadata: str
         :return:  (should the frame be dropped, has the frame been updated,
                    new metadata for the frame if any)
         :rtype: (bool, numpy.ndarray, str)

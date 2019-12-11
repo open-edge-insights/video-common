@@ -144,7 +144,7 @@ install(TARGETS udfloader
 set_target_properties(udfloader PROPERTIES EXPORT_NAME UDFLoader)
 install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
-# Install pkg-config libeismsgbus.pc file
+# Install pkg-config libudfloader.pc file
 install(
     FILES
         ${PKG_CONFIG_OUT}

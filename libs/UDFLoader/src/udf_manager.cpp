@@ -82,6 +82,7 @@ UdfManager::UdfManager(
         max_jobs = cfg_max_jobs->body.integer;
         config_value_destroy(cfg_max_jobs);
     }
+    LOG_INFO("max_jobs: %d", max_jobs);
 
     // Get the maximum number of workers
     int max_workers = DEFAULT_MAX_WORKERS;
@@ -95,9 +96,9 @@ UdfManager::UdfManager(
         max_workers = cfg_max_jobs->body.integer;
         config_value_destroy(cfg_max_workers);
     }
+    LOG_INFO("max_workers: %d", max_workers);
 
     // Initialize thread pool
-    LOG_DEBUG("Max workers: %d, max jobs: %d", max_workers, max_jobs);
     m_pool = new ThreadPool(max_workers, max_jobs);
 
     int len = 0;

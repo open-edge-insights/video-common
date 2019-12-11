@@ -136,7 +136,6 @@ class Udf:
         else:
             if self.filter_lock is False:
                 if self._check_frame(frame):
-                    metadata["user_data"] = 1
                     self.filter_lock = True
                     # Re-initialize frame count during trigger lock to 0
                     self.lock_frame_count = 0

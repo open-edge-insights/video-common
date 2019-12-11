@@ -185,9 +185,6 @@ class Udf:
         if self.profiling is True:
             metadata['ts_va_classify_entry'] = time.time()*1000
 
-		# Angle information of frame
-        index = metadata.get("user_data", None)
-
         # Read correct reference image to
         # perform keypoint detection and overlay
         ref_img = self.ref_img.copy()
@@ -240,13 +237,12 @@ class Udf:
         missing_ROI = []
         short_ROI = []
 
-        if index == 1:
-            # Read ROI of known defect locations :
-            # missing components and shorts
-            if 'missing' in self.config_roi:
-                missing_ROI = self.config_roi["missing"]["A1_roi"]
-            if 'short' in self.config_roi:
-                short_ROI = self.config_roi["short"]["A1_roi"]
+        # Read ROI of known defect locations :
+        # missing components and shorts
+        if 'missing' in self.config_roi:
+            missing_ROI = self.config_roi["missing"]["A1_roi"]
+        if 'short' in self.config_roi:
+            short_ROI = self.config_roi["short"]["A1_roi"]
         defects = []
         d_info = []
 

@@ -212,3 +212,7 @@ Example UDF configuration:
       "model_bin": "common/udfs/python/pcb/ref/model_2.bin"
   }
   ```
+
+### UDF Writing Guide
+
+User can refer to [UDF Writing HOW-TO GUIDE](./HOWTO_GUIDE_FOR_WRITING_UDF.md) for an detailed explanation of process to write an custom UDF.

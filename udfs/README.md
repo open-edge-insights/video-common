@@ -1,10 +1,13 @@
 # EIS Sample UDFs
 
-EIS supports loading and executing of native(c++) and python UDFs. In here, one can find the sample native and python UDFs to be used with EIS components like VideoIngestion and VideoAnalytics.
+EIS supports loading and executing of native(c++) and python UDFs. In here,
+one can find the sample native and python UDFs(User Defined Functions) to be used with EIS components
+like VideoIngestion and VideoAnalytics. The UDFs can modify the frame, drop the frame and generate meta-data from the frame.
 
 ## UDF Configuration
 
 Below is the JSON schema for UDF json object configuration:
+
 ```javascript
 {
   "type": "object",
@@ -62,9 +65,12 @@ Below is the JSON schema for UDF json object configuration:
   }
 }
 ```
-One can use [JSON validator tool](https://www.jsonschemavalidator.net/) for validating the UDF configuration object against the above schema.
+
+One can use [JSON validator tool](https://www.jsonschemavalidator.net/) for
+validating the UDF configuration object against the above schema.
 
 Example UDF configuration:
+
 ```javascript
 {
   "max_jobs": 20,
@@ -80,15 +86,20 @@ Example UDF configuration:
 }
 ```
 
+## UDF Writing Guide
+
+User can refer to [UDF Writing HOW-TO GUIDE](./HOWTO_GUIDE_FOR_WRITING_UDF.md) for an detailed explanation of process to write an custom UDF.
+
 ## Sample UDFs
 
-> **NOTE**: The UDF config of these go as json objects in the `udfs` key in the overall UDF configuration object
+> **NOTE**: The UDF config of these go as json objects in the `udfs` key in
+> the overall UDF configuration object
 
 ### Native UDFs
 
 * **Dummy UDF**
 
-  Accepts the frame and forwards the same without doing any processing. It's a 
+  Accepts the frame and forwards the same without doing any processing. It's a
   do-nothing UDF.
 
   `UDF config`:
@@ -117,9 +128,13 @@ Example UDF configuration:
 
 * **Safety Gear Demo UDF**
 
-  Acceps the frame, detects safety gear such as safety helmet, safety jacket in the frame and any violations occuring.
+  Acceps the frame, detects safety gear such as safety helmet, safety jacket in
+  the frame and any violations occuring.
 
-  > **NOTE**: This works well with only the [safe gear video file](../../VideoIngestion/test_videos/Safety_Full_Hat_and_Vest.mp4). For camera usecase, proper tuning needs to be done to have the proper model built and used for inference.
+  > **NOTE**: This works well with only the
+  > [safe gear video file](../../VideoIngestion/test_videos/Safety_Full_Hat_and_Vest.mp4).
+  > For camera usecase, proper tuning needs to be done to have the proper model
+  > built and used for inference.
 
    `UDF config`:
 
@@ -132,6 +147,7 @@ Example UDF configuration:
       "model_bin": "common/udfs/native/safety_gear_demo/ref/frozen_inference_graph.bin"
   }
   ```
+
   ----
   **NOTE**:
   The above config works for both "CPU" and "GPU" devices after setting
@@ -149,16 +165,18 @@ Example UDF configuration:
       "model_bin": "common/udfs/native/safety_gear_demo/ref/frozen_inference_graph_fp16.bin"
   }
   ```
+
   ----
 
 
 ### Python UDFs
 
-> **NOTE**: Additional properties/keys other than `name` and `type` in the UDF config are the parameters of the python UDF constructor
+> **NOTE**: Additional properties/keys other than `name` and `type` in the UDF
+> config are the parameters of the python UDF constructor
 
 * **Dummy UDF**
 
-  Accepts the frame and forwards the same without doing any processing. It's a 
+  Accepts the frame and forwards the same without doing any processing. It's a
   do-nothing UDF.
 
   `UDF config`:
@@ -176,7 +194,10 @@ Example UDF configuration:
   it forwards or drops the frame. It basically sends out only the key frames forward
   for further processing and not all frames it receives.
 
-  > **NOTE**: This works well with only the [pcb demo video file](../../VideoIngestion/test_videos/pcb_d2000.avi). For camera usecase, proper tuning needs to be done to have the proper model built and used for inference.
+  > **NOTE**: This works well with only the
+  > [pcb demo video file](../../VideoIngestion/test_videos/pcb_d2000.avi).
+  > For camera usecase, proper tuning needs to be done to have the proper model
+  > built and used for inference.
 
   `UDF config`:
 
@@ -191,13 +212,16 @@ Example UDF configuration:
   }
   ```
 
-* **PCB Classifier**
+* **PCB Classifier UDF**
 
   Accepts the frame, uses openvino inference engine APIs to determine whether it's
   a `good` pcb with no defects or `bad` pcb with defects. Metadata associated with
   the frame is populated accordingly.
 
-  > **NOTE**: This works well with only the [pcb demo video file](../../VideoIngestion/test_videos/pcb_d2000.avi). For camera usecase, proper tuning needs to be done to have the proper model built and used for inference.
+  > **NOTE**: This works well with only the
+  > [pcb demo video file](../../VideoIngestion/test_videos/pcb_d2000.avi).
+  > For camera usecase, proper tuning needs to be done to have the proper model
+  > built and used for inference.
 
   `UDF config`:
 
@@ -213,6 +237,53 @@ Example UDF configuration:
   }
   ```
 
-### UDF Writing Guide
+* **Safety Gear Demo UDF**
 
-User can refer to [UDF Writing HOW-TO GUIDE](./HOWTO_GUIDE_FOR_WRITING_UDF.md) for an detailed explanation of process to write an custom UDF.
+  Acceps the frame, detects safety gear such as safety helmet, safety jacket in
+  the frame and any violations occuring.
+
+  > **NOTE**: This works well with only the
+  > [safe gear video file](../../VideoIngestion/test_videos/Safety_Full_Hat_and_Vest.mp4).
+  > For camera usecase, proper tuning needs to be done to have the proper model
+  > built and used for inference.
+
+   `UDF config`:
+
+  ```javascript
+  {
+      "name": "safety_classifier",
+      "type": "python",
+      "device": "CPU"
+      "model_xml": "common/udfs/python/safety_gear/ref/frozen_inference_graph.xml",
+      "model_bin": "common/udfs/python/safety_gear/ref/frozen_inference_graph.bin"
+  }
+  ```
+
+  ----
+  **NOTE**:
+  The above config works for both "CPU" and "GPU" devices after setting
+  appropriate `device` value. If the device in the above config is "HDDL" or
+  "MYRIAD", please use the below config where the model_xml and model_bin
+  files are different. Please set the "device" value appropriately based on
+  the device used for inferencing.
+
+  ```javascript
+  {
+      "name": "safety_classifier",
+      "type": "python",
+      "device": "HDDL",
+      "model_xml": "common/udfs/python/safety_gear/ref/frozen_inference_graph_fp16.xml",
+      "model_bin": "common/udfs/python/safety_gear/ref/frozen_inference_graph_fp16.bin"
+  }
+  ```
+
+  ----
+
+## Chaining of UDFs
+
+One can chain multiple native/python UDFs in the `udfs` key. The way chaining
+works here is the output of the UDF listed first would send the modified frame
+and metadata to the subsequent UDF and so on. One such classic example is having
+`pcb.pcb_filter` and `pcb.pcb_classifier` in VideoIngestion service config to
+do both the pre-processing and the classification logic without the need of
+VideoAnalytics service.

@@ -81,7 +81,7 @@ Example UDF configuration:
     },
     {
       "type": "python",
-      "name": "pcb.filter"
+      "name": "pcb.pcb_filter"
     }]
 }
 ```

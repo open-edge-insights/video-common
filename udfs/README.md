@@ -142,7 +142,7 @@ User can refer to [UDF Writing HOW-TO GUIDE](./HOWTO_GUIDE_FOR_WRITING_UDF.md) f
   {
       "name": "safety_gear_demo",
       "type": "native",
-      "device": "CPU"
+      "device": "CPU",
       "model_xml": "common/udfs/native/safety_gear_demo/ref/frozen_inference_graph.xml",
       "model_bin": "common/udfs/native/safety_gear_demo/ref/frozen_inference_graph.bin"
   }
@@ -251,7 +251,7 @@ User can refer to [UDF Writing HOW-TO GUIDE](./HOWTO_GUIDE_FOR_WRITING_UDF.md) f
 
   ```javascript
   {
-      "name": "safety_classifier",
+      "name": "safety_gear.safety_classifier",
       "type": "python",
       "device": "CPU"
       "model_xml": "common/udfs/python/safety_gear/ref/frozen_inference_graph.xml",
@@ -269,7 +269,7 @@ User can refer to [UDF Writing HOW-TO GUIDE](./HOWTO_GUIDE_FOR_WRITING_UDF.md) f
 
   ```javascript
   {
-      "name": "safety_classifier",
+      "name": "safety_gear.safety_classifier",
       "type": "python",
       "device": "HDDL",
       "model_xml": "common/udfs/python/safety_gear/ref/frozen_inference_graph_fp16.xml",

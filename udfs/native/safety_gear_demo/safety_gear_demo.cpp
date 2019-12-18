@@ -140,7 +140,7 @@ SafetyDemo::SafetyDemo(config_t *config) : BaseUdf(config) {
 
             m_input_info = item.second;
 
-            LOG_DEBUG("Batch size is %d\n", networkReader.getNetwork().getBatchSize());
+            LOG_DEBUG("Batch size is %lu\n", networkReader.getNetwork().getBatchSize());
 
             /** Creating first input blob **/
             Precision inputPrecision = Precision::U8;
@@ -234,7 +234,7 @@ UdfRetCode SafetyDemo::process(cv::Mat &frame, cv::Mat &output, msg_envelope_t *
     size_t imageWidths = 0;
     size_t imageHeights = 0;
     
-    LOG_DEBUG("Resizing the image to \n\twidth: %d \n\theight: %d", m_input_info->getTensorDesc().getDims()[3],
+    LOG_DEBUG("Resizing the image to \n\twidth: %lu \n\theight: %lu", m_input_info->getTensorDesc().getDims()[3],
                 m_input_info->getTensorDesc().getDims()[2]);    
     cv::Size size(m_input_info->getTensorDesc().getDims()[3], m_input_info->getTensorDesc().getDims()[2]);
     cv::Mat dst_image;

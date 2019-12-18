@@ -283,11 +283,10 @@ void UdfManager::run() {
             // Note: the encoding level is only changed on the frame if the
             // UDF Manager has a different encoding
             EncodeType enc_type = frame->get_encode_type();
-            int enc_level = frame->get_encode_level();
-                if(enc_type != m_enc_type){
-                    if(m_enc_type != EncodeType::NONE){  
-                        frame->set_encoding(m_enc_type, m_enc_lvl);
-                    }
+            if(enc_type != m_enc_type){
+                if(m_enc_type != EncodeType::NONE){
+                    frame->set_encoding(m_enc_type, m_enc_lvl);
+                }
             }
 
             // Create the worker to execute the UDF pipeline on the given frame

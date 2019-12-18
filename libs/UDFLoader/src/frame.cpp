@@ -458,7 +458,9 @@ void Frame::encode_frame() {
             compression_params.push_back(cv::IMWRITE_PNG_COMPRESSION);
             break;
         case EncodeType::NONE:
-        default: return;
+        default:
+            delete encoded_bytes;
+            return;
     }
 
     // Add encoding level (value depends on encoding type)

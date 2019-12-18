@@ -253,7 +253,7 @@ User can refer to [UDF Writing HOW-TO GUIDE](./HOWTO_GUIDE_FOR_WRITING_UDF.md) f
   {
       "name": "safety_gear.safety_classifier",
       "type": "python",
-      "device": "CPU"
+      "device": "CPU",
       "model_xml": "common/udfs/python/safety_gear/ref/frozen_inference_graph.xml",
       "model_bin": "common/udfs/python/safety_gear/ref/frozen_inference_graph.bin"
   }

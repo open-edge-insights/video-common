@@ -1,10 +1,10 @@
-# EIS Sample UDFs
+# `EIS Sample UDFs`
 
 EIS supports loading and executing of native(c++) and python UDFs. In here,
 one can find the sample native and python UDFs(User Defined Functions) to be used with EIS components
 like VideoIngestion and VideoAnalytics. The UDFs can modify the frame, drop the frame and generate meta-data from the frame.
 
-## UDF Configuration
+## `UDF Configuration`
 
 Below is the JSON schema for UDF json object configuration:
 
@@ -86,16 +86,16 @@ Example UDF configuration:
 }
 ```
 
-## UDF Writing Guide
+## `UDF Writing Guide`
 
 User can refer to [UDF Writing HOW-TO GUIDE](./HOWTO_GUIDE_FOR_WRITING_UDF.md) for an detailed explanation of process to write an custom UDF.
 
-## Sample UDFs
+## `Sample UDFs`
 
 > **NOTE**: The UDF config of these go as json objects in the `udfs` key in
 > the overall UDF configuration object
 
-### Native UDFs
+### `Native UDFs`
 
 * **Dummy UDF**
 
@@ -169,7 +169,7 @@ User can refer to [UDF Writing HOW-TO GUIDE](./HOWTO_GUIDE_FOR_WRITING_UDF.md) f
   ----
 
 
-### Python UDFs
+### `Python UDFs`
 
 > **NOTE**: Additional properties/keys other than `name` and `type` in the UDF
 > config are the parameters of the python UDF constructor
@@ -279,7 +279,7 @@ User can refer to [UDF Writing HOW-TO GUIDE](./HOWTO_GUIDE_FOR_WRITING_UDF.md) f
 
   ----
 
-## Chaining of UDFs
+## `Chaining of UDFs`
 
 One can chain multiple native/python UDFs in the `udfs` key. The way chaining
 works here is the output of the UDF listed first would send the modified frame
@@ -287,3 +287,14 @@ and metadata to the subsequent UDF and so on. One such classic example is having
 `pcb.pcb_filter` and `pcb.pcb_classifier` in VideoIngestion service config to
 do both the pre-processing and the classification logic without the need of
 VideoAnalytics service.
+
+### `Combination of UDFs with ingestors`
+
+| Ingestor | Chaining UDFs for pcb demo usecase | Chaining UDFs for worker safety gear usecase |
+|:--------:|:----------------------------------:|:--------------------------------------------:|
+| opencv/gstreamer | <br><br>Combination of resize (native), pcb filter (python) and<br>pcb classifier (python) can be used as <br>per the need.  | <br><br><br>Combination of resize (native) and worker safety gear classifier (native/python) <br> can be used as per the need.  |
+| gstreamer with GVA(Gstreamer Video Analytics) elements | Not Applicable | <br>Any post-processing UDFs can be used as all<br>the pre-processing and classification is <br>happening in the gstreamer pipeline itself |
+
+> **NOTE**: 
+> Dummy UDF can also be used for above use cases for testing chaining UDFs
+> feature but as such there is no value add as it's a do-nothing UDF.

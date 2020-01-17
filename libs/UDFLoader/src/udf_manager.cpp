@@ -93,7 +93,7 @@ UdfManager::UdfManager(
             config_value_destroy(udfs);
             throw "\"max_jobs\" must be an integer";
         }
-        max_workers = cfg_max_jobs->body.integer;
+        max_workers = cfg_max_workers->body.integer;
         config_value_destroy(cfg_max_workers);
     }
     LOG_INFO("max_workers: %d", max_workers);

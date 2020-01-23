@@ -102,9 +102,13 @@ SafetyDemo::SafetyDemo(config_t *config) : BaseUdf(config) {
         (std::string("GPU").compare(device_type->body.string) == 0) ||
         (std::string("HDDL").compare(device_type->body.string) == 0) ||
         (std::string("MYRIAD").compare(device_type->body.string) == 0)) {
+<<<<<<< HEAD
      #ifdef WITH_EXTENSIONS  
         ie.AddExtension(std::make_shared<Extensions::Cpu::CpuExtensions>(), "CPU");
      #endif
+=======
+        ie.AddExtension(std::make_shared<Extensions::Cpu::CpuExtensions>(), "CPU");
+>>>>>>> 10a7c875... video-common: Changes required for multi-repo
     } else {
         //TODO: Will add support for GPU and improvise the above "if" caluse.
         const char *err = "Not a supported device to run Analytics";
@@ -116,10 +120,20 @@ SafetyDemo::SafetyDemo(config_t *config) : BaseUdf(config) {
     LOG_DEBUG("Loading IR files: \n\txml: %s, \n\tbin: %s\n",\
                path_to_xml->body.string, path_to_bin->body.string);
 
+<<<<<<< HEAD
     InferenceEngine::Core core;
     /** Read network model **/
     m_network = core.ReadNetwork(path_to_xml->body.string, path_to_bin->body.string);
 
+=======
+    CNNNetReader networkReader;
+    /** Read network model **/
+    networkReader.ReadNetwork(path_to_xml->body.string);
+    /** Extract model name and load weights **/
+    networkReader.ReadWeights(path_to_bin->body.string);
+    m_network = networkReader.getNetwork();
+    
+>>>>>>> 10a7c875... video-common: Changes required for multi-repo
     LOG_DEBUG("COMPLETED scanning IR files....");
 
     // --------------------------- Prepare input blobs --------------------------------------------------
@@ -139,6 +153,11 @@ SafetyDemo::SafetyDemo(config_t *config) : BaseUdf(config) {
 
             m_input_info = item.second;
 
+<<<<<<< HEAD
+=======
+            LOG_DEBUG("Batch size is %lu\n", networkReader.getNetwork().getBatchSize());
+
+>>>>>>> 10a7c875... video-common: Changes required for multi-repo
             /** Creating first input blob **/
             Precision inputPrecision = Precision::U8;
             item.second->setPrecision(inputPrecision);

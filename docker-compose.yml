@@ -1,0 +1,33 @@
+version: '3.6'
+
+services:
+
+  ##----Start: EIS Video Images -- These Video images must be included for building any EIS video related servcies ----
+  
+  ## Define ia_video_common service
+  ia_video_common:
+    depends_on:
+    - ia_eisbase
+    build:
+      context: $PWD/../common/openvino
+      dockerfile: $PWD/../common/openvino/Dockerfile.videocommon
+      args:
+        EIS_VERSION: ${EIS_VERSION}
+        # set CMAKE_BUILD_TYPE value to "Debug" to generate debug symbols
+        CMAKE_BUILD_TYPE: Release
+    read_only: true
+    image: ${DOCKER_REGISTRY}ia_video_common:${EIS_VERSION}
+
+  ## Define ia_openvino_base service
+  ia_openvino_base:
+    depends_on:
+    - ia_video_common
+    build:
+      context: $PWD/../common/openvino
+      dockerfile: $PWD/../common/openvino/Dockerfile.openvino
+      args:
+        EIS_VERSION: ${EIS_VERSION}
+    read_only: true
+    image: ${DOCKER_REGISTRY}ia_openvino_base:${EIS_VERSION}
+
+  ##----End: EIS Video Images---- -- These Video images must be included for building any EIS video servcies ----

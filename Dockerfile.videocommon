@@ -1,0 +1,9 @@
+ARG EIS_VERSION
+ARG CMAKE_BUILD_TYPE
+FROM ia_eisbase:$EIS_VERSION
+
+WORKDIR ${GO_WORK_DIR}
+
+# Copying udfs & UDFLoader
+COPY udfs ./common/udfs
+COPY UDFLoader ./common/UDFLoader

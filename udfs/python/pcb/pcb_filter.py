@@ -23,6 +23,7 @@ import logging
 import cv2
 import numpy as np
 import time
+<<<<<<< HEAD
 from datetime import datetime
 from random import uniform
 
@@ -49,15 +50,37 @@ class Udf:
         :type n_total_px: int
         :param training_mode: flag to save image ROI's
                               for training (default false)
+=======
+
+"""Visual trigger for PCB anomaly detection.
+"""
+class Udf:
+    """PCB anomaly detection trigger object.
+    """
+    def __init__(self, n_right_px, n_left_px, n_total_px, training_mode):
+        """Udf constructor
+
+        :param n_right_px: minimum number of pixels to the right of PCB mask (default 1000)
+        :type n_right_px: int
+        :param n_left_px: minimum number of pixels to the left of the PCB mask (default 1000)
+        :type n_left_px: int
+        :param n_total_px: minimum number of pixels in the PCB mask (default 300000)
+        :type n_total_px: int
+        :param training_mode: flag to save image ROI's for training (default false)
+>>>>>>> 10a7c875... video-common: Changes required for multi-repo
         :type training_mode: bool
         """
         self.log = logging.getLogger('PCB_FILTER')
         self.log.debug("In ctor")
+<<<<<<< HEAD
         self.ratio = scale_ratio
+=======
+>>>>>>> 10a7c875... video-common: Changes required for multi-repo
         # Initialize background subtractor
         self.fgbg = cv2.createBackgroundSubtractorMOG2()
         # Total white pixel # on MOG applied
         # frame after morphological operations
+<<<<<<< HEAD
         self.n_total_px = n_total_px/(self.ratio*self.ratio)
         # Total white pixel # on left edge of MOG
         # applied frame after morphological operations
@@ -65,13 +88,25 @@ class Udf:
         # Total white pixel # on right edge of MOG
         # applied frame after morphological operations
         self.n_right_px = n_right_px/(self.ratio*self.ratio)
+=======
+        self.n_total_px = n_total_px
+        # Total white pixel # on left edge of MOG
+        # applied frame after morphological operations
+        self.n_left_px = n_left_px
+        # Total white pixel # on right edge of MOG
+        # applied frame after morphological operations
+        self.n_right_px = n_right_px
+>>>>>>> 10a7c875... video-common: Changes required for multi-repo
         # Flag to lock trigger from forwarding frames to classifier
         self.filter_lock = False
         self.training_mode = training_mode
         self.profiling = False
         self.count = 0
         self.lock_frame_count = 0
+<<<<<<< HEAD
         self.threads = 0
+=======
+>>>>>>> 10a7c875... video-common: Changes required for multi-repo
 
     def _check_frame(self, frame):
         """Determines if the given frame is the key frame of interest for
@@ -106,8 +141,13 @@ class Udf:
                     (n_right < self.n_right_px):
                 # Find the PCB contour
                 contours, hier = cv2.findContours(thresh.copy(),
+<<<<<<< HEAD
                                                   cv2.RETR_EXTERNAL,
                                                   cv2.CHAIN_APPROX_NONE)
+=======
+                                                      cv2.RETR_EXTERNAL,
+                                                      cv2.CHAIN_APPROX_NONE)
+>>>>>>> 10a7c875... video-common: Changes required for multi-repo
                 if len(contours) != 0:
                     # Contour with largest area would be bounding the PCB
                     c = max(contours, key=cv2.contourArea)
@@ -121,8 +161,12 @@ class Udf:
                     # PCB doesn't touch the left or right edge
                     # of frame and the center x lies within
                     if (x != 0) & ((x + w) != columns) & \
+<<<<<<< HEAD
                        ((columns/2 - (100/self.ratio)) <= cX and
                        cX <= (columns/2 + (100/self.ratio))):
+=======
+                       ((columns/2 - 100) <= cX <= (columns/2 + 100)):
+>>>>>>> 10a7c875... video-common: Changes required for multi-repo
                         return True
                     else:
                         return False
@@ -141,9 +185,12 @@ class Udf:
         """
         if self.profiling is True:
             metadata['ts_vi_filter_entry'] = time.time()*1000
+<<<<<<< HEAD
         frame_height, frame_width = frame.shape[:-1]
         resized_frame = cv2.resize(frame, (int(frame_width/self.ratio),
                                            int(frame_height/self.ratio)))
+=======
+>>>>>>> 10a7c875... video-common: Changes required for multi-repo
 
         if self.training_mode is True:
             self.count = self.count + 1
@@ -151,7 +198,11 @@ class Udf:
             return True, None, None
         else:
             if self.filter_lock is False:
+<<<<<<< HEAD
                 if self._check_frame(resized_frame):
+=======
+                if self._check_frame(frame):
+>>>>>>> 10a7c875... video-common: Changes required for multi-repo
                     self.filter_lock = True
                     # Re-initialize frame count during trigger lock to 0
                     self.lock_frame_count = 0
@@ -161,7 +212,11 @@ class Udf:
             else:
                 # Continue applying background subtractor to
                 # keep track of PCB positions
+<<<<<<< HEAD
                 self._check_frame(resized_frame)
+=======
+                self._check_frame(frame)
+>>>>>>> 10a7c875... video-common: Changes required for multi-repo
                 # Increment frame count during trigger lock phase
                 self.lock_frame_count = self.lock_frame_count + 1
                 if self.lock_frame_count == 7:

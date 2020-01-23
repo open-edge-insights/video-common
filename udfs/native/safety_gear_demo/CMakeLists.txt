@@ -35,6 +35,7 @@ target_include_directories(safety_gear_demo
         ${IE_EXTERNAL_DIR}
         ${IntelSafeString_INCLUDE}
     )
+<<<<<<< HEAD
 
 if(TARGET IE::ie_cpu_extension)
     add_definitions(-DWITH_EXTENSIONS)
@@ -44,6 +45,8 @@ if(TARGET IE::ie_cpu_extension)
     target_link_libraries(safety_gear_demo IE::ie_cpu_extension)
 endif()
 
+=======
+>>>>>>> 10a7c875... video-common: Changes required for multi-repo
 target_link_libraries(safety_gear_demo
     PUBLIC
         udfloader
@@ -52,6 +55,10 @@ target_link_libraries(safety_gear_demo
         ${EISUtils_LIBRARIES}
         ${OpenCV_LIBRARIES}
         ${InferenceEngine_LIBRARIES}
+<<<<<<< HEAD
+=======
+        IE::ie_cpu_extension
+>>>>>>> 10a7c875... video-common: Changes required for multi-repo
     PRIVATE
         ${IntelSafeString_LIBRARIES}
     )

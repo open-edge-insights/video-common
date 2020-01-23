@@ -11,7 +11,11 @@ UDFs(User Defined Function) are one of the cardinal feature of EIS framework. It
 
 The order in which the UDFs are defined in EIS configuration file is the order in which data will flow across them. Currently there is no support for demux/mux the data flow to/fro the UDFs.
 
+<<<<<<< HEAD
 All configs related to UDFs are to be mentioned in [etcd_pre_load.json](../../docker_setup/provision/config/etcd_pre_load.json) for it take effect in EIS framework. The UDF schema and description about keys/values in it presented in detail in the [UDF README](./README.md) file.
+=======
+All configs related to UDFs are to be mentioned in [etcd_pre_load.json](../../build/provision/config/etcd_pre_load.json) for it take effect in EIS framework. The UDF schema and description about keys/values in it presented in detail in the [UDF README](./README.md) file.
+>>>>>>> 10a7c875... video-common: Changes required for multi-repo
 
 ## **Steps for writing native(c++) UDFs**
 
@@ -41,7 +45,11 @@ There are three APIs defined semantically to add the pre/post processing logic. 
 
     ```
 
+<<<<<<< HEAD
     The **DummyUdf** in the above code snippet is the user defined class and the constructor of the class initialize the UDF's specific data-structure. The only argument passed to this function is **config** which depicts configuration details mentioned in the **[etcd_pre_load.json](../../docker_setup/provision/config/etcd_pre_load.json)** for the respective UDF. The API to consume **config** is defined in [Util README](../common/util/c/README.md)
+=======
+    The **DummyUdf** in the above code snippet is the user defined class and the constructor of the class initialize the UDF's specific data-structure. The only argument passed to this function is **config** which depicts configuration details mentioned in the **[etcd_pre_load.json](../../build/provision/config/etcd_pre_load.json)** for the respective UDF. The API to consume **config** is defined in [Util README](../common/util/c/README.md)
+>>>>>>> 10a7c875... video-common: Changes required for multi-repo
 
 * #### **PROCESSING THE ACTUAL DATA**
 
@@ -162,7 +170,11 @@ For reference user can find example UDFs code in below mentioned links
 
 For any UDF to be utilized by the EIS infrastructure, user must follow the below steps.
 
+<<<<<<< HEAD
 * Corresponding UDF entry must be added to the *[etcd_pre_load.json](../../docker_setup/provision/config/etcd_pre_load.json)* file. The UDF entry syntax is explained in detail in the following document [UDF README](./README.md)
+=======
+* Corresponding UDF entry must be added to the *[etcd_pre_load.json](../../build/provision/config/etcd_pre_load.json)* file. The UDF entry syntax is explained in detail in the following document [UDF README](./README.md)
+>>>>>>> 10a7c875... video-common: Changes required for multi-repo
 
 * All the python UDFs must be kept under [python udf directory](./python). Additionally the entry *name* key must have the file hierarchy till the file name as the name of the udf. For example:
 A file present in this path *./python/pcb/pcb_filter.py* must have the *name* field as *pcb.pcb_filter*.

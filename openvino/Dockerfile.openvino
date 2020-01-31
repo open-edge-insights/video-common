@@ -29,9 +29,35 @@ RUN mkdir neo && \
 RUN rm -rf ${HOME}/l_openvino_toolkit*
 
 # Myriad and HDDL requirements
-RUN apt install -y libboost-all-dev libusb-1.0-0 libssl1.0.0 libudev1 libjson-c3 udev    
-COPY 97-myriad-usbboot.rules .    
+RUN apt install -y libboost-all-dev libusb-1.0-0 libssl1.0.0 libudev1 libjson-c3 udev
+COPY 97-myriad-usbboot.rules .
 RUN echo "source /opt/intel/openvino/bin/setupvars.sh" >> ~/.bashrc && \
     cp 97-myriad-usbboot.rules /etc/udev/rules.d/ && \
     echo "udevadm control --reload-rules" >> ~/.bashrc && \
     echo "udevadm trigger" >> ~/.bashrc
+
+# Installing libusb to support Myriad without network mode set to host as per
+# (https://software.intel.com/en-us/forums/intel-distribution-of-openvino-toolkit/topic/844287)
+RUN apt-get install -y curl
+RUN apt-get install -y zip unzip
+RUN cd /opt/ && \
+    curl -L https://github.com/libusb/libusb/archive/v1.0.22.zip --output v1.0.22.zip && \
+    unzip v1.0.22.zip && \
+    cd libusb-1.0.22 && \
+    ./bootstrap.sh && \
+    ./configure --disable-udev --enable-shared && \
+    make -j$(nproc --ignore=2)
+
+RUN apt update && \
+    apt install -y libusb-1.0-0-dev
+
+WORKDIR /opt/libusb-1.0.22/libusb
+
+RUN mkdir -p '/usr/local/lib' && \
+    /bin/bash ../libtool   --mode=install /usr/bin/install -c   libusb-1.0.la '/usr/local/lib' && \
+    mkdir -p '/usr/local/include/libusb-1.0' &&  \
+    /usr/bin/install -c -m 644 libusb.h '/usr/local/include/libusb-1.0' && \
+    mkdir -p '/usr/local/lib/pkgconfig' && \
+    cd  /opt/libusb-1.0.22/ && \
+    /usr/bin/install -c -m 644 libusb-1.0.pc '/usr/local/lib/pkgconfig' && \
+    ldconfig

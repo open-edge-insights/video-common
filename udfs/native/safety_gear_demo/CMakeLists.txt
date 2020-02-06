@@ -35,6 +35,15 @@ target_include_directories(safety_gear_demo
         ${IE_EXTERNAL_DIR}
         ${IntelSafeString_INCLUDE}
     )
+
+if(TARGET IE::ie_cpu_extension)
+    add_definitions(-DWITH_EXTENSIONS)
+endif()
+
+if(TARGET IE::ie_cpu_extension)
+    target_link_libraries(safety_gear_demo IE::ie_cpu_extension)
+endif()
+
 target_link_libraries(safety_gear_demo
     PUBLIC
         udfloader
@@ -43,7 +52,6 @@ target_link_libraries(safety_gear_demo
         ${EISUtils_LIBRARIES}
         ${OpenCV_LIBRARIES}
         ${InferenceEngine_LIBRARIES}
-        IE::ie_cpu_extension
     PRIVATE
         ${IntelSafeString_LIBRARIES}
     )

@@ -27,8 +27,10 @@
 
 #include <eis/udf/base_udf.h>
 #include <inference_engine.hpp>
-#include <ext_list.hpp>
 
+#ifdef WITH_EXTENSIONS
+#include <ext_list.hpp>
+#endif
 
 using namespace InferenceEngine;
 using namespace eis::udf;

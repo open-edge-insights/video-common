@@ -102,7 +102,9 @@ SafetyDemo::SafetyDemo(config_t *config) : BaseUdf(config) {
         (std::string("GPU").compare(device_type->body.string) == 0) ||
         (std::string("HDDL").compare(device_type->body.string) == 0) ||
         (std::string("MYRIAD").compare(device_type->body.string) == 0)) {
+     #ifdef WITH_EXTENSIONS  
         ie.AddExtension(std::make_shared<Extensions::Cpu::CpuExtensions>(), "CPU");
+     #endif
     } else {
         //TODO: Will add support for GPU and improvise the above "if" caluse.
         const char *err = "Not a supported device to run Analytics";

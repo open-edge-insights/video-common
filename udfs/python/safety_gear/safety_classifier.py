@@ -68,9 +68,9 @@ class Udf:
 
         # Load OpenVINO model
         self.irPlugin = IEPlugin(device=self.device.upper(), plugin_dirs="")
-        if self.device == "CPU":
-            cpu_ext = os.environ["INTEL_OPENVINO_DIR"]+'/inference_engine/lib/intel64/libcpu_extension_sse4.so'
-            self.irPlugin.add_cpu_extension(cpu_ext)
+        # if self.device == "CPU":
+        #     cpu_ext = os.environ["INTEL_OPENVINO_DIR"]+'/inference_engine/lib/intel64/libcpu_extension_sse4.so'
+        #     self.irPlugin.add_cpu_extension(cpu_ext)
         self.neuralNet = IENetwork.from_ir(
             model=self.model_xml, weights=self.model_bin)
 

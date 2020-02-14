@@ -317,6 +317,10 @@ User can refer to [UDF Writing HOW-TO GUIDE](./HOWTO_GUIDE_FOR_WRITING_UDF.md) f
   ```
   ----
 
+## `Construction of Metadata in UDF`
+
+If EIS Visualizer/WebVisualizer clients are used for visualizing the classified frames, then please follow the metadata guidelines mentioned in **`Metadata Structure`** in [Visualizer](../../Visualizer/README.md) / [WebVisualizer](../../WebVisualizer/README.md) README respectively.
+
 ## `Chaining of UDFs`
 
 One can chain multiple native/python UDFs in the `udfs` key. The way chaining

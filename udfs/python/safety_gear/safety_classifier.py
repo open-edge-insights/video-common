@@ -82,8 +82,6 @@ class Udf:
 
         self.profiling = bool(strtobool(os.environ['PROFILING_MODE']))
 
-
-
     # Main classification algorithm
     def process(self, frame, metadata):
         """Reads the image frame from input queue for classifier
@@ -99,9 +97,9 @@ class Udf:
             reshape_frame = cv2.imdecode(reshape_frame, 1)
         else:
             reshape_frame = np.reshape(np_buffer, (int(metadata["height"]),
-                                                    int(metadata["width"]),
-                                                    int(metadata["channel"])
-                                                    ))
+                                                   int(metadata["width"]),
+                                                   int(metadata["channel"])
+                                                   ))
 
         defects = []
         d_info = []
@@ -127,13 +125,15 @@ class Udf:
             fps = str("%.2f" % (1/det_time))
 
             # Parse detection results of the current request
-            res = self.executionNet.requests[cur_request_id].outputs[self.outputBlob]
+            res = self.executionNet.requests[cur_request_id].outputs[
+                self.outputBlob]
 
             for obj in res[0][0]:
-        	# obj[1] representing the category of the object detection
-                # Draw only objects when probability more than specified threshold represented by obj[2]
+                # obj[1] representing the category of the object detection
+                # Draw only objects when probability more than specified
+                # threshold represented by obj[2]
 
-                if obj[1] == 1 and obj[2] > 0.57: 
+                if obj[1] == 1 and obj[2] > 0.57:
                     xmin = int(obj[3] * initial_w)
                     ymin = int(obj[4] * initial_h)
                     xmax = int(obj[5] * initial_w)
@@ -141,11 +141,12 @@ class Udf:
                     class_id = int(obj[1])
                     prob = obj[2]
 
-		    #defect type returned as string, no user_labels mapping required
-                    defects.append({'type': 'safety_helmet', 'tl':(xmin, ymin), 'br':(xmax, ymax)})
+                    # defect type returned as string, no user_labels mapping
+                    # required
+                    defects.append({'type': 'safety_helmet', 'tl': (xmin, ymin),
+                                    'br': (xmax, ymax)})
 
-
-                if obj[1] == 2 and obj[2] > 0.525: 
+                if obj[1] == 2 and obj[2] > 0.525:
                     xmin = int(obj[3] * initial_w)
                     ymin = int(obj[4] * initial_h)
                     xmax = int(obj[5] * initial_w)
@@ -153,8 +154,10 @@ class Udf:
                     class_id = int(obj[1])
                     prob = obj[2]
 
-		    #defect type returned as string, no user_labels mapping required
-                    defects.append({'type': 'safety_jacket', 'tl':(xmin, ymin), 'br':(xmax, ymax)})
+                    # defect type returned as string, no user_labels mapping
+                    # required
+                    defects.append({'type': 'safety_jacket', 'tl': (xmin, ymin),
+                                    'br': (xmax, ymax)})
 
                 if obj[1] == 3 and obj[2] > 0.3:
                     xmin = int(obj[3] * initial_w)
@@ -164,9 +167,10 @@ class Udf:
                     class_id = int(obj[1])
                     prob = obj[2]
 
-		    #defect type returned as string, no user_labels mapping required
-                    defects.append({'type': 'safe', 'tl':(xmin, ymin), 'br':(xmax, ymax)})
-
+                    # defect type returned as string, no user_labels mapping
+                    # required
+                    defects.append({'type': 'safe', 'tl': (xmin, ymin),
+                                    'br': (xmax, ymax)})
 
                 if obj[1] == 4 and obj[2] > 0.35:
                     xmin = int(obj[3] * initial_w)
@@ -176,9 +180,10 @@ class Udf:
                     class_id = int(obj[1])
                     prob = obj[2]
 
-		    #defect type returned as string, no user_labels mapping required
-                    defects.append({'type': 'violation', 'tl':(xmin, ymin), 'br':(xmax, ymax)})
-
+                    # defect type returned as string, no user_labels mapping
+                    # required
+                    defects.append({'type': 'violation', 'tl': (xmin, ymin),
+                                    'br': (xmax, ymax)})
 
         metadata["defects"] = defects
 

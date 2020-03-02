@@ -32,6 +32,7 @@
 #include <eis/utils/config.h>
 #include <eis/utils/thread_safe_queue.h>
 #include <eis/utils/thread_pool.h>
+#include <eis/utils/profiling.h>
 
 #include "eis/udf/udf_handle.h"
 #include "eis/udf/frame.h"
@@ -70,6 +71,15 @@ private:
     // Encoding details
     EncodeType m_enc_type;
     int m_enc_lvl;
+
+    // Profiling handle
+    utils::Profiling* m_profile;
+
+    // UDF timestamp variable
+    char* m_udf_entry;
+
+    // UDF timestamp variable
+    char* m_udf_exit;
 
     /**
      * @c UDFManager private thread run method.

@@ -1,6 +1,8 @@
 ARG EIS_VERSION
 FROM ia_eisbase:$EIS_VERSION
 
+ARG FPGA_ENABLE
+
 # OpenVINO install
 ENV HOME /EIS
 RUN apt-get update && \
@@ -61,3 +63,14 @@ RUN mkdir -p '/usr/local/lib' && \
     cd  /opt/libusb-1.0.22/ && \
     /usr/bin/install -c -m 644 libusb-1.0.pc '/usr/local/lib/pkgconfig' && \
     ldconfig
+
+# FPGA drivers
+COPY install_openvino_fpga.sh ${HOME}/
+
+COPY 51-usbblaster.rules /etc/udev/rules/51-usbblaster.rules
+
+COPY fpga_env.sh ${HOME}/
+
+RUN chmod +x ${HOME}/install_openvino_fpga.sh ${HOME}/fpga_env.sh
+
+RUN if [ "${FPGA_ENABLE}" = "enable" ]; then cd ${HOME}; ./install_openvino_fpga.sh; else echo "Continuing with Non-FPGA setup"; fi

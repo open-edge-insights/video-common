@@ -50,7 +50,9 @@ Below is the JSON schema for UDF json object configuration:
                 "CPU",
                 "GPU",
                 "HDDL",
-                "MYRIAD"
+                "MYRIAD",
+                "HETERO:FPGA,CPU",
+                "HETERO:FPGA,GPU"
               ]
             }
           },
@@ -237,6 +239,12 @@ User can refer to [UDF Writing HOW-TO GUIDE](./HOWTO_GUIDE_FOR_WRITING_UDF.md) f
   }
   ```
 
+----
+  **NOTE**:
+  The above config works for both "CPU", "GPU", "HETERO:FPGA,CPU" and "HETERO:FPGA,GPU" devices
+  after setting appropriate `device` value. Please set the "device" value appropriately based on
+  the device used for inferencing.
+
 * **Safety Gear Demo UDF**
 
   Acceps the frame, detects safety gear such as safety helmet, safety jacket in
@@ -299,11 +307,11 @@ User can refer to [UDF Writing HOW-TO GUIDE](./HOWTO_GUIDE_FOR_WRITING_UDF.md) f
 
   ----
   **NOTE**:
-  The above config works for both "CPU" and "GPU" devices after setting
-  appropriate `device` value. If the device in the above config is "HDDL" or
-  "MYRIAD", please use the below config where the model_xml and model_bin
-  files are different and should be of FP16 based. Please set the "device" value appropriately based on
-  the device used for inferencing.
+  The above config works for both "CPU" and "GPU" devices after setting appropriate `device` value.
+  If the device in the above config is "HDDL" or "MYRIAD", please use the below config where the
+  model_xml and model_bin files are different and should be of FP16 based. If the device is
+  "HETERO:FPGA,CPU" or "HETERO:FPGA,GPU", both FP32 and FP16 model_xml and model_bin files will work.
+  Please set the "device" value appropriately based on the device used for inferencing.
 
   ```javascript
   {

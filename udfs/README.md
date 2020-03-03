@@ -208,6 +208,7 @@ User can refer to [UDF Writing HOW-TO GUIDE](./HOWTO_GUIDE_FOR_WRITING_UDF.md) f
       "name": "pcb.pcb_filter",
       "type": "python",
       "training_mode": "false",
+      "scale_ratio": 4,
       "n_total_px": 300000,
       "n_left_px": 1000,
       "n_right_px": 1000

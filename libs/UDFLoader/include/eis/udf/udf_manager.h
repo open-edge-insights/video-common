@@ -76,6 +76,16 @@ private:
      */
     void run();
 
+    /**
+     * Private @c UdfManager copy constructor.
+     *
+     * \note The constructor is copied, because this object is not supposed to
+     *      be copied. It is important to note that this only blocks callers
+     *      from passing the @c UdfManager by reference rather than as a
+     *      pointer.
+     */
+    UdfManager(const UdfManager& src);
+
 public:
     /**
      * Constructor

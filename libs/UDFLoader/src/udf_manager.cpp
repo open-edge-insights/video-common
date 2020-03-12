@@ -144,6 +144,11 @@ UdfManager::UdfManager(
     config_value_destroy(udfs);
 }
 
+UdfManager::UdfManager(const UdfManager& src) {
+    // This method does nothing, because the object is not supposed to be
+    // copied
+}
+
 UdfManager::~UdfManager() {
     this->stop();
     if(m_th != NULL) {

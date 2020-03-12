@@ -116,6 +116,15 @@ private:
         delete frame;
     };
 
+    /**
+     * Private @c Frame copy constructor.
+     *
+     * \note The constructor is copied, because this object is not supposed to
+     *      be copied. It is important to note that this only blocks callers
+     *      from passing the @c Frame by reference rather than as a pointer.
+     */
+    Frame(const Frame& src);
+
 public:
     /**
      * Constructor

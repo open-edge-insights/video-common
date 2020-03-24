@@ -1,4 +1,4 @@
-# Copyright (c) 2019 Intel Corporation.
+# Copyright (c) 2020 Intel Corporation.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -66,3 +66,4 @@ set(CMAKE_INSTALL_LIBDIR "${CMAKE_INSTALL_PREFIX}/lib/udfs/")
 add_subdirectory(dummy/)
 add_subdirectory(safety_gear_demo/)
 add_subdirectory(resize/)
+add_subdirectory(fps/)

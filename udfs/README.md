@@ -128,6 +128,36 @@ User can refer to [UDF Writing HOW-TO GUIDE](./HOWTO_GUIDE_FOR_WRITING_UDF.md) f
   }
   ```
 
+* **FPS UDF**
+
+  FPS udf can be used to measure the total number of frames received every second. It can be used in VideoIngestion and VideoAnalytics
+  application by adding the below configuration in the udf configuration. It can also be chained with other udfs in which case the FPS result will be affected depending on the other udfs used.
+
+  `UDF config`:
+
+  ```javascript
+  {
+      "name": "fps",
+      "type": "native"
+  }
+  ```
+
+  `Config for chaining fps udf with other udfs`:
+
+  ```javascript
+  "udfs": [{
+	      "name": "dummy",
+	      "type": "native"
+	  },
+	  {
+	      "name": "fps",
+	      "type": "native"
+	  }]
+  ```
+
+  > **Note** The fps results will be logged in `DEBUG` LOG_LEVEL, added to the metadata with the AppName as the key and will be
+  > displayed in the visualizer.
+
 * **Safety Gear Demo UDF**
 
   Acceps the frame, detects safety gear such as safety helmet, safety jacket in
@@ -302,7 +332,7 @@ User can refer to [UDF Writing HOW-TO GUIDE](./HOWTO_GUIDE_FOR_WRITING_UDF.md) f
       "device": "CPU",
       "labels_file_path": "common/udfs/python/sample_classification/ref/squeezenet1.1.labels",
       "model_xml": "common/udfs/python/sample_classification/ref/squeezenet1.1_FP32.xml",
-      "model_bin": "common/udfs/python/sample_classification/ref/squeezenet1.1_FP32.bin",
+      "model_bin": "common/udfs/python/sample_classification/ref/squeezenet1.1_FP32.bin"
   }
   ```
 

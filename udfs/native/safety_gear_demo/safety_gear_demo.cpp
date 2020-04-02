@@ -116,13 +116,10 @@ SafetyDemo::SafetyDemo(config_t *config) : BaseUdf(config) {
     LOG_DEBUG("Loading IR files: \n\txml: %s, \n\tbin: %s\n",\
                path_to_xml->body.string, path_to_bin->body.string);
 
-    CNNNetReader networkReader;
+    InferenceEngine::Core core;
     /** Read network model **/
-    networkReader.ReadNetwork(path_to_xml->body.string);
-    /** Extract model name and load weights **/
-    networkReader.ReadWeights(path_to_bin->body.string);
-    m_network = networkReader.getNetwork();
-    
+    m_network = core.ReadNetwork(path_to_xml->body.string, path_to_bin->body.string);
+
     LOG_DEBUG("COMPLETED scanning IR files....");
 
     // --------------------------- Prepare input blobs --------------------------------------------------
@@ -141,8 +138,6 @@ SafetyDemo::SafetyDemo(config_t *config) : BaseUdf(config) {
             m_image_input_name = item.first;
 
             m_input_info = item.second;
-
-            LOG_DEBUG("Batch size is %lu\n", networkReader.getNetwork().getBatchSize());
 
             /** Creating first input blob **/
             Precision inputPrecision = Precision::U8;

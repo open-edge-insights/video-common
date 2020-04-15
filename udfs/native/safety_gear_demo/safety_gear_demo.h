@@ -27,15 +27,10 @@
 
 #include <eis/udf/base_udf.h>
 #include <inference_engine.hpp>
-<<<<<<< HEAD
 
 #ifdef WITH_EXTENSIONS
 #include <ext_list.hpp>
 #endif
-=======
-#include <ext_list.hpp>
-
->>>>>>> 10a7c875... video-common: Changes required for multi-repo
 
 using namespace InferenceEngine;
 using namespace eis::udf;

@@ -50,13 +50,9 @@ Below is the JSON schema for UDF json object configuration:
                 "CPU",
                 "GPU",
                 "HDDL",
-<<<<<<< HEAD
                 "MYRIAD",
                 "HETERO:FPGA,CPU",
                 "HETERO:FPGA,GPU"
-=======
-                "MYRIAD"
->>>>>>> 10a7c875... video-common: Changes required for multi-repo
               ]
             }
           },
@@ -132,7 +128,6 @@ User can refer to [UDF Writing HOW-TO GUIDE](./HOWTO_GUIDE_FOR_WRITING_UDF.md) f
   }
   ```
 
-<<<<<<< HEAD
 * **FPS UDF**
 
   FPS udf can be used to measure the total number of frames received every second. It can be used in VideoIngestion and VideoAnalytics
@@ -163,8 +158,6 @@ User can refer to [UDF Writing HOW-TO GUIDE](./HOWTO_GUIDE_FOR_WRITING_UDF.md) f
   > **Note** The fps results will be logged in `DEBUG` LOG_LEVEL, added to the metadata with the AppName as the key and will be
   > displayed in the visualizer.
 
-=======
->>>>>>> 10a7c875... video-common: Changes required for multi-repo
 * **Safety Gear Demo UDF**
 
   Acceps the frame, detects safety gear such as safety helmet, safety jacket in
@@ -245,10 +238,7 @@ User can refer to [UDF Writing HOW-TO GUIDE](./HOWTO_GUIDE_FOR_WRITING_UDF.md) f
       "name": "pcb.pcb_filter",
       "type": "python",
       "training_mode": "false",
-<<<<<<< HEAD
       "scale_ratio": 4,
-=======
->>>>>>> 10a7c875... video-common: Changes required for multi-repo
       "n_total_px": 300000,
       "n_left_px": 1000,
       "n_right_px": 1000
@@ -280,15 +270,12 @@ User can refer to [UDF Writing HOW-TO GUIDE](./HOWTO_GUIDE_FOR_WRITING_UDF.md) f
   }
   ```
 
-<<<<<<< HEAD
 ----
   **NOTE**:
   The above config works for both "CPU", "GPU", "HETERO:FPGA,CPU" and "HETERO:FPGA,GPU" devices
   after setting appropriate `device` value. Please set the "device" value appropriately based on
   the device used for inferencing.
 
-=======
->>>>>>> 10a7c875... video-common: Changes required for multi-repo
 * **Safety Gear Demo UDF**
 
   Acceps the frame, detects safety gear such as safety helmet, safety jacket in
@@ -328,7 +315,7 @@ User can refer to [UDF Writing HOW-TO GUIDE](./HOWTO_GUIDE_FOR_WRITING_UDF.md) f
       "model_bin": "common/udfs/python/safety_gear/ref/frozen_inference_graph_fp16.bin"
   }
   ```
-<<<<<<< HEAD
+
 * **Multi-Class Classification UDF**
 
   This UDF accepts the frame, and classifies object in frame into different cataegories. Additionally it shows probability of other classes too with its confidence value. This classification doesn't need any specialized image preprocessing UDF.
@@ -374,15 +361,10 @@ User can refer to [UDF Writing HOW-TO GUIDE](./HOWTO_GUIDE_FOR_WRITING_UDF.md) f
 
 If EIS Visualizer/WebVisualizer clients are used for visualizing the classified frames, then please follow the metadata guidelines mentioned in **`Metadata Structure`** in [Visualizer](../../Visualizer/README.md) / [WebVisualizer](../../WebVisualizer/README.md) README respectively.
 
-**Note**: User has to make sure that the data with in meta data should be of type list, tuple, dict or primitive data types (int, float, string or bool). Also, data with in list, tuple, dict 
+**Note**: User has to make sure that the data with in meta data should be of type list, tuple, dict or primitive data types (int, float, string or bool). Also, data with in list, tuple, dict
 must contain only primitive data types.
 Eg: Any data is of type "numpy.float" or "numpy.int" should be type-casted to float and int respectively.
 
-=======
-
-  ----
-
->>>>>>> 10a7c875... video-common: Changes required for multi-repo
 ## `Chaining of UDFs`
 
 One can chain multiple native/python UDFs in the `udfs` key. The way chaining
@@ -399,10 +381,6 @@ VideoAnalytics service.
 | opencv/gstreamer | <br><br>Combination of resize (native), pcb filter (python) and<br>pcb classifier (python) can be used as <br>per the need.  | <br><br><br>Combination of resize (native) and worker safety gear classifier (native/python) <br> can be used as per the need.  |
 | gstreamer with GVA(Gstreamer Video Analytics) elements | Not Applicable | <br>Any post-processing UDFs can be used as all<br>the pre-processing and classification is <br>happening in the gstreamer pipeline itself |
 
-> **NOTE**: 
+> **NOTE**:
 > Dummy UDF can also be used for above use cases for testing chaining UDFs
-<<<<<<< HEAD
 > feature but as such there is no value add as it's a do-nothing UDF.
-=======
-> feature but as such there is no value add as it's a do-nothing UDF.
->>>>>>> 10a7c875... video-common: Changes required for multi-repo

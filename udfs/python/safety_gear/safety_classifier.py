@@ -68,9 +68,6 @@ class Udf:
 
         # Load OpenVINO model
         self.irPlugin = IEPlugin(device=self.device.upper(), plugin_dirs="")
-        # if self.device == "CPU":
-        #     cpu_ext = os.environ["INTEL_OPENVINO_DIR"]+'/inference_engine/lib/intel64/libcpu_extension_sse4.so'
-        #     self.irPlugin.add_cpu_extension(cpu_ext)
         self.neuralNet = IENetwork.from_ir(
             model=self.model_xml, weights=self.model_bin)
 
@@ -89,17 +86,6 @@ class Udf:
         """
         if self.profiling is True:
             metadata['ts_va_classify_entry'] = time.time()*1000
-
-        # Convert the buffer into np array.
-        np_buffer = np.frombuffer(frame, dtype=np.uint8)
-        if 'encoding_type' and 'encoding_level' in metadata:
-            reshape_frame = np.reshape(np_buffer, (np_buffer.shape))
-            reshape_frame = cv2.imdecode(reshape_frame, 1)
-        else:
-            reshape_frame = np.reshape(np_buffer, (int(metadata["height"]),
-                                                   int(metadata["width"]),
-                                                   int(metadata["channel"])
-                                                   ))
 
         defects = []
         d_info = []
@@ -143,7 +129,8 @@ class Udf:
 
                     # defect type returned as string, no user_labels mapping
                     # required
-                    defects.append({'type': 'safety_helmet', 'tl': (xmin, ymin),
+                    defects.append({'type': 'safety_helmet',
+                                    'tl': (xmin, ymin),
                                     'br': (xmax, ymax)})
 
                 if obj[1] == 2 and obj[2] > 0.525:
@@ -156,7 +143,8 @@ class Udf:
 
                     # defect type returned as string, no user_labels mapping
                     # required
-                    defects.append({'type': 'safety_jacket', 'tl': (xmin, ymin),
+                    defects.append({'type': 'safety_jacket',
+                                    'tl': (xmin, ymin),
                                     'br': (xmax, ymax)})
 
                 if obj[1] == 3 and obj[2] > 0.3:

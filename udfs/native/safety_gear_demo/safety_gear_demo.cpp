@@ -167,15 +167,15 @@ SafetyDemo::SafetyDemo(config_t *config) : BaseUdf(config) {
 
     OutputsDataMap outputsInfo(m_network.getOutputsInfo());
 
-    //std::string outputName;
-    DataPtr outputInfo;
-    for (const auto &out : outputsInfo) {
-        if (out.second->getCreatorLayer().lock()->type == "DetectionOutput")
-        {
-            m_output_name = out.first;
-            outputInfo = out.second;
-        }
+    if (outputsInfo.size() != 1) {
+        const char *err = "This application only supports networks with one output";
+        LOG_ERROR("%s", err);
+        throw err;
     }
+
+    DataPtr outputInfo;
+    m_output_name = outputsInfo.begin()->first;
+    outputInfo = outputsInfo.begin()->second;
 
     if (outputInfo == nullptr) {
         const char *err = "Can't find a DetectionOutput layer in the topology";

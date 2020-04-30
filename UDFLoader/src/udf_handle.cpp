@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Intel Corporation.
+// Copyright (c) 2020 Intel Corporation.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to
@@ -59,4 +59,20 @@ bool UdfHandle::initialize(config_t* config) {
 
 std::string UdfHandle::get_name() {
     return m_name;
+}
+
+std::string UdfHandle::get_prof_entry_key() {
+    return m_prof_entry_key;
+}
+
+std::string UdfHandle::get_prof_exit_key() {
+    return m_prof_exit_key;
+}
+
+void UdfHandle::set_prof_entry_key(std::string value) {
+    m_prof_entry_key = value;
+}
+
+void UdfHandle::set_prof_exit_key(std::string value) {
+    m_prof_exit_key = value;
 }

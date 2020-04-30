@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Intel Corporation.
+// Copyright (c) 2020 Intel Corporation.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to
@@ -68,18 +68,12 @@ private:
     // UDF Handles
     std::vector<UdfHandle*> m_udfs;
 
-    // Encoding details
-    EncodeType m_enc_type;
-    int m_enc_lvl;
-
     // Profiling handle
     utils::Profiling* m_profile;
 
-    // UDF timestamp variable
-    char* m_udf_entry;
-
-    // UDF timestamp variable
-    char* m_udf_exit;
+    // Encoding details
+    EncodeType m_enc_type;
+    int m_enc_lvl;
 
     /**
      * @c UDFManager private thread run method.

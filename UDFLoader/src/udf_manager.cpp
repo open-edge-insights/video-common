@@ -25,6 +25,8 @@
 
 #include <chrono>
 #include <eis/utils/logger.h>
+#include <safe_lib.h>
+#include <cstring>
 #include "eis/udf/udf_manager.h"
 #include "eis/udf/frame.h"
 #include "eis/udf/loader.h"
@@ -141,7 +143,63 @@ UdfManager::UdfManager(
         m_udfs.push_back(handle);
     }
 
+    // Initializing profiling
+    this->m_profile = new Profiling();
+    if(this->m_profile->is_profiling_enabled()) {
+
+        // TODO: Alter this to profile for multiple UDFs
+        // UDF chaining scenarios
+        config_value_t* cfg_obj = config_value_array_get(udfs, 0);
+        if(cfg_obj == NULL) {
+            throw "Failed to get configuration array element";
+        }
+
+        config_value_t* name = config_value_object_get(cfg_obj, "name");
+        if(name == NULL) {
+            throw "Failed to get UDF name";
+        }
+        if(name->type != CVT_STRING) {
+            throw "UDF name must be a string";
+        }
+
+        // Setting timestamp key for udf entry
+        size_t dest_len = strlen(name->body.string)+ strlen("_entry") + 1;
+        int ret = 0;
+
+        this->m_udf_entry = new char[dest_len];        
+        if(this->m_udf_entry == NULL) {
+            throw "malloc failed for m_udf_entry";
+        }
+        ret = strcpy_s(this->m_udf_entry, dest_len, name->body.string);
+        if(ret != 0) {
+            throw "strcpy_s failed for m_udf_entry";
+        }
+        ret = strcat_s(this->m_udf_entry, dest_len, "_entry");
+        if(ret != 0) {
+            throw "strcat_s failed for m_udf_entry";
+        }
+
+        // Setting timestamp key for udf exit
+        this->m_udf_exit = new char[dest_len];
+        if(this->m_udf_exit == NULL) {
+            throw "malloc failed for m_udf_exit";
+        }
+        ret = strcpy_s(this->m_udf_exit, dest_len, name->body.string);
+        if(ret != 0) {
+            throw "strcpy_s failed for m_udf_exit";
+        }
+        ret = strcat_s(this->m_udf_exit, dest_len, "_exit");
+        if(ret != 0) {
+            throw "strcat_s failed for m_udf_exit";
+        }
+
+    }
     config_value_destroy(udfs);
+}
+
+UdfManager::UdfManager(const UdfManager& src) {
+    // This method does nothing, because the object is not supposed to be
+    // copied
 }
 
 UdfManager::~UdfManager() {
@@ -152,32 +210,45 @@ UdfManager::~UdfManager() {
 
     delete m_pool;
 
-    LOG_DEBUG("Deleting all handles");
+    LOG_DEBUG_0("Deleting all handles");
     for(auto handle : m_udfs) {
         delete handle;
     }
 
-    LOG_DEBUG("Clearing udf input queue");
+    LOG_DEBUG_0("Freeing UDF timestamp related variables");
+    if(m_udf_entry != NULL) {
+        delete m_udf_entry;
+    }
+
+    if(m_udf_exit != NULL) {
+        delete m_udf_exit;
+    }
+
+    if(m_profile) {
+        delete m_profile;
+    }
+
+    LOG_DEBUG_0("Clearing udf input queue");
     // Clear queues and delete them
     while(!m_udf_input_queue->empty()) {
         Frame* frame = m_udf_input_queue->front();
         m_udf_input_queue->pop();
         delete frame;
     }
-    LOG_DEBUG("Cleared udf input queue");
+    LOG_DEBUG_0("Cleared udf input queue");
     delete m_udf_input_queue;
 
-    LOG_DEBUG("Clearing udf output queue");
+    LOG_DEBUG_0("Clearing udf output queue");
     while(!m_udf_output_queue->empty()) {
         Frame* frame = m_udf_output_queue->front();
         m_udf_output_queue->pop();
         delete frame;
     }
-    LOG_DEBUG("Cleared udf output queue");
+    LOG_DEBUG_0("Cleared udf output queue");
     delete m_udf_output_queue;
 
     config_destroy(m_config);
-    LOG_DEBUG("Done with ~UdfManager()");
+    LOG_DEBUG_0("Done with ~UdfManager()");
 }
 
 /**
@@ -280,6 +351,14 @@ void UdfManager::run() {
             Frame* frame = m_udf_input_queue->front();
             m_udf_input_queue->pop();
 
+            if(this->m_profile->is_profiling_enabled()) {
+                msg_envelope_t* meta_data = frame->get_meta_data();
+
+                // Profiling start
+                DO_PROFILING(this->m_profile, meta_data, this->m_udf_entry);
+                // Profiling end
+            }
+
             // Note: the encoding level is only changed on the frame if the
             // UDF Manager has a different encoding
             EncodeType enc_type = frame->get_encode_type();
@@ -292,13 +371,21 @@ void UdfManager::run() {
             // Create the worker to execute the UDF pipeline on the given frame
             UdfWorker* ctx = new UdfWorker(
                     frame, &m_udfs, m_udf_output_queue);
-
+            
             LOG_DEBUG_0("Submitting job to job pool")
             JobHandle* job_handle = NULL;
 
             // Submit the job to run in the thread pool
             job_handle = m_pool->submit(&UdfWorker::run, ctx, free_udf_worker);
             LOG_DEBUG_0("Done submitting the job")
+
+            if(this->m_profile->is_profiling_enabled()) {
+                msg_envelope_t* meta_data = frame->get_meta_data();
+
+                // Profiling start
+                DO_PROFILING(this->m_profile, meta_data, this->m_udf_exit);
+                // Profiling end
+            }
 
             // The job handle is not actually needed in this use of the
             // thread pool

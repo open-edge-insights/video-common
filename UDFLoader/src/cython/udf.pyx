@@ -101,21 +101,23 @@ cdef extern from "eis/msgbus/msg_envelope.h":
         MSG_ERR_RECV_EMPTY = 5
         MSG_ERR_ALREADY_RECEIVED = 6
         MSG_ERR_NO_SUCH_SERVICE = 7
-        MSG_ERR_SERVICE_ALREADY_EXIST = 8,
+        MSG_ERR_SERVICE_ALREADY_EXIST = 8
         MSG_ERR_BUS_CONTEXT_DESTROYED = 9
-        MSG_ERR_INIT_FAILED = 10
-        MSG_ERR_NO_MEMORY = 11
-        MSG_ERR_ELEM_NOT_EXIST = 12
-        MSG_ERR_ELEM_ALREADY_EXISTS = 13
-        MSG_ERR_ELEM_BLOB_ALREADY_SET = 14
-        MSG_ERR_ELEM_BLOB_MALFORMED = 15
-        MSG_RECV_NO_MESSAGE = 16
-        MSG_ERR_SERVICE_INIT_FAILED = 17
-        MSG_ERR_REQ_FAILED = 18
-        MSG_ERR_EINTR = 19
-        MSG_ERR_MSG_SEND_FAILED = 20
-        MSG_ERR_DISCONNECTED = 21
-        MSG_ERR_AUTH_FAILED = 22
+        MSG_ERR_NO_MEMORY = 10
+        MSG_ERR_ELEM_NOT_EXIST = 11
+        MSG_ERR_ELEM_ALREADY_EXISTS = 12
+        MSG_ERR_ELEM_BLOB_ALREADY_SET = 13
+        MSG_ERR_ELEM_BLOB_MALFORMED = 14
+        MSG_RECV_NO_MESSAGE = 15
+        MSG_ERR_SERVICE_INIT_FAILED = 16
+        MSG_ERR_REQ_FAILED = 17
+        MSG_ERR_EINTR = 18
+        MSG_ERR_MSG_SEND_FAILED = 19
+        MSG_ERR_DISCONNECTED = 20
+        MSG_ERR_AUTH_FAILED = 21
+        MSG_ERR_ELEM_OBJ = 22
+        MSG_ERR_ELEM_ARR = 23
+        MSG_ERR_DESERIALIZE_FAILED = 24
         MSG_ERR_UNKNOWN = 255
 
     ctypedef struct owned_blob_t:
@@ -207,7 +209,7 @@ cdef extern from "eis/msgbus/msg_envelope.h":
             msg_envelope_t* env, msg_envelope_serialized_part_t** parts)
     msgbus_ret_t msgbus_msg_envelope_deserialize(
             content_type_t ct, msg_envelope_serialized_part_t* data,
-            size_t num_parts, msg_envelope_t** env)
+            size_t num_parts, const char* name, msg_envelope_t** env)
     msgbus_ret_t msgbus_msg_envelope_serialize_parts_new(
             int num_parts, msg_envelope_serialized_part_t** parts)
     void msgbus_msg_envelope_serialize_destroy(

@@ -51,6 +51,10 @@ if (CMAKE_VERSION VERSION_LESS 2.8.11)
     include_directories("${gtest_SOURCE_DIR}/include")
 endif()
 
+# Copying over source.sh file to setup Python path
+file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/source.sh"
+     DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
+
 # Now simply link against gtest or gtest_main as needed. Eg
 file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/test_config.json"
      DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")

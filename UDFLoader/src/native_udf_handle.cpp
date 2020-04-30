@@ -44,6 +44,13 @@ NativeUdfHandle::NativeUdfHandle(std::string name, int max_workers) :
     m_udf = NULL;
 }
 
+NativeUdfHandle::NativeUdfHandle(const NativeUdfHandle& src) :
+    UdfHandle(NULL, 0)
+{
+    // This method does nothing, because the object is not supposed to be
+    // copied
+}
+
 NativeUdfHandle::~NativeUdfHandle() {
     LOG_DEBUG_0("Destroying Native UDF");
 

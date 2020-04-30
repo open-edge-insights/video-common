@@ -240,6 +240,11 @@ Frame::Frame(msg_envelope_t* msg) :
     }
 }
 
+Frame::Frame(const Frame& src) {
+    // This method does nothing, because the object is not supposed to be
+    // copied
+}
+
 Frame::~Frame() {
     if(!m_serialized.load()) {
         // Free the underlying frame if the m_free_frame method is set

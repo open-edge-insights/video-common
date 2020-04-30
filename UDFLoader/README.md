@@ -63,6 +63,12 @@ Run the following commands from the `build/tests` folder to cover the unit
 tests.
 
 ```sh
+# First, source the source.sh file to setup the PYTHONPATH environment
+$ source ./source.sh
+
+# Execute frame abstraction unit tests
 $ ./frame-tests
+
+# Execute UDF loader unit tests
 $ ./udfloader-tests
 ```

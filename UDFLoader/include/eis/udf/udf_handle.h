@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Intel Corporation.
+// Copyright (c) 2020 Intel Corporation.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to
@@ -49,6 +49,12 @@ private:
 
     // Max number of worker threads for executing the UDF
     int m_max_workers;
+
+    // Profiling start timestamp key
+    std::string m_prof_entry_key;
+
+    // Profiling end timestamp key
+    std::string m_prof_exit_key;
 
 protected:
     // UDF Configuration
@@ -106,6 +112,34 @@ public:
      * @return Name of the UDF
      */
     std::string get_name();
+
+    /**
+     * Get profiling start timestamp key
+     *
+     * @return profiling start timestamp key
+     */
+    std::string get_prof_entry_key();
+
+    /**
+     * Get profiling end timestamp key
+     *
+     * @return profiling end timestamp key
+     */
+    std::string get_prof_exit_key();
+
+    /**
+     * Set profiling start timestamp key
+     *
+     * @param value - Value to be set
+     */
+    void set_prof_entry_key(std::string value);
+
+    /**
+     * Set profiling end timestamp key
+     *
+     * @param value - Value to be set
+     */
+    void set_prof_exit_key(std::string value);
 };
 
 } // udf

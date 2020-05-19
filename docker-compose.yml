@@ -13,6 +13,7 @@ services:
       dockerfile: $PWD/../common/video/Dockerfile.videocommon
       args:
         EIS_VERSION: ${EIS_VERSION}
+        DOCKER_REGISTRY: ${DOCKER_REGISTRY}
         # set CMAKE_BUILD_TYPE value to "Debug" to generate debug symbols
         CMAKE_BUILD_TYPE: Release
     read_only: true
@@ -28,6 +29,7 @@ services:
       args:
           EIS_VERSION: ${EIS_VERSION}
           FPGA_ENABLE: "disable"
+          DOCKER_REGISTRY: ${DOCKER_REGISTRY}
     read_only: true
     image: ${DOCKER_REGISTRY}ia_openvino_base:${EIS_VERSION}
 

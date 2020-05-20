@@ -60,7 +60,7 @@ class Udf:
         self.log = logging.getLogger('Sample_ONNX')
 
         # Assert all input parameters exist
-        if download_model.lower() == 'true':
+        if download_model:
             self.log.info('Attempting to download AzureML model')
 
             self.log.debug('Initializing service principal auth with Azure')

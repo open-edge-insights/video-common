@@ -1,69 +1,18 @@
+ARG OPENVINO_IMAGE_VERSION
 ARG EIS_VERSION
-ARG DOCKER_REGISTRY
-FROM ${DOCKER_REGISTRY}ia_eisbase:$EIS_VERSION
+
+FROM openvino/ubuntu18_runtime:${OPENVINO_IMAGE_VERSION} AS openvino
+
+FROM ia_eisbase:$EIS_VERSION
+
+ENV HOME {PY_WORK_DIR}
+
+WORKDIR ${HOME}
+
+# Copy OpenVINO arifacts
+COPY --from=openvino / /
 
 ARG FPGA_ENABLE
-
-# OpenVINO install
-ENV HOME /EIS
-RUN apt-get update && \
-    apt-get install -y cpio \
-    lsb-release \
-    libgtk-3-dev
-
-# Installing openvino dependencies and openvino itself
-COPY l_openvino_toolkit*  ${HOME}/openvino_toolkit/
-RUN cd ${HOME}/openvino_toolkit && \
-    ./install_openvino_dependencies.sh && \
-    sed -i -e 's/^ACCEPT_EULA=decline/ACCEPT_EULA=accept/g' silent.cfg && \
-    ./install.sh -s silent.cfg --ignore-cpu
-
-# Configure MO and install dependencies for processor graphics
-RUN mkdir neo && \
-    cd neo && \
-    wget https://github.com/intel/compute-runtime/releases/download/19.16.12873/intel-gmmlib_19.1.1_amd64.deb && \
-    wget https://github.com/intel/compute-runtime/releases/download/19.16.12873/intel-igc-core_1.0.2-1787_amd64.deb && \
-    wget https://github.com/intel/compute-runtime/releases/download/19.16.12873/intel-igc-opencl_1.0.2-1787_amd64.deb && \
-    wget https://github.com/intel/compute-runtime/releases/download/19.16.12873/intel-opencl_19.16.12873_amd64.deb && \
-    wget https://github.com/intel/compute-runtime/releases/download/19.16.12873/intel-ocloc_19.16.12873_amd64.deb && \
-    dpkg -i *.deb
-
-# Remove OpenVINO toolkit after installation
-RUN rm -rf ${HOME}/l_openvino_toolkit*
-
-# Myriad and HDDL requirements
-RUN apt install -y libboost-all-dev libusb-1.0-0 libssl1.0.0 libudev1 libjson-c3 udev
-COPY 97-myriad-usbboot.rules .
-RUN echo "source /opt/intel/openvino/bin/setupvars.sh" >> ~/.bashrc && \
-    cp 97-myriad-usbboot.rules /etc/udev/rules.d/ && \
-    echo "udevadm control --reload-rules" >> ~/.bashrc && \
-    echo "udevadm trigger" >> ~/.bashrc
-
-# Installing libusb to support Myriad without network mode set to host as per
-# (https://software.intel.com/en-us/forums/intel-distribution-of-openvino-toolkit/topic/844287)
-RUN apt-get install -y curl
-RUN apt-get install -y zip unzip
-RUN cd /opt/ && \
-    curl -L https://github.com/libusb/libusb/archive/v1.0.22.zip --output v1.0.22.zip && \
-    unzip v1.0.22.zip && \
-    cd libusb-1.0.22 && \
-    ./bootstrap.sh && \
-    ./configure --disable-udev --enable-shared && \
-    make -j$(nproc --ignore=2)
-
-RUN apt update && \
-    apt install -y libusb-1.0-0-dev
-
-WORKDIR /opt/libusb-1.0.22/libusb
-
-RUN mkdir -p '/usr/local/lib' && \
-    /bin/bash ../libtool   --mode=install /usr/bin/install -c   libusb-1.0.la '/usr/local/lib' && \
-    mkdir -p '/usr/local/include/libusb-1.0' &&  \
-    /usr/bin/install -c -m 644 libusb.h '/usr/local/include/libusb-1.0' && \
-    mkdir -p '/usr/local/lib/pkgconfig' && \
-    cd  /opt/libusb-1.0.22/ && \
-    /usr/bin/install -c -m 644 libusb-1.0.pc '/usr/local/lib/pkgconfig' && \
-    ldconfig
 
 # FPGA drivers
 COPY install_openvino_fpga.sh ${HOME}/

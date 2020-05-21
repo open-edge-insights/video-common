@@ -139,8 +139,6 @@ class Udf:
                    new metadata for the frame if any)
         :rtype: (bool, numpy.ndarray, str)
         """
-        if self.profiling is True:
-            metadata['ts_vi_filter_entry'] = time.time()*1000
         frame_height, frame_width = frame.shape[:-1]
         resized_frame = cv2.resize(frame, (int(frame_width/self.ratio),
                                            int(frame_height/self.ratio)))

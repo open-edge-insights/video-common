@@ -86,7 +86,6 @@ class Udf:
         self.output_blob = next(iter(self.net.outputs))
         self.net.batch_size = 1  # change to enable batch loading
         self.exec_net = self.plugin.load(network=self.net)
-        self.profiling = bool(strtobool(os.environ['PROFILING_MODE']))
 
         # Initialize keypoint descriptor
         self.brisk = cv2.BRISK_create()
@@ -182,9 +181,6 @@ class Udf:
                    new metadata for the frame if any)
         :rtype: (bool, numpy.ndarray, str)
         """
-        if self.profiling is True:
-            metadata['ts_va_classify_entry'] = time.time()*1000
-
         # Read correct reference image to
         # perform keypoint detection and overlay
         ref_img = self.ref_img.copy()
@@ -305,7 +301,5 @@ class Udf:
 
         metadata["defects"] = defects
 
-        if self.profiling is True:
-            metadata['ts_va_classify_exit'] = time.time()*1000
         return False, None, metadata
 

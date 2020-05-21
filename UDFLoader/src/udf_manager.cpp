@@ -29,6 +29,8 @@
 #include <random>
 #include <safe_lib.h>
 #include <cstring>
+#include <iostream>
+#include <cstdlib>
 #include "eis/udf/udf_manager.h"
 #include "eis/udf/frame.h"
 #include "eis/udf/loader.h"
@@ -73,10 +75,10 @@ std::string generate_rand_string(const int len) {
 
 UdfManager::UdfManager(
         config_t* udf_cfg, FrameQueue* input_queue, FrameQueue* output_queue,
-        EncodeType enc_type, int enc_lvl) :
+        std::string service_name, EncodeType enc_type, int enc_lvl) :
     m_th(NULL), m_stop(false), m_config(udf_cfg),
     m_udf_input_queue(input_queue), m_udf_output_queue(output_queue), m_enc_type(enc_type),
-    m_enc_lvl(enc_lvl)
+    m_enc_lvl(enc_lvl), m_service_name(service_name)
 {
     config_value_t* udfs = NULL;
 
@@ -162,18 +164,30 @@ UdfManager::UdfManager(
         }
 
         if(m_profile->is_profiling_enabled()) {
+
             std::string udf_name_str(name->body.string);
             std::string rand_str = generate_rand_string(RANDOM_STR_LENGTH);
-            std::string udf_entry_str = udf_name_str + rand_str + "_entry";
-            std::string udf_exit_str = udf_name_str + rand_str + "_exit";
+            if(i == 0) {
+                std::string udf_entry_str = udf_name_str + "_" + rand_str + "_" + m_service_name + "_first" + "_entry";
+                std::string udf_exit_str = udf_name_str + "_" + rand_str + "_" + m_service_name + "_first" + "_exit";
 
-            handle->set_prof_entry_key(udf_entry_str);
-            handle->set_prof_exit_key(udf_exit_str);
+                handle->set_prof_entry_key(udf_entry_str);
+                handle->set_prof_exit_key(udf_exit_str);
+
+            } else {
+                std::string udf_entry_str = udf_name_str + "_" + rand_str + "_" + m_service_name + "_entry";
+                std::string udf_exit_str = udf_name_str + "_" + rand_str + "_" + m_service_name + "_exit";
+
+                handle->set_prof_entry_key(udf_entry_str);
+                handle->set_prof_exit_key(udf_exit_str);
+
+            }
         }
-
         config_value_destroy(name);
         m_udfs.push_back(handle);
     }
+    m_udf_push_entry_key = m_service_name + "_UDF_output_queue_ts";
+    m_udf_push_block_key = m_service_name + "_UDF_output_queue_blocked_ts";
 
     config_value_destroy(udfs);
 }
@@ -233,6 +247,12 @@ private:
     // Profiling variable
     Profiling* m_profile;
 
+    // UDF entry profiling key
+    std::string m_udf_push_entry_key;
+
+    // Queue blocked variable
+    std::string m_udf_push_block_key;
+
 public:
     // UDF to be ran by the worker
     // UdfHandle* handle;
@@ -257,8 +277,10 @@ public:
      */
     UdfWorker(Frame* frame, std::vector<UdfHandle*>* udfs,
               Profiling* profile,
+              std::string frame_push_key,
+              std::string frame_block_key,
               FrameQueue* output_queue) :
-        frame(frame), output_queue(output_queue), udfs(udfs), handle(NULL), m_profile(profile)
+        frame(frame), output_queue(output_queue), udfs(udfs), handle(NULL), m_profile(profile), m_udf_push_entry_key(frame_push_key), m_udf_push_block_key(frame_block_key)
     {};
 
     /**
@@ -320,8 +342,17 @@ public:
         }
 
         LOG_DEBUG_0("Pushing frame to output queue");
-        ctx->output_queue->push_wait(ctx->frame);
-
+        // Add queue entry timestamp
+        DO_PROFILING(ctx->m_profile, ctx->frame->get_meta_data(), ctx->m_udf_push_entry_key.c_str());
+        QueueRetCode ret_queue = ctx->output_queue->push(ctx->frame);
+        if(ret_queue == QueueRetCode::QUEUE_FULL) {
+            if(ctx->output_queue->push_wait(ctx->frame) != QueueRetCode::SUCCESS) {
+                LOG_ERROR_0("Failed to enqueue received message, "
+                            "message dropped");
+            }
+            // Add timestamp which acts as a marker if queue if blocked
+            DO_PROFILING(ctx->m_profile, ctx->frame->get_meta_data(), ctx->m_udf_push_block_key.c_str());
+        }
         LOG_DEBUG_0("Done running worker function");
     };
 };
@@ -354,7 +385,7 @@ void UdfManager::run() {
 
             // Create the worker to execute the UDF pipeline on the given frame
             UdfWorker* ctx = new UdfWorker(
-                    frame, &m_udfs, m_profile, m_udf_output_queue);
+                    frame, &m_udfs, m_profile, m_udf_push_entry_key, m_udf_push_block_key, m_udf_output_queue);
             
             LOG_DEBUG_0("Submitting job to job pool")
             JobHandle* job_handle = NULL;

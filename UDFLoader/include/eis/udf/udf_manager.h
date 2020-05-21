@@ -71,6 +71,15 @@ private:
     // Profiling handle
     utils::Profiling* m_profile;
 
+    // Queue blocked variable
+    std::string m_udf_push_block_key;
+
+    // UDF exit profiling key
+    std::string m_udf_push_entry_key;
+
+    // Caller's AppName
+    std::string m_service_name;
+
     // Encoding details
     EncodeType m_enc_type;
     int m_enc_lvl;
@@ -103,7 +112,8 @@ public:
      *                       and 0 and 100 for JPEG (df: 0)
      */
     UdfManager(config_t* udf_cfg, FrameQueue* input_queue,
-               FrameQueue* output_queue, EncodeType enc_type=EncodeType::NONE,
+               FrameQueue* output_queue, std::string service_name,
+               EncodeType enc_type=EncodeType::NONE,
                int enc_lvl=0);
 
     /**

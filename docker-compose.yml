@@ -7,7 +7,7 @@ services:
   ## Define ia_video_common service
   ia_video_common:
     depends_on:
-      - ia_eisbase
+      - ia_common
     build:
       context: $PWD/../common/video
       dockerfile: $PWD/../common/video/Dockerfile.videocommon

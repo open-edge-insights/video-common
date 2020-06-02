@@ -125,9 +125,7 @@ UdfManager::UdfManager(
 
     m_profile = new Profiling();
 
-    int len = 0;
-
-    len = (int) config_value_array_len(udfs);
+    int len = (int) config_value_array_len(udfs);
 
     for(int i = 0; i < len; i++) {
         config_value_t* cfg_obj = config_value_array_get(udfs, i);
@@ -280,7 +278,8 @@ public:
               std::string frame_push_key,
               std::string frame_block_key,
               FrameQueue* output_queue) :
-        frame(frame), output_queue(output_queue), udfs(udfs), handle(NULL), m_profile(profile), m_udf_push_entry_key(frame_push_key), m_udf_push_block_key(frame_block_key)
+        frame(frame), output_queue(output_queue), udfs(udfs), handle(NULL), m_profile(profile),
+        m_udf_push_entry_key(frame_push_key), m_udf_push_block_key(frame_block_key)
     {};
 
     /**
@@ -349,6 +348,7 @@ public:
             if(ctx->output_queue->push_wait(ctx->frame) != QueueRetCode::SUCCESS) {
                 LOG_ERROR_0("Failed to enqueue received message, "
                             "message dropped");
+                delete ctx->frame;
             }
             // Add timestamp which acts as a marker if queue if blocked
             DO_PROFILING(ctx->m_profile, ctx->frame->get_meta_data(), ctx->m_udf_push_block_key.c_str());
@@ -384,8 +384,8 @@ void UdfManager::run() {
             }
 
             // Create the worker to execute the UDF pipeline on the given frame
-            UdfWorker* ctx = new UdfWorker(
-                    frame, &m_udfs, m_profile, m_udf_push_entry_key, m_udf_push_block_key, m_udf_output_queue);
+            UdfWorker* ctx = new UdfWorker(frame, &m_udfs, m_profile, m_udf_push_entry_key,
+                                           m_udf_push_block_key, m_udf_output_queue);
             
             LOG_DEBUG_0("Submitting job to job pool")
             JobHandle* job_handle = NULL;

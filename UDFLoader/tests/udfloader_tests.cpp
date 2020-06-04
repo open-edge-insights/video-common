@@ -203,7 +203,7 @@ TEST(udfloader_tests, reinitialize) {
         FrameQueue* input_queue = new FrameQueue(-1);
         FrameQueue* output_queue = new FrameQueue(-1);
 
-        UdfManager* manager = new UdfManager(config, input_queue, output_queue);
+        UdfManager* manager = new UdfManager(config, input_queue, output_queue, "");
         manager->start();
 
         Frame* frame = init_frame();
@@ -218,7 +218,7 @@ TEST(udfloader_tests, reinitialize) {
         input_queue = new FrameQueue(-1);
         output_queue = new FrameQueue(-1);
         config = json_config_new("test_udf_mgr_config.json");
-        manager = new UdfManager(config, input_queue, output_queue);
+        manager = new UdfManager(config, input_queue, output_queue, "");
         manager->start();
         std::this_thread::sleep_for(std::chrono::seconds(3));
         delete manager;

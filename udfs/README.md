@@ -1,4 +1,4 @@
-# `EIS Sample UDFs`
+`EIS Sample UDFs`
 
 EIS supports loading and executing of native(c++) and python UDFs. In here,
 one can find the sample native and python UDFs(User Defined Functions) to be used with EIS components
@@ -164,7 +164,7 @@ User can refer to [UDF Writing HOW-TO GUIDE](./HOWTO_GUIDE_FOR_WRITING_UDF.md) f
   the frame and any violations occuring.
 
   > **NOTE**: This works well with only the
-  > [safe gear video file](../../VideoIngestion/test_videos/Safety_Full_Hat_and_Vest.mp4).
+  > [safe gear video file](../../VideoIngestion/test_videos/Safety_Full_Hat_and_Vest.avi).
   > For camera usecase, proper tuning needs to be done to have the proper model
   > built and used for inference.
 
@@ -282,7 +282,7 @@ User can refer to [UDF Writing HOW-TO GUIDE](./HOWTO_GUIDE_FOR_WRITING_UDF.md) f
   the frame and any violations occuring.
 
   > **NOTE**: This works well with only the
-  > [safe gear video file](../../VideoIngestion/test_videos/Safety_Full_Hat_and_Vest.mp4).
+  > [safe gear video file](../../VideoIngestion/test_videos/Safety_Full_Hat_and_Vest.avi).
   > For camera usecase, proper tuning needs to be done to have the proper model
   > built and used for inference.
 

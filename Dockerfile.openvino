@@ -25,7 +25,7 @@ FROM openvino/ubuntu18_runtime:${OPENVINO_IMAGE_VERSION} AS openvino
 
 FROM ia_eisbase:$EIS_VERSION
 
-ENV HOME {PY_WORK_DIR}
+ENV HOME ${PY_WORK_DIR}
 
 WORKDIR ${HOME}
 

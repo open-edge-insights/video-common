@@ -101,7 +101,10 @@ SafetyDemo::SafetyDemo(config_t *config) : BaseUdf(config) {
     if ((std::string("CPU").compare(device_type->body.string) == 0) ||
         (std::string("GPU").compare(device_type->body.string) == 0) ||
         (std::string("HDDL").compare(device_type->body.string) == 0) ||
-        (std::string("MYRIAD").compare(device_type->body.string) == 0)) {
+        (std::string("MYRIAD").compare(device_type->body.string) == 0) ||
+	(std::string("HETERO:FPGA,CPU").compare(device_type->body.string) == 0) ||
+	(std::string("HETERO:FPGA,GPU").compare(device_type->body.string) == 0) ||
+	(std::string("HETERO:FPGA,CPU,GPU").compare(device_type->body.string) == 0)) {
      #ifdef WITH_EXTENSIONS
         ie.AddExtension(std::make_shared<Extensions::Cpu::CpuExtensions>(), "CPU");
      #endif

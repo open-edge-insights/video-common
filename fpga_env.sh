@@ -19,7 +19,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-BITSTREAM_PATH="/opt/intel/openvino/bitstreams/a10_vision_design_sg1_bitstreams/BSP/a10_1150_sg1"
+BITSTREAM_PATH="/opt/intel/openvino/bitstreams/a10_vision_design_sg2_bitstreams/BSP/a10_1150_sg2"
 QUARTUS_PATH="/opt/intel/intelFPGA/18.1/qprogrammer"
 
 export IOCL_BOARD_PACKAGE_ROOT="${BITSTREAM_PATH}"

@@ -35,12 +35,7 @@ COPY --from=openvino / /
 ARG FPGA_ENABLE
 
 # FPGA drivers
-COPY install_openvino_fpga.sh ${HOME}/
-
 COPY 51-usbblaster.rules /etc/udev/rules/51-usbblaster.rules
 
 COPY fpga_env.sh ${HOME}/
 
-RUN chmod +x ${HOME}/install_openvino_fpga.sh ${HOME}/fpga_env.sh
-
-RUN if [ "${FPGA_ENABLE}" = "enable" ]; then cd ${HOME}; ./install_openvino_fpga.sh; else echo "Continuing with Non-FPGA setup"; fi

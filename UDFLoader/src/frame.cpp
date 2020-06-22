@@ -403,14 +403,25 @@ void Frame::set_encoding(EncodeType encode_type, int encode_level) {
     }
     this->m_encode_type = encode_type;
     this->m_encode_level = encode_level;
-    msg_envelope_elem_body_t* encoding = NULL;
-    msgbus_ret_t ret = msgbus_msg_envelope_get(
-            m_meta_data, "encoding", &encoding);
+    msg_envelope_elem_body_t* encoding_type = NULL;
+    msg_envelope_elem_body_t* encoding_level = NULL;
+    msgbus_ret_t ret;
+    ret = msgbus_msg_envelope_get(
+            m_meta_data, "encoding_type", &encoding_type);
     if(ret == MSG_SUCCESS) {
-        ret = msgbus_msg_envelope_remove(m_meta_data, "encoding");
+        ret = msgbus_msg_envelope_remove(m_meta_data, "encoding_type");
         if(ret != MSG_SUCCESS)
-            throw "Failed to remove \"encoding\" from the meta-data";
+            throw "Failed to remove \"encoding_type\" from the meta-data";
     }
+
+    ret = msgbus_msg_envelope_get(
+            m_meta_data, "encoding_level", &encoding_level);
+    if(ret == MSG_SUCCESS) {
+        ret = msgbus_msg_envelope_remove(m_meta_data, "encoding_level");
+        if(ret != MSG_SUCCESS)
+            throw "Failed to remove \"encoding_level\" from the meta-data";
+    }
+
     // Add encoding (if type is not NONE)
     if(encode_type != EncodeType::NONE) {
         msg_envelope_elem_body_t* e_enc_type = NULL;

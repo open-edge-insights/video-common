@@ -77,8 +77,8 @@ UdfManager::UdfManager(
         config_t* udf_cfg, FrameQueue* input_queue, FrameQueue* output_queue,
         std::string service_name, EncodeType enc_type, int enc_lvl) :
     m_th(NULL), m_stop(false), m_config(udf_cfg),
-    m_udf_input_queue(input_queue), m_udf_output_queue(output_queue), m_enc_type(enc_type),
-    m_enc_lvl(enc_lvl), m_service_name(service_name)
+    m_udf_input_queue(input_queue), m_udf_output_queue(output_queue),
+    m_service_name(service_name), m_enc_type(enc_type), m_enc_lvl(enc_lvl)
 {
     config_value_t* udfs = NULL;
 
@@ -154,7 +154,7 @@ UdfManager::UdfManager(
         if(cfg == NULL) {
             throw "Failed to initialize configuration for UDF";
         }
-        
+
         LOG_DEBUG("Loading UDF...");
         UdfHandle* handle = g_loader.load(name->body.string, cfg, 1);
         if(handle == NULL) {
@@ -278,8 +278,9 @@ public:
               std::string frame_push_key,
               std::string frame_block_key,
               FrameQueue* output_queue) :
-        frame(frame), output_queue(output_queue), udfs(udfs), handle(NULL), m_profile(profile),
-        m_udf_push_entry_key(frame_push_key), m_udf_push_block_key(frame_block_key)
+        m_profile(profile), m_udf_push_entry_key(frame_push_key),
+        m_udf_push_block_key(frame_block_key),
+        frame(frame), output_queue(output_queue), udfs(udfs), handle(NULL)
     {};
 
     /**
@@ -386,7 +387,7 @@ void UdfManager::run() {
             // Create the worker to execute the UDF pipeline on the given frame
             UdfWorker* ctx = new UdfWorker(frame, &m_udfs, m_profile, m_udf_push_entry_key,
                                            m_udf_push_block_key, m_udf_output_queue);
-            
+
             LOG_DEBUG_0("Submitting job to job pool")
             JobHandle* job_handle = NULL;
 

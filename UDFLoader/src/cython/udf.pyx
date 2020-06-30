@@ -1,3 +1,4 @@
+# cython: language_level=3, boundscheck=False
 # Copyright (c) 2019 Intel Corporation.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -20,7 +21,6 @@
 # distutils: language = c++
 """UDF Cython code to interface with Python
 """
-# cython: language_level=3, boundscheck=False
 
 # Cython imports
 from libc.stdint cimport *

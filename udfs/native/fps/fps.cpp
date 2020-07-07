@@ -31,6 +31,7 @@ FpsUdf::FpsUdf(config_t* config): BaseUdf(config) {
     m_fps = 0;
     m_first_frame = true;
     int ret = 0;
+    m_ret = MSG_SUCCESS;
     char* appname = getenv("AppName");
     if (appname == NULL) {
 	LOG_ERROR_0("Failed to read AppName");

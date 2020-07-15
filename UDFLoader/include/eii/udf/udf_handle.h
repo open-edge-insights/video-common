@@ -56,12 +56,6 @@ private:
     // Profiling end timestamp key
     std::string m_prof_exit_key;
 
-protected:
-    // UDF Configuration
-    config_t* m_config;
-
-    // TODO: Add thread pool definition
-
 public:
     /**
      * Constructor

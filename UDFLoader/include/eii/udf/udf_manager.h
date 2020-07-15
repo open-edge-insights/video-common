@@ -53,9 +53,6 @@ private:
     // Flag to stop the UDFManager thread
     std::atomic<bool> m_stop;
 
-    // Configuration
-    config_t* m_config;
-
     // UDF input queue
     FrameQueue* m_udf_input_queue;
 

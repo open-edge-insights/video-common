@@ -34,6 +34,8 @@
 #include "eis/udf/udf_manager.h"
 #include "eis/udf/frame.h"
 
+#define SERVICE_NAME "load-example"
+
 using namespace eis::udf;
 using namespace eis::msgbus;
 
@@ -60,19 +62,22 @@ int main(int argc, char** argv) {
         FrameQueue* sub_queue = new FrameQueue(-1);
 
         LOG_INFO_0("Initializing UDFManager");
-        UdfManager* manager = new UdfManager(config, sub_queue, output_queue);
+        UdfManager* manager = new UdfManager(
+                config, sub_queue, output_queue, SERVICE_NAME);
         manager->start();
 
         LOG_INFO_0("Initializing Publisher thread");
         std::condition_variable err_cv;
         Publisher* publisher = new Publisher(
-                msgbus_config, err_cv, "example", (MessageQueue*) input_queue);
+                msgbus_config, err_cv, "example", (MessageQueue*) input_queue,
+                SERVICE_NAME);
         publisher->start();
 
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
         Subscriber<Frame>* subscriber = new Subscriber<Frame>(
-                sub_config, err_cv, "example", (MessageQueue*) sub_queue);
+                sub_config, err_cv, "example", (MessageQueue*) sub_queue,
+                SERVICE_NAME);
         subscriber->start();
 
         LOG_INFO_0("Adding frames to input queue");
@@ -117,6 +122,8 @@ int main(int argc, char** argv) {
         LOG_INFO_0("Cleaning up UDFManager");
         delete manager;
         delete input_queue;
+        delete output_queue;
+        config_destroy(config);
     } catch(const char* ex) {
         LOG_INFO("Failed to load exception: %s", ex);
         return -1;

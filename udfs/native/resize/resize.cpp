@@ -43,7 +43,7 @@ namespace eis {
 
             public:
                 ResizeUdf(config_t* config): BaseUdf(config) {
-                    config_value_t* width = m_config->get_config_value(m_config->cfg,"width");
+                    config_value_t* width = config->get_config_value(config->cfg,"width");
                     if(width == NULL) {
                         throw "Failed to get width";
                     }
@@ -51,7 +51,7 @@ namespace eis {
                         throw "width must be a string";
                     }
 
-                    config_value_t* height = m_config->get_config_value(m_config->cfg,"height");
+                    config_value_t* height = config->get_config_value(config->cfg,"height");
 
                     if(height == NULL) {
                     throw "Failed to get height";

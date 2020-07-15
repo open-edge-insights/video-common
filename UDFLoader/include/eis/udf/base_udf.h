@@ -37,13 +37,6 @@ namespace eis {
 namespace udf {
 
 class BaseUdf {
-protected:
-    // UDF configuration
-    //
-    // NOTE: The memory for this configuration is managed by the
-    // @c UdfHandle class and does not need to be freed in the UDF object.
-    config_t* m_config;
-
 public:
     /**
      * Constructor

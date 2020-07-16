@@ -24,7 +24,7 @@ import cv2
 import numpy as np
 from time import time
 
-from openvino.inference_engine import IENetwork, IEPlugin
+from openvino.inference_engine import IEPlugin, IECore
 
 
 class DisplayInfo:
@@ -70,7 +70,8 @@ class Udf:
         self.plugin = IEPlugin(device=device.upper(), plugin_dirs="")
         self.log.debug("Loading network files:\n\t{}\n\t{}".format(model_xml,
                                                                    model_bin))
-        self.net = IENetwork.from_ir(model=model_xml, weights=model_bin)
+        self.ie = IECore()
+        self.net = self.ie.read_network(model=model_xml, weights=model_bin)
         if device.upper() == "CPU":
             supported_layers = self.plugin.get_supported_layers(self.net)
             not_supported_layers = [l for l in self.net.layers.keys() if l not

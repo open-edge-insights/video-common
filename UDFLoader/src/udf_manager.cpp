@@ -76,14 +76,14 @@ std::string generate_rand_string(const int len) {
 UdfManager::UdfManager(
         config_t* udf_cfg, FrameQueue* input_queue, FrameQueue* output_queue,
         std::string service_name, EncodeType enc_type, int enc_lvl) :
-    m_th(NULL), m_stop(false),
-    m_udf_input_queue(input_queue), m_udf_output_queue(output_queue),
-    m_service_name(service_name), m_enc_type(enc_type), m_enc_lvl(enc_lvl)
+    m_th(NULL), m_stop(false), m_config(udf_cfg),
+    m_udf_input_queue(input_queue), m_udf_output_queue(output_queue), m_enc_type(enc_type),
+    m_enc_lvl(enc_lvl), m_service_name(service_name)
 {
     config_value_t* udfs = NULL;
 
     LOG_DEBUG_0("Loading UDFs");
-    udfs = config_get(udf_cfg, CFG_UDFS);
+    udfs = config_get(m_config, CFG_UDFS);
     if(udfs == NULL) {
         throw "Failed to get UDFs";
     }
@@ -94,7 +94,7 @@ UdfManager::UdfManager(
 
     // Get maximum jobs (if it exists)
     int max_jobs = DEFAULT_MAX_JOBS;
-    config_value_t* cfg_max_jobs = config_get(udf_cfg, CFG_MAX_JOBS);
+    config_value_t* cfg_max_jobs = config_get(m_config, CFG_MAX_JOBS);
     if(cfg_max_jobs != NULL) {
         if(cfg_max_jobs->type != CVT_INTEGER) {
             config_value_destroy(cfg_max_jobs);
@@ -108,7 +108,7 @@ UdfManager::UdfManager(
 
     // Get the maximum number of workers
     int max_workers = DEFAULT_MAX_WORKERS;
-    config_value_t* cfg_max_workers = config_get(udf_cfg, CFG_MAX_WORKERS);
+    config_value_t* cfg_max_workers = config_get(m_config, CFG_MAX_WORKERS);
     if(cfg_max_workers != NULL) {
         if(cfg_max_workers->type != CVT_INTEGER) {
             config_value_destroy(cfg_max_workers);
@@ -154,7 +154,7 @@ UdfManager::UdfManager(
         if(cfg == NULL) {
             throw "Failed to initialize configuration for UDF";
         }
-
+        
         LOG_DEBUG("Loading UDF...");
         UdfHandle* handle = g_loader.load(name->body.string, cfg, 1);
         if(handle == NULL) {
@@ -183,7 +183,6 @@ UdfManager::UdfManager(
         }
         config_value_destroy(name);
         m_udfs.push_back(handle);
-        config_destroy(cfg);
     }
     m_udf_push_entry_key = m_service_name + "_UDF_output_queue_ts";
     m_udf_push_block_key = m_service_name + "_UDF_output_queue_blocked_ts";
@@ -214,6 +213,26 @@ UdfManager::~UdfManager() {
         delete m_profile;
     }
 
+    LOG_DEBUG_0("Clearing udf input queue");
+    // Clear queues and delete them
+    while(!m_udf_input_queue->empty()) {
+        Frame* frame = m_udf_input_queue->front();
+        m_udf_input_queue->pop();
+        delete frame;
+    }
+    LOG_DEBUG_0("Cleared udf input queue");
+    delete m_udf_input_queue;
+
+    LOG_DEBUG_0("Clearing udf output queue");
+    while(!m_udf_output_queue->empty()) {
+        Frame* frame = m_udf_output_queue->front();
+        m_udf_output_queue->pop();
+        delete frame;
+    }
+    LOG_DEBUG_0("Cleared udf output queue");
+    delete m_udf_output_queue;
+
+    config_destroy(m_config);
     LOG_DEBUG_0("Done with ~UdfManager()");
 }
 
@@ -259,9 +278,8 @@ public:
               std::string frame_push_key,
               std::string frame_block_key,
               FrameQueue* output_queue) :
-        m_profile(profile), m_udf_push_entry_key(frame_push_key),
-        m_udf_push_block_key(frame_block_key), frame(frame),
-        output_queue(output_queue), udfs(udfs), handle(NULL)
+        frame(frame), output_queue(output_queue), udfs(udfs), handle(NULL), m_profile(profile),
+        m_udf_push_entry_key(frame_push_key), m_udf_push_block_key(frame_block_key)
     {};
 
     /**
@@ -368,7 +386,7 @@ void UdfManager::run() {
             // Create the worker to execute the UDF pipeline on the given frame
             UdfWorker* ctx = new UdfWorker(frame, &m_udfs, m_profile, m_udf_push_entry_key,
                                            m_udf_push_block_key, m_udf_output_queue);
-
+            
             LOG_DEBUG_0("Submitting job to job pool")
             JobHandle* job_handle = NULL;
 

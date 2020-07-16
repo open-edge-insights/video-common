@@ -389,3 +389,4 @@ VideoAnalytics service.
 > **NOTE**:
 > Dummy UDF can also be used for above use cases for testing chaining UDFs
 > feature but as such there is no value add as it's a do-nothing UDF.
+> In DEV Mode python udfs changes can be tested by restarting containers, no need to rebuild. 

@@ -25,7 +25,7 @@ import cv2
 import numpy as np
 import json
 import threading
-from openvino.inference_engine import IENetwork, IEPlugin
+from openvino.inference_engine import IEPlugin, IECore
 from distutils.util import strtobool
 import time
 
@@ -80,8 +80,8 @@ class Udf:
 
         # Load OpenVINO model
         self.plugin = IEPlugin(device=self.device.upper(), plugin_dirs="")
-        self.net = IENetwork.from_ir(model=self.model_xml,
-                                     weights=self.model_bin)
+        self.ie = IECore()
+        self.net = self.ie.read_network(model=self.model_xml, weights=self.model_bin)
         self.input_blob = next(iter(self.net.inputs))
         self.output_blob = next(iter(self.net.outputs))
         self.net.batch_size = 1  # change to enable batch loading

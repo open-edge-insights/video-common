@@ -28,7 +28,9 @@
 
 using namespace eis::udf;
 
-BaseUdf::BaseUdf(config_t* config) {}
+BaseUdf::BaseUdf(config_t* config) :
+    m_config(config)
+{}
 
 BaseUdf::~BaseUdf() {
     // NOTE: The m_config value is not freed here because this should always

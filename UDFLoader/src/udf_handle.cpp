@@ -29,11 +29,16 @@
 using namespace eis::udf;
 
 UdfHandle::UdfHandle(std::string name, int max_workers) :
-    m_name(name), m_initialized(false), m_max_workers(max_workers)
+    m_name(name), m_initialized(false), m_max_workers(max_workers),
+    m_config(NULL)
 {}
 
 UdfHandle::~UdfHandle() {
     LOG_DEBUG_0("Base UdfHandle destructor");
+
+    if(m_initialized.load()) {
+        config_destroy(m_config);
+    }
 
     // TODO: Clean up thread pool
 }
@@ -47,6 +52,7 @@ bool UdfHandle::initialize(config_t* config) {
 
     // Initialize internal state variables
     m_initialized.store(true);
+    m_config = config;
 
     return true;
 }

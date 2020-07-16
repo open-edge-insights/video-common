@@ -119,7 +119,6 @@ TEST(udfloader_tests, py_modify) {
     // Clean up
     delete frame;
     delete handle;
-    config_destroy(config);
 }
 
 // Test to drop a frame
@@ -143,7 +142,6 @@ TEST(udfloader_tests, py_drop_frame) {
     // Clean up
     delete frame;
     delete handle;
-    config_destroy(config);
 }
 
 // Test to verify configuration
@@ -158,7 +156,6 @@ TEST(udfloader_tests, py_config) {
 
     // Clean up
     delete handle;
-    config_destroy(config);
 }
 
 // Test for exception in constructor
@@ -173,7 +170,6 @@ TEST(udfloader_tests, py_constructor_error) {
 
     // Clean up
     delete handle;
-    config_destroy(config);
 }
 
 // Test exception in process
@@ -197,21 +193,17 @@ TEST(udfloader_tests, py_process_error) {
     // Clean up
     delete frame;
     delete handle;
-    config_destroy(config);
 }
 
 TEST(udfloader_tests, reinitialize) {
-    config_t* config = NULL;
-
     try {
-        config = json_config_new("test_udf_mgr_config.json");
+        config_t* config = json_config_new("test_udf_mgr_config.json");
         ASSERT_NOT_NULL(config);
 
         FrameQueue* input_queue = new FrameQueue(-1);
         FrameQueue* output_queue = new FrameQueue(-1);
 
-        UdfManager* manager = new UdfManager(
-                config, input_queue, output_queue, "");
+        UdfManager* manager = new UdfManager(config, input_queue, output_queue, "");
         manager->start();
 
         Frame* frame = init_frame();
@@ -222,10 +214,6 @@ TEST(udfloader_tests, reinitialize) {
         std::this_thread::sleep_for(std::chrono::seconds(3));
 
         delete manager;
-        delete input_queue;
-        delete output_queue;
-
-        config_destroy(config);
 
         input_queue = new FrameQueue(-1);
         output_queue = new FrameQueue(-1);
@@ -234,14 +222,8 @@ TEST(udfloader_tests, reinitialize) {
         manager->start();
         std::this_thread::sleep_for(std::chrono::seconds(3));
         delete manager;
-        delete input_queue;
-        delete output_queue;
     } catch(const std::exception& ex) {
         FAIL() << ex.what();
-    }
-
-    if (config != NULL) {
-        config_destroy(config);
     }
 }
 

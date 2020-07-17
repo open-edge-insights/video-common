@@ -25,7 +25,7 @@ import cv2
 import numpy as np
 import json
 import threading
-from openvino.inference_engine import IEPlugin, IECore
+from openvino.inference_engine import IECore
 from distutils.util import strtobool
 import time
 import sys
@@ -67,16 +67,16 @@ class Udf:
             'Model bin file missing: {}'.format(self.model_bin)
 
         # Load OpenVINO model
-        self.irPlugin = IEPlugin(device=self.device.upper(), plugin_dirs="")
         self.ie = IECore()
         self.neuralNet = self.ie.read_network(
             model=self.model_xml, weights=self.model_bin)
 
-        if self.irPlugin is not None and self.neuralNet is not None:
-            self.inputBlob = next(iter(self.neuralNet.inputs))
+        if self.neuralNet is not None:
+            self.inputBlob = next(iter(self.neuralNet.input_info))
             self.outputBlob = next(iter(self.neuralNet.outputs))
             self.neuralNet.batch_size = 1
-            self.executionNet = self.irPlugin.load(network=self.neuralNet)
+            self.executionNet = self.ie.load_network(network=self.neuralNet,
+                device_name=self.device.upper())
 
         self.profiling = bool(strtobool(os.environ['PROFILING_MODE']))
 

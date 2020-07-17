@@ -24,7 +24,7 @@ import cv2
 import numpy as np
 from time import time
 
-from openvino.inference_engine import IEPlugin, IECore
+from openvino.inference_engine import IECore
 
 
 class DisplayInfo:
@@ -67,30 +67,28 @@ class Udf:
                                in f]
 
         # Load OpenVINO model
-        self.plugin = IEPlugin(device=device.upper(), plugin_dirs="")
-        self.log.debug("Loading network files:\n\t{}\n\t{}".format(model_xml,
-                                                                   model_bin))
         self.ie = IECore()
         self.net = self.ie.read_network(model=model_xml, weights=model_bin)
+        self.log.debug("Loading network files:\n\t{}\n\t{}".format(model_xml,
+                                                                   model_bin))
         if device.upper() == "CPU":
-            supported_layers = self.plugin.get_supported_layers(self.net)
+            supported_layers = self.ie.query_network(self.net, device_name="CPU")
             not_supported_layers = [l for l in self.net.layers.keys() if l not
                                     in supported_layers]
             if len(not_supported_layers) != 0:
                 self.log.debug('ERROR: Following layers are not supported by \
-                                the plugin for specified device {}:\n \
-                                {}'.format(self.plugin.device,
-                                           ', '.join(not_supported_layers)))
+                                {}'.format(not_supported_layer))
 
-        assert len(self.net.inputs.keys()) == 1, \
+        assert len(self.net.input_info.keys()) == 1, \
             'Sample supports only single input topologies'
         assert len(self.net.outputs) == 1, \
             'Sample supports only single output topologies'
 
-        self.input_blob = next(iter(self.net.inputs))
+        self.input_blob = next(iter(self.net.input_info))
         self.output_blob = next(iter(self.net.outputs))
         self.net.batch_size = 1  # change to enable batch loading
-        self.exec_net = self.plugin.load(network=self.net)
+        self.exec_net = self.ie.load_network(network=self.net,
+            device_name=device.upper())
 
     # Main classification algorithm
     def process(self, frame, metadata):

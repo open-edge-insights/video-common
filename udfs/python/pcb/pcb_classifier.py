@@ -25,7 +25,7 @@ import cv2
 import numpy as np
 import json
 import threading
-from openvino.inference_engine import IEPlugin, IECore
+from openvino.inference_engine import IECore
 from distutils.util import strtobool
 import time
 
@@ -79,13 +79,13 @@ class Udf:
             self.config_roi = json.load(f)
 
         # Load OpenVINO model
-        self.plugin = IEPlugin(device=self.device.upper(), plugin_dirs="")
         self.ie = IECore()
         self.net = self.ie.read_network(model=self.model_xml, weights=self.model_bin)
-        self.input_blob = next(iter(self.net.inputs))
+        self.input_blob = next(iter(self.net.input_info))
         self.output_blob = next(iter(self.net.outputs))
         self.net.batch_size = 1  # change to enable batch loading
-        self.exec_net = self.plugin.load(network=self.net)
+        self.exec_net = self.ie.load_network(network=self.net,
+                                             device_name=self.device.upper())
 
         # Initialize keypoint descriptor
         self.brisk = cv2.BRISK_create()

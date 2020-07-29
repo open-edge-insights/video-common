@@ -21,7 +21,8 @@
 cmake_minimum_required(VERSION 3.12)
 project(eis-udf-safety_gear_demo VERSION 1.0.0 LANGUAGES C CXX)
 
-#find_package(InferenceEngine 2.1 REQUIRED)
+find_package(UDFLoader REQUIRED)
+
 add_library(safety_gear_demo SHARED "safety_gear_demo.cpp")
 #find_library(CPU_LIB cpu_extension PATH /EIS/go/src/IEdgeInsights/common/udfs/native/safety_gear_demo)
 
@@ -46,7 +47,7 @@ endif()
 
 target_link_libraries(safety_gear_demo
     PUBLIC
-        udfloader
+        ${UDFLoader_LIBRARIES}
         ${CPU_LIB}
         ${EISMsgEnv_LIBRARIES}
         ${EISUtils_LIBRARIES}

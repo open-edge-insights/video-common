@@ -21,10 +21,12 @@
 cmake_minimum_required(VERSION 3.12)
 project(eis-udf-samples VERSION 1.0.0 LANGUAGES C CXX)
 
+find_package(UDFLoader REQUIRED)
+
 add_library(dummy SHARED "dummy.cpp")
 target_link_libraries(dummy
     PUBLIC
-        udfloader
+        ${UDFLoader_LIBRARIES}
         ${EISMsgEnv_LIBRARIES}
         ${EISUtils_LIBRARIES}
     PRIVATE

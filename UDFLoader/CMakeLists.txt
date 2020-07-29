@@ -90,9 +90,9 @@ execute_process(
 file(GLOB SOURCES "src/*.cpp" "src/cython/udf.cpp")
 
 # Add target
-add_library(udfloader SHARED ${SOURCES})
-add_dependencies(udfloader cython-udf)
-target_link_libraries(udfloader
+add_library(eisudfloader SHARED ${SOURCES})
+add_dependencies(eisudfloader cython-udf)
+target_link_libraries(eisudfloader
     PUBLIC
         ${EISMsgEnv_LIBRARIES}
         ${EISUtils_LIBRARIES}
@@ -104,7 +104,7 @@ target_link_libraries(udfloader
 
 # If compile in debug mode, set DEBUG flag for C code
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-    target_compile_definitions(udfloader PRIVATE DEBUG=1)
+    target_compile_definitions(eisudfloader PRIVATE DEBUG=1)
 endif()
 
 # Add examples if the option was selected
@@ -121,8 +121,8 @@ endif()
 ## Configure pkg-config file to be installed for the EIS Message Envelope lib
 ##
 
-set(PKG_CONFIG_IN  "${CMAKE_CURRENT_SOURCE_DIR}/cmake/libudfloader.pc.in")
-set(PKG_CONFIG_OUT "${CMAKE_CURRENT_BINARY_DIR}/libudfloader.pc")
+set(PKG_CONFIG_IN  "${CMAKE_CURRENT_SOURCE_DIR}/cmake/libeisudfloader.pc.in")
+set(PKG_CONFIG_OUT "${CMAKE_CURRENT_BINARY_DIR}/libeisudfloader.pc")
 set(DEST_DIR       "${CMAKE_INSTALL_PREFIX}")
 set(PRIVATE_LIBS   "-l")
 
@@ -136,12 +136,12 @@ configure_file(${PKG_CONFIG_IN} ${PKG_CONFIG_OUT} @ONLY)
 include(GNUInstallDirs)
 set(INSTALL_CONFIGDIR ${CMAKE_INSTALL_LIBDIR}/cmake/UDFLoader)
 
-install(TARGETS udfloader
-    EXPORT udfloader-targets
+install(TARGETS eisudfloader
+    EXPORT eisudfloader-targets
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
-set_target_properties(udfloader PROPERTIES EXPORT_NAME UDFLoader)
+set_target_properties(eisudfloader PROPERTIES EXPORT_NAME UDFLoader)
 install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
 # Install pkg-config libudfloader.pc file
@@ -153,7 +153,7 @@ install(
 )
 
 # Export targets to a script
-install(EXPORT udfloader-targets
+install(EXPORT eisudfloader-targets
     FILE
         UDFLoaderTargets.cmake
     DESTINATION
@@ -179,7 +179,7 @@ install(FILES
     DESTINATION ${INSTALL_CONFIGDIR}
 )
 
-export(EXPORT udfloader-targets
+export(EXPORT eisudfloader-targets
        FILE ${CMAKE_CURRENT_BINARY_DIR}/UDFLoaderTargets.cmake)
 
 # Register package in user's package registry

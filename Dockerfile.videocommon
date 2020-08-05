@@ -26,5 +26,6 @@ FROM ${DOCKER_REGISTRY}ia_eisbase:$EIS_VERSION
 WORKDIR ${GO_WORK_DIR}
 
 # Copying udfs & UDFLoader
-COPY udfs ./common/udfs
 COPY UDFLoader ./common/UDFLoader
+COPY udfs/native ./common/udfs/native
+COPY udfs/python ./common/udfs/python

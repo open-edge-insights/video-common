@@ -34,26 +34,26 @@ FpsUdf::FpsUdf(config_t* config): BaseUdf(config) {
     m_ret = MSG_SUCCESS;
     char* appname = getenv("AppName");
     if (appname == NULL) {
-	LOG_ERROR_0("Failed to read AppName");
-	throw "Failed to read Appname";
+        LOG_ERROR_0("Failed to read AppName");
+        throw "Failed to read Appname";
     }
     size_t appname_len = strlen(appname);
     m_fps_key = new char(appname_len);
     if (m_fps_key == NULL) {
-	LOG_ERROR_0("Failed to allocate memory for fps key");
-	throw "Failed to allocate memory for fps key";
+        LOG_ERROR_0("Failed to allocate memory for fps key");
+        throw "Failed to allocate memory for fps key";
     }
 
     ret = strncpy_s(m_fps_key,(appname_len + 1), appname, appname_len);
     if (ret != 0) {
-	LOG_ERROR_0("Failed to read appname");
-	throw "Failed to read appname";
+        LOG_ERROR_0("Failed to read appname");
+        throw "Failed to read appname";
     }
 
     ret = strncat_s(m_fps_key, (appname_len + 4), "Fps", 3);
     if (ret != 0) {
-	LOG_ERROR_0("Failed to concatenate appname with fps key");
-	throw "Failed to concatenate appname with fps key";
+        LOG_ERROR_0("Failed to concatenate appname with fps key");
+        throw "Failed to concatenate appname with fps key";
     }
 }
 
@@ -64,8 +64,8 @@ FpsUdf::~FpsUdf() {
 UdfRetCode FpsUdf::process(cv::Mat& frame, cv::Mat& output, msg_envelope_t* meta) {
     m_mtx.lock();
     if (m_first_frame) {
-	m_start = std::chrono::system_clock::now();
-	m_first_frame = false; // First frame has been received
+        m_start = std::chrono::system_clock::now();
+        m_first_frame = false; // First frame has been received
     }
     m_frame_count += 1;
     m_end = std::chrono::system_clock::now();
@@ -80,17 +80,15 @@ UdfRetCode FpsUdf::process(cv::Mat& frame, cv::Mat& output, msg_envelope_t* meta
 
     msg_envelope_elem_body_t *fps_int = msgbus_msg_envelope_new_integer(m_fps);
     if (fps_int == NULL) {
-	LOG_ERROR_0("Failed to allocate fps integer");
-	throw "Failed to allocate fps integer";
-	return UdfRetCode::UDF_ERROR;
+        LOG_ERROR_0("Failed to allocate fps integer");
+        return UdfRetCode::UDF_ERROR;
     }
 
     m_ret = msgbus_msg_envelope_put(meta, m_fps_key, fps_int);
     if(m_ret != MSG_SUCCESS) {
-	LOG_ERROR_0("Failed to add fps results in metadata");
-	msgbus_msg_envelope_elem_destroy(fps_int);
-	throw "Failed to add fps results in metadata";
-	return UdfRetCode::UDF_ERROR;
+        LOG_ERROR_0("Failed to add fps results in metadata");
+        msgbus_msg_envelope_elem_destroy(fps_int);
+        return UdfRetCode::UDF_ERROR;
     }
     return UdfRetCode::UDF_OK;
 }

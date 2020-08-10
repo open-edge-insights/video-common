@@ -375,12 +375,16 @@ void UdfManager::run() {
             Frame* frame = m_udf_input_queue->front();
             m_udf_input_queue->pop();
 
-            // Note: the encoding level is only changed on the frame if the
-            // UDF Manager has a different encoding
-            EncodeType enc_type = frame->get_encode_type();
-            if(enc_type != m_enc_type){
-                if(m_enc_type != EncodeType::NONE){
+	    EncodeType enc_type = frame->get_encode_type();
+	    int enc_lvl = frame->get_encode_level();
+
+            if((enc_type != m_enc_type) || (enc_lvl != m_enc_lvl)) {
+                try {
                     frame->set_encoding(m_enc_type, m_enc_lvl);
+                } catch(const char *err) {
+                    LOG_ERROR("Exception: %s", err);
+                } catch(...) {
+                    LOG_ERROR("Exception occurred in set_encoding()");
                 }
             }
 

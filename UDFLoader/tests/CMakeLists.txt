@@ -63,11 +63,11 @@ file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/test_udf_mgr_config.json"
 file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/py_tests/"
     DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/py_tests")
 add_executable(udfloader-tests "udfloader_tests.cpp")
-target_link_libraries(udfloader-tests udfloader gtest_main)
+target_link_libraries(udfloader-tests eisudfloader gtest_main)
 add_test(NAME udfloader-tests COMMAND udfloader-tests)
 
 file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/test_image.png"
      DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
 add_executable(frame-tests "frame_tests.cpp")
-target_link_libraries(frame-tests udfloader gtest_main)
+target_link_libraries(frame-tests eisudfloader gtest_main)
 add_test(NAME frame-tests COMMAND frame-tests)

@@ -31,9 +31,9 @@ file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/load_example_frame.png"
      DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
 file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/.socks")
 add_executable(load-example "load_example.cpp")
-target_link_libraries(load-example udfloader ${EISMessageBus_LIBRARIES})
+target_link_libraries(load-example eisudfloader ${EISMessageBus_LIBRARIES})
 target_include_directories(load-example PRIVATE ${EISMessageBus_INCLUDE})
 
 add_library(native_example SHARED "native_example.cpp")
-target_link_libraries(native_example udfloader ${EISMessageBus_LIBRARIES})
+target_link_libraries(native_example eisudfloader ${EISMessageBus_LIBRARIES})
 target_include_directories(native_example PRIVATE ${EISMessageBus_INCLUDE})

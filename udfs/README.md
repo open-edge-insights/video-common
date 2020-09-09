@@ -162,49 +162,7 @@ User can refer to [UDF Writing HOW-TO GUIDE](./HOWTO_GUIDE_FOR_WRITING_UDF.md) f
   > **Note** The fps results will be logged in `DEBUG` LOG_LEVEL, added to the metadata with the AppName as the key and will be
   > displayed in the visualizer.
 
-* **Safety Gear Demo UDF**
-
-  Acceps the frame, detects safety gear such as safety helmet, safety jacket in
-  the frame and any violations occuring.
-
-  > **NOTE**: This works well with only the
-  > [safe gear video file](../../VideoIngestion/test_videos/Safety_Full_Hat_and_Vest.avi).
-  > For camera usecase, proper tuning needs to be done to have the proper model
-  > built and used for inference.
-
-   `UDF config`:
-
-  ```javascript
-  {
-      "name": "safety_gear_demo",
-      "type": "native",
-      "device": "CPU",
-      "model_xml": "common/udfs/native/safety_gear_demo/ref/frozen_inference_graph.xml",
-      "model_bin": "common/udfs/native/safety_gear_demo/ref/frozen_inference_graph.bin"
-  }
-  ```
-
   ----
-  **NOTE**:
-  The above config works for both "CPU" and "GPU" devices after setting
-  appropriate `device` value. If the device in the above config is "HDDL" or
-  "MYRIAD", please use the below config where the model_xml and model_bin
-  files are different. Please set the "device" value appropriately based on
-  the device used for inferencing.
-
-  ```javascript
-  {
-      "name": "safety_gear_demo",
-      "type": "native",
-      "device": "HDDL",
-      "model_xml": "common/udfs/native/safety_gear_demo/ref/frozen_inference_graph_fp16.xml",
-      "model_bin": "common/udfs/native/safety_gear_demo/ref/frozen_inference_graph_fp16.bin"
-  }
-  ```
-
-  ----
-
-
 ### `Python UDFs`
 
 > **NOTE**: Additional properties/keys other than `name` and `type` in the UDF
@@ -230,10 +188,6 @@ User can refer to [UDF Writing HOW-TO GUIDE](./HOWTO_GUIDE_FOR_WRITING_UDF.md) f
   it forwards or drops the frame. It basically sends out only the key frames forward
   for further processing and not all frames it receives.
 
-  > **NOTE**: This works well with only the
-  > [pcb demo video file](../../VideoIngestion/test_videos/pcb_d2000.avi).
-  > For camera usecase, proper tuning needs to be done to have the proper model
-  > built and used for inference.
 
   `UDF config`:
 
@@ -248,17 +202,13 @@ User can refer to [UDF Writing HOW-TO GUIDE](./HOWTO_GUIDE_FOR_WRITING_UDF.md) f
       "n_right_px": 1000
   }
   ```
+  Refer [python/pcb/README.md](./python/pcb/README.md) for more information.
 
 * **PCB Classifier UDF**
 
   Accepts the frame, uses openvino inference engine APIs to determine whether it's
   a `good` pcb with no defects or `bad` pcb with defects. Metadata associated with
   the frame is populated accordingly.
-
-  > **NOTE**: This works well with only the
-  > [pcb demo video file](../../VideoIngestion/test_videos/pcb_d2000.avi).
-  > For camera usecase, proper tuning needs to be done to have the proper model
-  > built and used for inference.
 
   `UDF config`:
 
@@ -274,93 +224,14 @@ User can refer to [UDF Writing HOW-TO GUIDE](./HOWTO_GUIDE_FOR_WRITING_UDF.md) f
   }
   ```
 
-----
+  Refer [python/pcb/README.md](./python/pcb/README.md) for more information.
+
   **NOTE**:
   The above config works for both "CPU", "GPU", "HETERO:FPGA,CPU" and "HETERO:FPGA,GPU" devices
   after setting appropriate `device` value. Please set the "device" value appropriately based on
   the device used for inferencing.
 
-* **Safety Gear Demo UDF**
-
-  Acceps the frame, detects safety gear such as safety helmet, safety jacket in
-  the frame and any violations occuring.
-
-  > **NOTE**: This works well with only the
-  > [safe gear video file](../../VideoIngestion/test_videos/Safety_Full_Hat_and_Vest.avi).
-  > For camera usecase, proper tuning needs to be done to have the proper model
-  > built and used for inference.
-
-   `UDF config`:
-
-  ```javascript
-  {
-      "name": "safety_gear.safety_classifier",
-      "type": "python",
-      "device": "CPU",
-      "model_xml": "common/udfs/python/safety_gear/ref/frozen_inference_graph.xml",
-      "model_bin": "common/udfs/python/safety_gear/ref/frozen_inference_graph.bin"
-  }
-  ```
-
-  ----
-  **NOTE**:
-  The above config works for both "CPU" and "GPU" devices after setting
-  appropriate `device` value. If the device in the above config is "HDDL" or
-  "MYRIAD", please use the below config where the model_xml and model_bin files
-  are different. If the device is "HETERO:FPGA,CPU" or "HETERO:FPGA,GPU",
-  both FP32 and FP16 model_xml and model_bin files will work. Please set the
-  "device" value appropriately based on the device used for inferencing.
-
-  ```javascript
-  {
-      "name": "safety_gear.safety_classifier",
-      "type": "python",
-      "device": "HDDL",
-      "model_xml": "common/udfs/python/safety_gear/ref/frozen_inference_graph_fp16.xml",
-      "model_bin": "common/udfs/python/safety_gear/ref/frozen_inference_graph_fp16.bin"
-  }
-  ```
-
-* **Multi-Class Classification UDF**
-
-  This UDF accepts the frame, and classifies object in frame into different cataegories. Additionally it shows probability of other classes too with its confidence value. This classification doesn't need any specialized image preprocessing UDF.
-
-  > **NOTE**: For a successful execution user can stream a sample video file
-  > [classification_vid.avi](../../VideoIngestion/test_videos/classification_vid.avi).
-  > For using camera classification will work correctly if the model has been trained for the object earlier. It is currently trained with some subset of imageNet database. The labels for which it is trained already trained can be found in following [label file](../../common/udfs/python/sample_classification/ref/squeezenet1.1.labels)
-
-   `UDF config`:
-
-  ```javascript
-  {
-      "name": "sample_classification.multi_class_classifier",
-      "type": "python",
-      "device": "CPU",
-      "labels_file_path": "common/udfs/python/sample_classification/ref/squeezenet1.1.labels",
-      "model_xml": "common/udfs/python/sample_classification/ref/squeezenet1.1_FP32.xml",
-      "model_bin": "common/udfs/python/sample_classification/ref/squeezenet1.1_FP32.bin"
-  }
-  ```
-
-  ----
-  **NOTE**:
-  The above config works for both "CPU" and "GPU" devices after setting appropriate `device` value.
-  If the device in the above config is "HDDL" or "MYRIAD", please use the below config where the
-  model_xml and model_bin files are different and should be of FP16 based. If the device is
-  "HETERO:FPGA,CPU" or "HETERO:FPGA,GPU", both FP32 and FP16 model_xml and model_bin files will work.
-  Please set the "device" value appropriately based on the device used for inferencing.
-
-  ```javascript
-  {
-      "name": "sample_classification.multi_class_classifier",
-      "type": "python",
-      "device": "HDDL",
-      "labels_file_path": "common/udfs/python/sample_classification/ref/squeezenet1.1.labels",
-      "model_xml": "common/udfs/python/sample_classification/ref/squeezenet1.1_FP16.xml",
-      "model_bin": "common/udfs/python/sample_classification/ref/squeezenet1.1_FP16.bin",
-  }
-  ```
-  ----
+----
 
 ## `Construction of Metadata in UDF`
 
@@ -389,4 +260,4 @@ VideoAnalytics service.
 > **NOTE**:
 > Dummy UDF can also be used for above use cases for testing chaining UDFs
 > feature but as such there is no value add as it's a do-nothing UDF.
-> In DEV Mode python udfs changes can be tested by restarting containers, no need to rebuild. 
+> In DEV Mode python udfs changes can be tested by restarting containers, no need to rebuild.

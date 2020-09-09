@@ -64,6 +64,5 @@ include_directories(
 set(CMAKE_INSTALL_LIBDIR "${CMAKE_INSTALL_PREFIX}/lib/udfs/")
 
 add_subdirectory(dummy/)
-add_subdirectory(safety_gear_demo/)
 add_subdirectory(resize/)
 add_subdirectory(fps/)

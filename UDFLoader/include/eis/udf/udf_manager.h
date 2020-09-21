@@ -21,7 +21,6 @@
 /**
  * @file
  * @brief UDF Manager thread with input/output frame queues.
- * @author Kevin Midkiff (kevin.midkiff@intel.com)
  */
 #ifndef _EIS_UDF_UDF_MANAGER_H
 #define _EIS_UDF_UDF_MANAGER_H

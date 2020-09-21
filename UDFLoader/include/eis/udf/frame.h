@@ -21,7 +21,6 @@
 /**
  * @file
  * @brief High level video frame abstraction.
- * @author Kevin Midkiff (kevin.midkiff@intel.com)
  */
 
 #ifndef _EIS_UDF_FRAME_H

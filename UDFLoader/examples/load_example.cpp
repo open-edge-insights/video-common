@@ -19,7 +19,6 @@
 
 /**
  * @brief UDF loading example
- * @author Kevin Midkiff <kevin.midkiff@intel.com>
  */
 
 #include <cstring>

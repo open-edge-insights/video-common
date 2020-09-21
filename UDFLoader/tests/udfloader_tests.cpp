@@ -20,7 +20,6 @@
 
 /**
  * @brief Unit tests for the @c UDFLoader object and for calling UDFs
- * @author Kevin Midkiff (kevin.midkiff@intel.com)
  */
 
 #include <chrono>

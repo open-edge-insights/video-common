@@ -21,7 +21,6 @@
 /**
  * @file
  * @brief Handle for a UDF to be called via the loader.
- * @author Kevin Midkiff (kevin.midkiff@intel.com)
  */
 
 #ifndef _EIS_UDF_UDF_HANDLE_H

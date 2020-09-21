@@ -20,7 +20,6 @@
 
 /**
  * @brief @c UdfManager class implementation.
- * @author Kevin Midkiff (kevin.midkiff@intel.com)
  */
 
 #include <chrono>

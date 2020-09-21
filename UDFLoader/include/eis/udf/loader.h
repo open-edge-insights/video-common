@@ -22,7 +22,6 @@
  * @file
  * @brief UDF loader library entry point. Provides the object for loading UDFs
  *      into the application.
- * @author Kevin Midkiff (kevin.midkiff@intel.com)
  */
 
 #ifndef _EIS_UDF_LOADER_H

@@ -20,7 +20,6 @@
 
 /**
  * @brief Implementation of @c PythonUdfHandle object.
- * @author Kevin Midkiff (kevin.midkiff@intel.com)
  */
 
 // Defining NumPy version

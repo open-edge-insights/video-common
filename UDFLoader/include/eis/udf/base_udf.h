@@ -21,7 +21,6 @@
 /**
  * @file
  * @brief Base UDF class for native UDF implementations.
- * @author Kevin Midkiff (kevin.midkiff@intel.com)
  */
 
 #ifndef _EIS_UDF_BASE_UDF_H

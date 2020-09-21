@@ -20,7 +20,6 @@
 
 /**
  * @brief Implementation of the @c UdfLoader class
- * @author Kevin Midkiff (kevin.midkiff@intel.com)
  */
 
 #include "eis/udf/loader.h"

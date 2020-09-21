@@ -20,7 +20,6 @@
 
 /**
  * @brief @c UdfHandle implementation
- * @author Kevin Midkiff (kevin.midkiff@intel.com)
  */
 
 #include "eis/udf/udf_handle.h"

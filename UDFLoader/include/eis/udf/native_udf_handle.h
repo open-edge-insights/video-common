@@ -21,7 +21,6 @@
 /**
  * @file
  * @brief C++ UDF
- * @author Caleb McMillan <caleb.m.mcmillan@intel.com>
  */
 
 #ifndef _EIS_UDF_NATIVE_UDF_H

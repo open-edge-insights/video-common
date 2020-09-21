@@ -21,7 +21,6 @@
 /**
  * @file
  * @brief Return values for UDFs.
- * @author Kevin Midkiff (kevin.midkiff@intel.com)
  */
 
 #ifndef _EIS_UDF_UDF_RET_CODES_H

@@ -21,7 +21,6 @@
 /**
  * @file
  * @brief Python UDF
- * @author Kevin Midkiff <kevin.midkiff@intel.com>
  */
 
 #ifndef _EIS_UDF_PYTHON_UDF_H

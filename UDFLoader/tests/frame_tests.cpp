@@ -20,7 +20,6 @@
 
 /**
  * @brief Unit tests for the @c Frame object
- * @author Kevin Midkiff (kevin.midkiff@intel.com)
  */
 
 #include <opencv2/opencv.hpp>

@@ -20,7 +20,6 @@
 
 /**
  * @brief Implementation of @c BaseUdf class
- * @author Kevin Midkiff (kevin.midkiff@intel.com)
  */
 
 #include <eis/utils/logger.h>

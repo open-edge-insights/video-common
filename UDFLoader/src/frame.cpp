@@ -20,7 +20,6 @@
 
 /**
  * @brief Implementation of @c Frame class
- * @author Kevin Midkiff (kevin.midkiff@intel.com)
  */
 
 #include <vector>

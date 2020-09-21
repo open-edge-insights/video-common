@@ -20,7 +20,6 @@
 
 /**
  * @brief @c C++ UdfHandle implementation
- * @author Caleb McMillan (caleb.m.mcmillan@intel.com)
  */
 
 #include <dlfcn.h>

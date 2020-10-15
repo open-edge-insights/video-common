@@ -33,6 +33,8 @@ WORKDIR ${HOME}
 # Copy OpenVINO arifacts
 COPY --from=openvino / /
 
+RUN cd /opt/intel/openvino/install_dependencies/ && ./install_openvino_dependencies.sh
+
 ARG FPGA_ENABLE
 
 # FPGA drivers

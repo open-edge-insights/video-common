@@ -29,6 +29,7 @@ from cpython.ref cimport PyObject, Py_INCREF
 
 # Python imports
 import json
+import logging
 import warnings
 import inspect
 import importlib
@@ -354,7 +355,7 @@ cdef public object load_udf(const char* name, config_t* config) with gil:
 
     py_name = <bytes> name
     py_name = py_name.decode('utf-8')
-
+    log = logging.getLogger('CYTHON_LOG')
     try:
         lib = importlib.import_module(f'{py_name}')
 
@@ -374,11 +375,13 @@ cdef public object load_udf(const char* name, config_t* config) with gil:
 
         return lib.Udf(*args)
     except AttributeError:
+        logging.exception("fatal error")
         raise AttributeError(f'{py_name} module is missing the Udf class')
     except ImportError:
+        logging.exception("fatal error")
         raise ImportError(f'Failed to load UDF: {py_name}')
     except Exception as ex:
-        print("Exception : {}".format(ex))
+        logging.exception("Exception : {}".format(ex))
         raise
 
 

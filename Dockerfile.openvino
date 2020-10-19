@@ -34,11 +34,3 @@ WORKDIR ${HOME}
 COPY --from=openvino / /
 
 RUN cd /opt/intel/openvino/install_dependencies/ && ./install_openvino_dependencies.sh
-
-ARG FPGA_ENABLE
-
-# FPGA drivers
-COPY 51-usbblaster.rules /etc/udev/rules/51-usbblaster.rules
-
-COPY fpga_env.sh ${HOME}/
-

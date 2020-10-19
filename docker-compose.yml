@@ -49,7 +49,6 @@ services:
       args:
           EIS_VERSION: ${EIS_VERSION}
           OPENVINO_IMAGE_VERSION: ${OPENVINO_IMAGE_VERSION}
-          FPGA_ENABLE: "disable"
           DOCKER_REGISTRY: ${DOCKER_REGISTRY}
     read_only: true
     image: ${DOCKER_REGISTRY}ia_openvino_base:${EIS_VERSION}

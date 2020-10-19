@@ -50,9 +50,7 @@ Below is the JSON schema for UDF json object configuration:
                 "CPU",
                 "GPU",
                 "HDDL",
-                "MYRIAD",
-                "HETERO:FPGA,CPU",
-                "HETERO:FPGA,GPU"
+                "MYRIAD"
               ]
             }
           },
@@ -67,10 +65,6 @@ Below is the JSON schema for UDF json object configuration:
   }
 }
 ```
-
-**Note**: Heterogeneous Execution needs to be used with FPGA plugin. One must still point to the CPU plugin or the GPU plugin as fallback devices for heterogeneous plugin. HETERO does not support VPU. For more information refer the below link:
-https://docs.openvinotoolkit.org/latest/_docs_IE_DG_supported_plugins_FPGA.html
-
 
 One can use [JSON validator tool](https://www.jsonschemavalidator.net/) for
 validating the UDF configuration object against the above schema.
@@ -227,9 +221,8 @@ User can refer to [UDF Writing HOW-TO GUIDE](./HOWTO_GUIDE_FOR_WRITING_UDF.md) f
   Refer [python/pcb/README.md](./python/pcb/README.md) for more information.
 
   **NOTE**:
-  The above config works for both "CPU", "GPU", "HETERO:FPGA,CPU" and "HETERO:FPGA,GPU" devices
-  after setting appropriate `device` value. Please set the "device" value appropriately based on
-  the device used for inferencing.
+  The above config works for both "CPU" and "GPU" devices after setting appropriate `device` value.
+  Please set the "device" value appropriately based on the device used for inferencing.
 
 ----
 

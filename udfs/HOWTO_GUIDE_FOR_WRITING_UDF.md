@@ -91,13 +91,13 @@ There are three APIs defined semantically to add the pre/post processing logic. 
 
 This section describes the check-list one has to ensure to be completed before exercising C++ UDF.
 
-1. All the code specific to UDF should be kept under one directory which should be placed under **.../common/udfs/native** directory.
+1. All the code specific to UDF should be kept under one directory which should be placed under **.../common/video/udfs/native** directory.
 
 2. Write appropriate ***CMakeLists.txt*** file and link appropriate external library based on the code. Currently two sample CMAKE files are defined for two different use-case.
     * [ Dummy UDF's CMakeLists.txt file] (./native/dummy/CMakeLists.txt)
     * [Safety Gear Demo CMakeLists.txt file](./native/safety_gear_demo/CMakeLists.txt)
 
-3. If the OpenVINO is used kindly follow the [safety_gear_demo](common/udfs/native/safety_gear_demo) example for proper linking of  **cpu_extension.so** shared object.
+3. If the OpenVINO is used kindly follow the [safety_gear_demo](common/video/udfs/native/safety_gear_demo) example for proper linking of  **cpu_extension.so** shared object.
 
 4. An appropriate entry must exist for each UDF that need to be loaded as part of EIS deployment. The UDF entry syntax is explained in detail in the following document [UDF README](./README.md)
 

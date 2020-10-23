@@ -211,10 +211,10 @@ User can refer to [UDF Writing HOW-TO GUIDE](./HOWTO_GUIDE_FOR_WRITING_UDF.md) f
       "name": "pcb.pcb_classifier",
       "type": "python",
       "device": "CPU",
-      "ref_img": "common/udfs/python/pcb/ref/ref.png",
-      "ref_config_roi": "common/udfs/python/pcb/ref/roi_2.json",
-      "model_xml": "common/udfs/python/pcb/ref/model_2.xml",
-      "model_bin": "common/udfs/python/pcb/ref/model_2.bin"
+      "ref_img": "common/video/udfs/python/pcb/ref/ref.png",
+      "ref_config_roi": "common/video/udfs/python/pcb/ref/roi_2.json",
+      "model_xml": "common/video/udfs/python/pcb/ref/model_2.xml",
+      "model_bin": "common/video/udfs/python/pcb/ref/model_2.bin"
   }
   ```
 

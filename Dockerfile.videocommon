@@ -27,5 +27,5 @@ WORKDIR ${GO_WORK_DIR}
 
 # Copying udfs & UDFLoader
 COPY UDFLoader ./common/UDFLoader
-COPY udfs/native ./common/udfs/native
-COPY udfs/python ./common/udfs/python
+COPY udfs/native ./common/video/udfs/native
+COPY udfs/python ./common/video/udfs/python

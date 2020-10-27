@@ -355,7 +355,7 @@ cdef public object load_udf(const char* name, config_t* config) with gil:
 
     py_name = <bytes> name
     py_name = py_name.decode('utf-8')
-    log = logging.getLogger('CYTHON_LOG')
+    log = logging.getLogger('UdfLoader')
     try:
         lib = importlib.import_module(f'{py_name}')
 
@@ -375,13 +375,16 @@ cdef public object load_udf(const char* name, config_t* config) with gil:
 
         return lib.Udf(*args)
     except AttributeError:
-        logging.exception("fatal error")
-        raise AttributeError(f'{py_name} module is missing the Udf class')
+        err = f'{py_name} module is missing the Udf class'
+        log.error(err)
+        raise AttributeError()
     except ImportError:
-        logging.exception("fatal error")
-        raise ImportError(f'Failed to load UDF: {py_name}')
+        err = f'Failed to load UDF: {py_name}'
+        log.error(err)
+        raise ImportError()
     except Exception as ex:
-        logging.exception("Exception : {}".format(ex))
+        err = f'Unexpected error while loading UDF {py_name}: {ex}'
+        log.error(err, exc_info=True)
         raise
 
 

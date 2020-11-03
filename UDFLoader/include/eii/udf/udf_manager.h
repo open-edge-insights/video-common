@@ -30,7 +30,7 @@
 #include <vector>
 #include <eis/utils/config.h>
 #include <eis/utils/thread_safe_queue.h>
-#include <eis/utils/thread_pool.h>
+#include <eis/utils/thread_executor.hpp>
 #include <eis/utils/profiling.h>
 
 #include "eis/udf/udf_handle.h"
@@ -61,8 +61,8 @@ private:
     // UDF output queue
     FrameQueue* m_udf_output_queue;
 
-    // Thread pool
-    utils::ThreadPool* m_pool;
+    // Thread executor
+    utils::ThreadExecutor* m_executor;
 
     // UDF Handles
     std::vector<UdfHandle*> m_udfs;
@@ -86,7 +86,7 @@ private:
     /**
      * @c UDFManager private thread run method.
      */
-    void run();
+    void run(int tid, std::atomic<bool>& stop, void* varg);
 
     /**
      * Private @c UdfManager copy constructor.

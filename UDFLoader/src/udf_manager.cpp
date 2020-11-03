@@ -22,6 +22,7 @@
  * @brief @c UdfManager class implementation.
  */
 
+#include <functional>
 #include <chrono>
 #include <eis/utils/logger.h>
 #include <sstream>
@@ -38,10 +39,8 @@ using namespace eis::udf;
 using namespace eis::utils;
 
 #define CFG_UDFS            "udfs"
-#define CFG_MAX_JOBS        "max_jobs"
 #define CFG_MAX_WORKERS     "max_workers"
 #define DEFAULT_MAX_WORKERS 4  // Default 4 threads to submit jobs to
-#define DEFAULT_MAX_JOBS    20 // Default for the number of queued jobs
 #define RANDOM_STR_LENGTH   5  // Size of random strings to be added for profiling keys
 
 // Globals
@@ -91,20 +90,6 @@ UdfManager::UdfManager(
         throw "\"udfs\" must be an array";
     }
 
-    // Get maximum jobs (if it exists)
-    int max_jobs = DEFAULT_MAX_JOBS;
-    config_value_t* cfg_max_jobs = config_get(m_config, CFG_MAX_JOBS);
-    if(cfg_max_jobs != NULL) {
-        if(cfg_max_jobs->type != CVT_INTEGER) {
-            config_value_destroy(cfg_max_jobs);
-            config_value_destroy(udfs);
-            throw "\"max_jobs\" must be an integer";
-        }
-        max_jobs = cfg_max_jobs->body.integer;
-        config_value_destroy(cfg_max_jobs);
-    }
-    LOG_INFO("max_jobs: %d", max_jobs);
-
     // Get the maximum number of workers
     int max_workers = DEFAULT_MAX_WORKERS;
     config_value_t* cfg_max_workers = config_get(m_config, CFG_MAX_WORKERS);
@@ -119,8 +104,13 @@ UdfManager::UdfManager(
     }
     LOG_INFO("max_workers: %d", max_workers);
 
-    // Initialize thread pool
-    m_pool = new ThreadPool(max_workers, max_jobs);
+    // Initialize thread executor
+    m_executor = new ThreadExecutor(
+            max_workers, std::bind(
+                &UdfManager::run, this,
+                std::placeholders::_1,
+                std::placeholders::_2,
+                std::placeholders::_3), NULL);
 
     m_profile = new Profiling();
 
@@ -200,7 +190,8 @@ UdfManager::~UdfManager() {
         delete m_th;
     }
 
-    delete m_pool;
+    // Clean up the executor
+    delete m_executor;
 
     LOG_DEBUG_0("Deleting all handles");
     for(auto handle : m_udfs) {
@@ -215,18 +206,16 @@ UdfManager::~UdfManager() {
     LOG_DEBUG_0("Clearing udf input queue");
     // Clear queues and delete them
     while(!m_udf_input_queue->empty()) {
-        Frame* frame = m_udf_input_queue->front();
-        m_udf_input_queue->pop();
-        delete frame;
+        Frame* frame = m_udf_input_queue->pop();
+        if (frame != NULL) delete frame;
     }
     LOG_DEBUG_0("Cleared udf input queue");
     delete m_udf_input_queue;
 
     LOG_DEBUG_0("Clearing udf output queue");
     while(!m_udf_output_queue->empty()) {
-        Frame* frame = m_udf_output_queue->front();
-        m_udf_output_queue->pop();
-        delete frame;
+        Frame* frame = m_udf_output_queue->pop();
+        if (frame != NULL)  delete frame;
     }
     LOG_DEBUG_0("Cleared udf output queue");
     delete m_udf_output_queue;
@@ -235,147 +224,21 @@ UdfManager::~UdfManager() {
     LOG_DEBUG_0("Done with ~UdfManager()");
 }
 
-/**
- * Context object for the worker function to get it's frame, UDF handle, and
- * the output queue for resulting frames.
- */
-class UdfWorker {
-private:
-    // Profiling variable
-    Profiling* m_profile;
-
-    // UDF entry profiling key
-    std::string m_udf_push_entry_key;
-
-    // Queue blocked variable
-    std::string m_udf_push_block_key;
-
-public:
-    // UDF to be ran by the worker
-    // UdfHandle* handle;
-
-    // Frame for the UDF to process
-    Frame* frame;
-
-    // Output queue for the frame (if it not dropped)
-    FrameQueue* output_queue;
-
-    // UDF pipeline to continue
-    std::vector<UdfHandle*>* udfs;
-
-    JobHandle* handle;
-
-    /**
-     * Constructor
-     *
-     * @param handle       - UDF handle
-     * @param frame        - Frame to process
-     * @param output_queue - Output queue to put processed frames into
-     */
-    UdfWorker(Frame* frame, std::vector<UdfHandle*>* udfs,
-              Profiling* profile,
-              std::string frame_push_key,
-              std::string frame_block_key,
-              FrameQueue* output_queue) :
-        m_profile(profile), m_udf_push_entry_key(frame_push_key),
-        m_udf_push_block_key(frame_block_key),
-        frame(frame), output_queue(output_queue), udfs(udfs), handle(NULL)
-    {};
-
-    /**
-     * Destructor
-     */
-    ~UdfWorker() {
-        if(handle != NULL) {
-            delete handle;
-        }
-    };
-
-    /**
-     * UDF worker run method to be executed in a thread pool. This method is
-     * static so that it can be passed to the thread pool as a function
-     * pointer.
-     */
-    static void run(void* vargs) {
-        LOG_DEBUG_0("UdfWorker::run()");
-        UdfWorker* ctx = (UdfWorker*) vargs;
-        UdfRetCode ret;
-
-        for(auto handle : *ctx->udfs) {
-            LOG_DEBUG_0("Running UdfHandle::process()");
-
-            if(ctx->m_profile->is_profiling_enabled()) {
-                msg_envelope_t* meta_data = ctx->frame->get_meta_data();
-
-                // Add entry timestamp
-                DO_PROFILING(ctx->m_profile, meta_data, handle->get_prof_entry_key().c_str());
-
-                ret = handle->process(ctx->frame);
-
-                // Add exit timestamp
-                DO_PROFILING(ctx->m_profile, meta_data, handle->get_prof_exit_key().c_str());
-            } else {
-                ret = handle->process(ctx->frame);
-            }
-
-            // TODO: Should probably have better error reporting here...
-            switch(ret) {
-                case UdfRetCode::UDF_DROP_FRAME:
-                    LOG_DEBUG_0("Dropping frame");
-                    delete ctx->frame;
-                    return;
-                case UdfRetCode::UDF_ERROR:
-                    LOG_ERROR_0("Failed to process frame");
-                    delete ctx->frame;
-                    return;
-                case UdfRetCode::UDF_FRAME_MODIFIED:
-                case UdfRetCode::UDF_OK:
-                    LOG_DEBUG_0("UDF_OK");
-                    break;
-                default:
-                    LOG_ERROR_0("Reached default case, this should not happen");
-                    delete ctx->frame;
-                    return;
-            }
-            LOG_DEBUG_0("Done with UDF handle");
-        }
-
-        LOG_DEBUG_0("Pushing frame to output queue");
-        // Add queue entry timestamp
-        DO_PROFILING(ctx->m_profile, ctx->frame->get_meta_data(), ctx->m_udf_push_entry_key.c_str());
-        QueueRetCode ret_queue = ctx->output_queue->push(ctx->frame);
-        if(ret_queue == QueueRetCode::QUEUE_FULL) {
-            if(ctx->output_queue->push_wait(ctx->frame) != QueueRetCode::SUCCESS) {
-                LOG_ERROR_0("Failed to enqueue received message, "
-                            "message dropped");
-                delete ctx->frame;
-            }
-            // Add timestamp which acts as a marker if queue if blocked
-            DO_PROFILING(ctx->m_profile, ctx->frame->get_meta_data(), ctx->m_udf_push_block_key.c_str());
-        }
-        LOG_DEBUG_0("Done running worker function");
-    };
-};
-
-static void free_udf_worker(void* varg) {
-    UdfWorker* ctx = (UdfWorker*) varg;
-    delete ctx;
-}
-
-void UdfManager::run() {
+void UdfManager::run(int tid, std::atomic<bool>& stop, void* varg) {
     LOG_INFO_0("UDFManager thread started");
 
     // How often to check if the thread should quit
     auto duration = std::chrono::milliseconds(250);
+    UdfRetCode ret = UDF_OK;
 
-    while(!m_stop.load()) {
+    while(!stop.load()) {
         if(m_udf_input_queue->wait_for(duration)) {
             LOG_DEBUG_0("Popping frame from input queue");
-            Frame* frame = m_udf_input_queue->front();
-            m_udf_input_queue->pop();
+            Frame* frame = m_udf_input_queue->pop();
+            if (frame == NULL) continue;
 
-	    EncodeType enc_type = frame->get_encode_type();
-	    int enc_lvl = frame->get_encode_level();
+            EncodeType enc_type = frame->get_encode_type();
+            int enc_lvl = frame->get_encode_level();
 
             if((enc_type != m_enc_type) || (enc_lvl != m_enc_lvl)) {
                 try {
@@ -387,39 +250,92 @@ void UdfManager::run() {
                 }
             }
 
-            // Create the worker to execute the UDF pipeline on the given frame
-            UdfWorker* ctx = new UdfWorker(frame, &m_udfs, m_profile, m_udf_push_entry_key,
-                                           m_udf_push_block_key, m_udf_output_queue);
+            // Loop over all UDFs and execute them on the queued frame
+            for(auto handle : m_udfs) {
+                LOG_DEBUG_0("Running UdfHandle::process()");
 
-            LOG_DEBUG_0("Submitting job to job pool")
-            JobHandle* job_handle = NULL;
+                // If the application using the UDF Manager is in profiling
+                // mode, then add timestamps for UDF entry/exit, else just
+                // run the UDF
+                if(m_profile->is_profiling_enabled()) {
+                    msg_envelope_t* meta_data = frame->get_meta_data();
 
-            // Submit the job to run in the thread pool
-            job_handle = m_pool->submit(&UdfWorker::run, ctx, free_udf_worker);
-            LOG_DEBUG_0("Done submitting the job")
+                    // Add entry timestamp
+                    DO_PROFILING(
+                            m_profile, meta_data,
+                            handle->get_prof_entry_key().c_str());
 
-            // The job handle is not actually needed in this use of the
-            // thread pool
-            //delete job_handle;
-            ctx->handle = job_handle;
+                    ret = handle->process(frame);
+
+                    // Add exit timestamp
+                    DO_PROFILING(
+                            m_profile, meta_data,
+                            handle->get_prof_exit_key().c_str());
+                } else {
+                    // Run the UDF by itself, with no profiling timestamps
+                    ret = handle->process(frame);
+                }
+
+                // Check the return code from the UDF
+                switch(ret) {
+                    case UdfRetCode::UDF_DROP_FRAME:
+                        LOG_DEBUG_0("Dropping frame");
+                        delete frame;
+                        break;
+                    case UdfRetCode::UDF_ERROR:
+                        LOG_ERROR_0("Failed to process frame");
+                        delete frame;
+                        break;
+                    case UdfRetCode::UDF_FRAME_MODIFIED:
+                    case UdfRetCode::UDF_OK:
+                        LOG_DEBUG_0("UDF_OK");
+                        break;
+                    default:
+                        LOG_ERROR_0("Reached default case");
+                        delete frame;
+                        break;
+                }
+                LOG_DEBUG_0("Done with UDF handle");
+            }
+
+            if (ret == UDF_OK) {
+                LOG_DEBUG_0("Pushing frame to output queue");
+
+                // Add output queue entry timestamp
+                DO_PROFILING(
+                        m_profile, frame->get_meta_data(),
+                        m_udf_push_entry_key.c_str());
+
+                QueueRetCode ret_queue = m_udf_output_queue->push(frame);
+                if(ret_queue == QueueRetCode::QUEUE_FULL) {
+                    ret_queue = m_udf_output_queue->push_wait(frame);
+                    if(ret_queue != QueueRetCode::SUCCESS) {
+                        LOG_ERROR_0("Failed to enqueue received message, "
+                                    "message dropped");
+                        delete frame;
+                    }
+
+                    // Add timestamp which acts as a marker if queue if blocked
+                    DO_PROFILING(
+                            m_profile, frame->get_meta_data(),
+                            m_udf_push_block_key.c_str());
+                }
+            }
+
+            LOG_DEBUG_0("Finished processing frame");
         }
     }
 
     LOG_INFO_0("UDFManager thread stopped");
 }
 
+// TODO: Remove this method...
 void UdfManager::start() {
-    if(m_th == NULL && !m_stop.load()) {
-        m_th = new std::thread(&UdfManager::run, this);
-    } else {
-        LOG_WARN_0("Start attempted after stop or after start");
-    }
 }
 
 void UdfManager::stop() {
-    if(m_th != NULL && !m_stop.load()) {
+    if (!m_stop.load()) {
         m_stop.store(true);
-        m_th->join();
-        m_pool->stop();
+        m_executor->stop();
     }
 }

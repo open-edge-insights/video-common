@@ -1,10 +1,10 @@
 <?xml version="1.0" ?>
-<net name="pcb_1013" version="10">
+<net name="pcb_101920" version="10">
 	<layers>
 		<layer id="0" name="input" type="Parameter" version="opset1">
-			<data element_type="f32" shape="1,3,224,224"/>
+			<data element_type="f16" shape="1,3,224,224"/>
 			<output>
-				<port id="0" precision="FP32">
+				<port id="0" precision="FP16">
 					<dim>1</dim>
 					<dim>3</dim>
 					<dim>224</dim>
@@ -12,10 +12,80 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="1" name="MobilenetV1/MobilenetV1/Conv2d_0/BatchNorm/batchnorm/mul_156295631_const" type="Const" version="opset1">
-			<data element_type="f32" offset="0" shape="16,3,3,3" size="1728"/>
+		<layer id="1" name="input/reverse_input_channels9775/Concat9794_const" type="Const" version="opset1">
+			<data element_type="f16" offset="0" shape="1,3,1,1" size="6"/>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
+					<dim>1</dim>
+					<dim>3</dim>
+					<dim>1</dim>
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="2" name="Mul_/Fused_Mul_" type="Multiply" version="opset1">
+			<input>
+				<port id="0">
+					<dim>1</dim>
+					<dim>3</dim>
+					<dim>224</dim>
+					<dim>224</dim>
+				</port>
+				<port id="1">
+					<dim>1</dim>
+					<dim>3</dim>
+					<dim>1</dim>
+					<dim>1</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="FP16">
+					<dim>1</dim>
+					<dim>3</dim>
+					<dim>224</dim>
+					<dim>224</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="3" name="input/reverse_input_channels9777/Concat9802_const" type="Const" version="opset1">
+			<data element_type="f16" offset="6" shape="1,3,1,1" size="6"/>
+			<output>
+				<port id="1" precision="FP16">
+					<dim>1</dim>
+					<dim>3</dim>
+					<dim>1</dim>
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="4" name="Add_/Fused_Add_" type="Add" version="opset1">
+			<input>
+				<port id="0">
+					<dim>1</dim>
+					<dim>3</dim>
+					<dim>224</dim>
+					<dim>224</dim>
+				</port>
+				<port id="1">
+					<dim>1</dim>
+					<dim>3</dim>
+					<dim>1</dim>
+					<dim>1</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="FP16">
+					<dim>1</dim>
+					<dim>3</dim>
+					<dim>224</dim>
+					<dim>224</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="5" name="input/reverse_input_channels/Concat9786_const" type="Const" version="opset1">
+			<data element_type="f16" offset="12" shape="16,3,3,3" size="864"/>
+			<output>
+				<port id="1" precision="FP16">
 					<dim>16</dim>
 					<dim>3</dim>
 					<dim>3</dim>
@@ -23,7 +93,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="2" name="MobilenetV1/MobilenetV1/Conv2d_0/convolution" type="Convolution" version="opset1">
+		<layer id="6" name="MobilenetV1/MobilenetV1/Conv2d_0/convolution" type="Convolution" version="opset1">
 			<data auto_pad="same_upper" dilations="1,1" output_padding="0,0" pads_begin="0,0" pads_end="0,0" strides="2,2"/>
 			<input>
 				<port id="0">
@@ -40,7 +110,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="2" precision="FP32">
+				<port id="2" precision="FP16">
 					<dim>1</dim>
 					<dim>16</dim>
 					<dim>112</dim>
@@ -48,10 +118,10 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="3" name="MobilenetV1/MobilenetV1/Conv2d_0/BatchNorm/batchnorm/sub/Output_0/Data_/copy_const" type="Const" version="opset1">
-			<data element_type="f32" offset="1728" shape="1,16,1,1" size="64"/>
+		<layer id="7" name="MobilenetV1/MobilenetV1/Conv2d_0/BatchNorm/batchnorm/sub/Output_0/Data_/copy_const" type="Const" version="opset1">
+			<data element_type="f16" offset="876" shape="1,16,1,1" size="32"/>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>1</dim>
 					<dim>16</dim>
 					<dim>1</dim>
@@ -59,7 +129,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="4" name="MobilenetV1/MobilenetV1/Conv2d_0/BatchNorm/batchnorm/add_1" type="Add" version="opset1">
+		<layer id="8" name="MobilenetV1/MobilenetV1/Conv2d_0/BatchNorm/batchnorm/add_1" type="Add" version="opset1">
 			<input>
 				<port id="0">
 					<dim>1</dim>
@@ -75,7 +145,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="2" precision="FP32">
+				<port id="2" precision="FP16">
 					<dim>1</dim>
 					<dim>16</dim>
 					<dim>112</dim>
@@ -83,7 +153,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="5" name="MobilenetV1/MobilenetV1/Conv2d_0/Relu6" type="Clamp" version="opset1">
+		<layer id="9" name="MobilenetV1/MobilenetV1/Conv2d_0/Relu6" type="Clamp" version="opset1">
 			<data max="6.0" min="0.0"/>
 			<input>
 				<port id="0">
@@ -94,7 +164,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>1</dim>
 					<dim>16</dim>
 					<dim>112</dim>
@@ -102,10 +172,10 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="6" name="99479950_const" type="Const" version="opset1">
-			<data element_type="f32" offset="1792" shape="16,1,1,3,3" size="576"/>
+		<layer id="10" name="1013310136_const" type="Const" version="opset1">
+			<data element_type="f16" offset="908" shape="16,1,1,3,3" size="288"/>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>16</dim>
 					<dim>1</dim>
 					<dim>1</dim>
@@ -114,7 +184,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="7" name="MobilenetV1/MobilenetV1/Conv2d_1_depthwise/depthwise" type="GroupConvolution" version="opset1">
+		<layer id="11" name="MobilenetV1/MobilenetV1/Conv2d_1_depthwise/depthwise" type="GroupConvolution" version="opset1">
 			<data auto_pad="same_upper" dilations="1,1" output_padding="0,0" pads_begin="0,0" pads_end="0,0" strides="1,1"/>
 			<input>
 				<port id="0">
@@ -132,7 +202,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="2" precision="FP32">
+				<port id="2" precision="FP16">
 					<dim>1</dim>
 					<dim>16</dim>
 					<dim>112</dim>
@@ -140,10 +210,10 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="8" name="MobilenetV1/MobilenetV1/Conv2d_1_depthwise/BatchNorm/batchnorm/sub/Output_0/Data_/copy_const" type="Const" version="opset1">
-			<data element_type="f32" offset="2368" shape="1,16,1,1" size="64"/>
+		<layer id="12" name="MobilenetV1/MobilenetV1/Conv2d_1_depthwise/BatchNorm/batchnorm/sub/Output_0/Data_/copy_const" type="Const" version="opset1">
+			<data element_type="f16" offset="1196" shape="1,16,1,1" size="32"/>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>1</dim>
 					<dim>16</dim>
 					<dim>1</dim>
@@ -151,7 +221,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="9" name="MobilenetV1/MobilenetV1/Conv2d_1_depthwise/BatchNorm/batchnorm/add_1" type="Add" version="opset1">
+		<layer id="13" name="MobilenetV1/MobilenetV1/Conv2d_1_depthwise/BatchNorm/batchnorm/add_1" type="Add" version="opset1">
 			<input>
 				<port id="0">
 					<dim>1</dim>
@@ -167,7 +237,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="2" precision="FP32">
+				<port id="2" precision="FP16">
 					<dim>1</dim>
 					<dim>16</dim>
 					<dim>112</dim>
@@ -175,7 +245,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="10" name="MobilenetV1/MobilenetV1/Conv2d_1_depthwise/Relu6" type="Clamp" version="opset1">
+		<layer id="14" name="MobilenetV1/MobilenetV1/Conv2d_1_depthwise/Relu6" type="Clamp" version="opset1">
 			<data max="6.0" min="0.0"/>
 			<input>
 				<port id="0">
@@ -186,7 +256,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>1</dim>
 					<dim>16</dim>
 					<dim>112</dim>
@@ -194,10 +264,10 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="11" name="MobilenetV1/MobilenetV1/Conv2d_1_pointwise/BatchNorm/batchnorm/mul_156375639_const" type="Const" version="opset1">
-			<data element_type="f32" offset="2432" shape="32,16,1,1" size="2048"/>
+		<layer id="15" name="MobilenetV1/MobilenetV1/Conv2d_1_pointwise/BatchNorm/batchnorm/mul_157055707_const" type="Const" version="opset1">
+			<data element_type="f16" offset="1228" shape="32,16,1,1" size="1024"/>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>32</dim>
 					<dim>16</dim>
 					<dim>1</dim>
@@ -205,7 +275,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="12" name="MobilenetV1/MobilenetV1/Conv2d_1_pointwise/convolution" type="Convolution" version="opset1">
+		<layer id="16" name="MobilenetV1/MobilenetV1/Conv2d_1_pointwise/convolution" type="Convolution" version="opset1">
 			<data auto_pad="same_upper" dilations="1,1" output_padding="0,0" pads_begin="0,0" pads_end="0,0" strides="1,1"/>
 			<input>
 				<port id="0">
@@ -222,7 +292,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="2" precision="FP32">
+				<port id="2" precision="FP16">
 					<dim>1</dim>
 					<dim>32</dim>
 					<dim>112</dim>
@@ -230,10 +300,10 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="13" name="MobilenetV1/MobilenetV1/Conv2d_1_pointwise/BatchNorm/batchnorm/sub/Output_0/Data_/copy_const" type="Const" version="opset1">
-			<data element_type="f32" offset="4480" shape="1,32,1,1" size="128"/>
+		<layer id="17" name="MobilenetV1/MobilenetV1/Conv2d_1_pointwise/BatchNorm/batchnorm/sub/Output_0/Data_/copy_const" type="Const" version="opset1">
+			<data element_type="f16" offset="2252" shape="1,32,1,1" size="64"/>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>1</dim>
 					<dim>32</dim>
 					<dim>1</dim>
@@ -241,7 +311,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="14" name="MobilenetV1/MobilenetV1/Conv2d_1_pointwise/BatchNorm/batchnorm/add_1" type="Add" version="opset1">
+		<layer id="18" name="MobilenetV1/MobilenetV1/Conv2d_1_pointwise/BatchNorm/batchnorm/add_1" type="Add" version="opset1">
 			<input>
 				<port id="0">
 					<dim>1</dim>
@@ -257,7 +327,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="2" precision="FP32">
+				<port id="2" precision="FP16">
 					<dim>1</dim>
 					<dim>32</dim>
 					<dim>112</dim>
@@ -265,7 +335,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="15" name="MobilenetV1/MobilenetV1/Conv2d_1_pointwise/Relu6" type="Clamp" version="opset1">
+		<layer id="19" name="MobilenetV1/MobilenetV1/Conv2d_1_pointwise/Relu6" type="Clamp" version="opset1">
 			<data max="6.0" min="0.0"/>
 			<input>
 				<port id="0">
@@ -276,7 +346,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>1</dim>
 					<dim>32</dim>
 					<dim>112</dim>
@@ -284,10 +354,10 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="16" name="99199922_const" type="Const" version="opset1">
-			<data element_type="f32" offset="4608" shape="32,1,1,3,3" size="1152"/>
+		<layer id="20" name="1010110104_const" type="Const" version="opset1">
+			<data element_type="f16" offset="2316" shape="32,1,1,3,3" size="576"/>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>32</dim>
 					<dim>1</dim>
 					<dim>1</dim>
@@ -296,7 +366,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="17" name="MobilenetV1/MobilenetV1/Conv2d_2_depthwise/depthwise" type="GroupConvolution" version="opset1">
+		<layer id="21" name="MobilenetV1/MobilenetV1/Conv2d_2_depthwise/depthwise" type="GroupConvolution" version="opset1">
 			<data auto_pad="same_upper" dilations="1,1" output_padding="0,0" pads_begin="0,0" pads_end="0,0" strides="2,2"/>
 			<input>
 				<port id="0">
@@ -314,7 +384,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="2" precision="FP32">
+				<port id="2" precision="FP16">
 					<dim>1</dim>
 					<dim>32</dim>
 					<dim>56</dim>
@@ -322,10 +392,10 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="18" name="MobilenetV1/MobilenetV1/Conv2d_2_depthwise/BatchNorm/batchnorm/sub/Output_0/Data_/copy_const" type="Const" version="opset1">
-			<data element_type="f32" offset="5760" shape="1,32,1,1" size="128"/>
+		<layer id="22" name="MobilenetV1/MobilenetV1/Conv2d_2_depthwise/BatchNorm/batchnorm/sub/Output_0/Data_/copy_const" type="Const" version="opset1">
+			<data element_type="f16" offset="2892" shape="1,32,1,1" size="64"/>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>1</dim>
 					<dim>32</dim>
 					<dim>1</dim>
@@ -333,7 +403,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="19" name="MobilenetV1/MobilenetV1/Conv2d_2_depthwise/BatchNorm/batchnorm/add_1" type="Add" version="opset1">
+		<layer id="23" name="MobilenetV1/MobilenetV1/Conv2d_2_depthwise/BatchNorm/batchnorm/add_1" type="Add" version="opset1">
 			<input>
 				<port id="0">
 					<dim>1</dim>
@@ -349,7 +419,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="2" precision="FP32">
+				<port id="2" precision="FP16">
 					<dim>1</dim>
 					<dim>32</dim>
 					<dim>56</dim>
@@ -357,7 +427,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="20" name="MobilenetV1/MobilenetV1/Conv2d_2_depthwise/Relu6" type="Clamp" version="opset1">
+		<layer id="24" name="MobilenetV1/MobilenetV1/Conv2d_2_depthwise/Relu6" type="Clamp" version="opset1">
 			<data max="6.0" min="0.0"/>
 			<input>
 				<port id="0">
@@ -368,7 +438,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>1</dim>
 					<dim>32</dim>
 					<dim>56</dim>
@@ -376,10 +446,10 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="21" name="MobilenetV1/MobilenetV1/Conv2d_2_pointwise/BatchNorm/batchnorm/mul_156455647_const" type="Const" version="opset1">
-			<data element_type="f32" offset="5888" shape="64,32,1,1" size="8192"/>
+		<layer id="25" name="MobilenetV1/MobilenetV1/Conv2d_2_pointwise/BatchNorm/batchnorm/mul_157135715_const" type="Const" version="opset1">
+			<data element_type="f16" offset="2956" shape="64,32,1,1" size="4096"/>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>64</dim>
 					<dim>32</dim>
 					<dim>1</dim>
@@ -387,7 +457,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="22" name="MobilenetV1/MobilenetV1/Conv2d_2_pointwise/convolution" type="Convolution" version="opset1">
+		<layer id="26" name="MobilenetV1/MobilenetV1/Conv2d_2_pointwise/convolution" type="Convolution" version="opset1">
 			<data auto_pad="same_upper" dilations="1,1" output_padding="0,0" pads_begin="0,0" pads_end="0,0" strides="1,1"/>
 			<input>
 				<port id="0">
@@ -404,7 +474,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="2" precision="FP32">
+				<port id="2" precision="FP16">
 					<dim>1</dim>
 					<dim>64</dim>
 					<dim>56</dim>
@@ -412,10 +482,10 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="23" name="MobilenetV1/MobilenetV1/Conv2d_2_pointwise/BatchNorm/batchnorm/sub/Output_0/Data_/copy_const" type="Const" version="opset1">
-			<data element_type="f32" offset="14080" shape="1,64,1,1" size="256"/>
+		<layer id="27" name="MobilenetV1/MobilenetV1/Conv2d_2_pointwise/BatchNorm/batchnorm/sub/Output_0/Data_/copy_const" type="Const" version="opset1">
+			<data element_type="f16" offset="7052" shape="1,64,1,1" size="128"/>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>1</dim>
 					<dim>64</dim>
 					<dim>1</dim>
@@ -423,7 +493,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="24" name="MobilenetV1/MobilenetV1/Conv2d_2_pointwise/BatchNorm/batchnorm/add_1" type="Add" version="opset1">
+		<layer id="28" name="MobilenetV1/MobilenetV1/Conv2d_2_pointwise/BatchNorm/batchnorm/add_1" type="Add" version="opset1">
 			<input>
 				<port id="0">
 					<dim>1</dim>
@@ -439,7 +509,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="2" precision="FP32">
+				<port id="2" precision="FP16">
 					<dim>1</dim>
 					<dim>64</dim>
 					<dim>56</dim>
@@ -447,7 +517,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="25" name="MobilenetV1/MobilenetV1/Conv2d_2_pointwise/Relu6" type="Clamp" version="opset1">
+		<layer id="29" name="MobilenetV1/MobilenetV1/Conv2d_2_pointwise/Relu6" type="Clamp" version="opset1">
 			<data max="6.0" min="0.0"/>
 			<input>
 				<port id="0">
@@ -458,7 +528,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>1</dim>
 					<dim>64</dim>
 					<dim>56</dim>
@@ -466,10 +536,10 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="26" name="99399942_const" type="Const" version="opset1">
-			<data element_type="f32" offset="14336" shape="64,1,1,3,3" size="2304"/>
+		<layer id="30" name="1008910092_const" type="Const" version="opset1">
+			<data element_type="f16" offset="7180" shape="64,1,1,3,3" size="1152"/>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>64</dim>
 					<dim>1</dim>
 					<dim>1</dim>
@@ -478,7 +548,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="27" name="MobilenetV1/MobilenetV1/Conv2d_3_depthwise/depthwise" type="GroupConvolution" version="opset1">
+		<layer id="31" name="MobilenetV1/MobilenetV1/Conv2d_3_depthwise/depthwise" type="GroupConvolution" version="opset1">
 			<data auto_pad="same_upper" dilations="1,1" output_padding="0,0" pads_begin="0,0" pads_end="0,0" strides="1,1"/>
 			<input>
 				<port id="0">
@@ -496,7 +566,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="2" precision="FP32">
+				<port id="2" precision="FP16">
 					<dim>1</dim>
 					<dim>64</dim>
 					<dim>56</dim>
@@ -504,10 +574,10 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="28" name="MobilenetV1/MobilenetV1/Conv2d_3_depthwise/BatchNorm/batchnorm/sub/Output_0/Data_/copy_const" type="Const" version="opset1">
-			<data element_type="f32" offset="16640" shape="1,64,1,1" size="256"/>
+		<layer id="32" name="MobilenetV1/MobilenetV1/Conv2d_3_depthwise/BatchNorm/batchnorm/sub/Output_0/Data_/copy_const" type="Const" version="opset1">
+			<data element_type="f16" offset="8332" shape="1,64,1,1" size="128"/>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>1</dim>
 					<dim>64</dim>
 					<dim>1</dim>
@@ -515,7 +585,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="29" name="MobilenetV1/MobilenetV1/Conv2d_3_depthwise/BatchNorm/batchnorm/add_1" type="Add" version="opset1">
+		<layer id="33" name="MobilenetV1/MobilenetV1/Conv2d_3_depthwise/BatchNorm/batchnorm/add_1" type="Add" version="opset1">
 			<input>
 				<port id="0">
 					<dim>1</dim>
@@ -531,7 +601,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="2" precision="FP32">
+				<port id="2" precision="FP16">
 					<dim>1</dim>
 					<dim>64</dim>
 					<dim>56</dim>
@@ -539,7 +609,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="30" name="MobilenetV1/MobilenetV1/Conv2d_3_depthwise/Relu6" type="Clamp" version="opset1">
+		<layer id="34" name="MobilenetV1/MobilenetV1/Conv2d_3_depthwise/Relu6" type="Clamp" version="opset1">
 			<data max="6.0" min="0.0"/>
 			<input>
 				<port id="0">
@@ -550,7 +620,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>1</dim>
 					<dim>64</dim>
 					<dim>56</dim>
@@ -558,10 +628,10 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="31" name="MobilenetV1/MobilenetV1/Conv2d_3_pointwise/BatchNorm/batchnorm/mul_156535655_const" type="Const" version="opset1">
-			<data element_type="f32" offset="16896" shape="64,64,1,1" size="16384"/>
+		<layer id="35" name="MobilenetV1/MobilenetV1/Conv2d_3_pointwise/BatchNorm/batchnorm/mul_157215723_const" type="Const" version="opset1">
+			<data element_type="f16" offset="8460" shape="64,64,1,1" size="8192"/>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>64</dim>
 					<dim>64</dim>
 					<dim>1</dim>
@@ -569,7 +639,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="32" name="MobilenetV1/MobilenetV1/Conv2d_3_pointwise/convolution" type="Convolution" version="opset1">
+		<layer id="36" name="MobilenetV1/MobilenetV1/Conv2d_3_pointwise/convolution" type="Convolution" version="opset1">
 			<data auto_pad="same_upper" dilations="1,1" output_padding="0,0" pads_begin="0,0" pads_end="0,0" strides="1,1"/>
 			<input>
 				<port id="0">
@@ -586,7 +656,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="2" precision="FP32">
+				<port id="2" precision="FP16">
 					<dim>1</dim>
 					<dim>64</dim>
 					<dim>56</dim>
@@ -594,10 +664,10 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="33" name="MobilenetV1/MobilenetV1/Conv2d_3_pointwise/BatchNorm/batchnorm/sub/Output_0/Data_/copy_const" type="Const" version="opset1">
-			<data element_type="f32" offset="33280" shape="1,64,1,1" size="256"/>
+		<layer id="37" name="MobilenetV1/MobilenetV1/Conv2d_3_pointwise/BatchNorm/batchnorm/sub/Output_0/Data_/copy_const" type="Const" version="opset1">
+			<data element_type="f16" offset="16652" shape="1,64,1,1" size="128"/>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>1</dim>
 					<dim>64</dim>
 					<dim>1</dim>
@@ -605,7 +675,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="34" name="MobilenetV1/MobilenetV1/Conv2d_3_pointwise/BatchNorm/batchnorm/add_1" type="Add" version="opset1">
+		<layer id="38" name="MobilenetV1/MobilenetV1/Conv2d_3_pointwise/BatchNorm/batchnorm/add_1" type="Add" version="opset1">
 			<input>
 				<port id="0">
 					<dim>1</dim>
@@ -621,7 +691,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="2" precision="FP32">
+				<port id="2" precision="FP16">
 					<dim>1</dim>
 					<dim>64</dim>
 					<dim>56</dim>
@@ -629,7 +699,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="35" name="MobilenetV1/MobilenetV1/Conv2d_3_pointwise/Relu6" type="Clamp" version="opset1">
+		<layer id="39" name="MobilenetV1/MobilenetV1/Conv2d_3_pointwise/Relu6" type="Clamp" version="opset1">
 			<data max="6.0" min="0.0"/>
 			<input>
 				<port id="0">
@@ -640,7 +710,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>1</dim>
 					<dim>64</dim>
 					<dim>56</dim>
@@ -648,10 +718,10 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="36" name="99279930_const" type="Const" version="opset1">
-			<data element_type="f32" offset="33536" shape="64,1,1,3,3" size="2304"/>
+		<layer id="40" name="1010510108_const" type="Const" version="opset1">
+			<data element_type="f16" offset="16780" shape="64,1,1,3,3" size="1152"/>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>64</dim>
 					<dim>1</dim>
 					<dim>1</dim>
@@ -660,7 +730,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="37" name="MobilenetV1/MobilenetV1/Conv2d_4_depthwise/depthwise" type="GroupConvolution" version="opset1">
+		<layer id="41" name="MobilenetV1/MobilenetV1/Conv2d_4_depthwise/depthwise" type="GroupConvolution" version="opset1">
 			<data auto_pad="same_upper" dilations="1,1" output_padding="0,0" pads_begin="0,0" pads_end="0,0" strides="2,2"/>
 			<input>
 				<port id="0">
@@ -678,7 +748,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="2" precision="FP32">
+				<port id="2" precision="FP16">
 					<dim>1</dim>
 					<dim>64</dim>
 					<dim>28</dim>
@@ -686,10 +756,10 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="38" name="MobilenetV1/MobilenetV1/Conv2d_4_depthwise/BatchNorm/batchnorm/sub/Output_0/Data_/copy_const" type="Const" version="opset1">
-			<data element_type="f32" offset="35840" shape="1,64,1,1" size="256"/>
+		<layer id="42" name="MobilenetV1/MobilenetV1/Conv2d_4_depthwise/BatchNorm/batchnorm/sub/Output_0/Data_/copy_const" type="Const" version="opset1">
+			<data element_type="f16" offset="17932" shape="1,64,1,1" size="128"/>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>1</dim>
 					<dim>64</dim>
 					<dim>1</dim>
@@ -697,7 +767,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="39" name="MobilenetV1/MobilenetV1/Conv2d_4_depthwise/BatchNorm/batchnorm/add_1" type="Add" version="opset1">
+		<layer id="43" name="MobilenetV1/MobilenetV1/Conv2d_4_depthwise/BatchNorm/batchnorm/add_1" type="Add" version="opset1">
 			<input>
 				<port id="0">
 					<dim>1</dim>
@@ -713,7 +783,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="2" precision="FP32">
+				<port id="2" precision="FP16">
 					<dim>1</dim>
 					<dim>64</dim>
 					<dim>28</dim>
@@ -721,7 +791,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="40" name="MobilenetV1/MobilenetV1/Conv2d_4_depthwise/Relu6" type="Clamp" version="opset1">
+		<layer id="44" name="MobilenetV1/MobilenetV1/Conv2d_4_depthwise/Relu6" type="Clamp" version="opset1">
 			<data max="6.0" min="0.0"/>
 			<input>
 				<port id="0">
@@ -732,7 +802,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>1</dim>
 					<dim>64</dim>
 					<dim>28</dim>
@@ -740,10 +810,10 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="41" name="MobilenetV1/MobilenetV1/Conv2d_4_pointwise/BatchNorm/batchnorm/mul_156615663_const" type="Const" version="opset1">
-			<data element_type="f32" offset="36096" shape="128,64,1,1" size="32768"/>
+		<layer id="45" name="MobilenetV1/MobilenetV1/Conv2d_4_pointwise/BatchNorm/batchnorm/mul_157295731_const" type="Const" version="opset1">
+			<data element_type="f16" offset="18060" shape="128,64,1,1" size="16384"/>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>128</dim>
 					<dim>64</dim>
 					<dim>1</dim>
@@ -751,7 +821,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="42" name="MobilenetV1/MobilenetV1/Conv2d_4_pointwise/convolution" type="Convolution" version="opset1">
+		<layer id="46" name="MobilenetV1/MobilenetV1/Conv2d_4_pointwise/convolution" type="Convolution" version="opset1">
 			<data auto_pad="same_upper" dilations="1,1" output_padding="0,0" pads_begin="0,0" pads_end="0,0" strides="1,1"/>
 			<input>
 				<port id="0">
@@ -768,7 +838,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="2" precision="FP32">
+				<port id="2" precision="FP16">
 					<dim>1</dim>
 					<dim>128</dim>
 					<dim>28</dim>
@@ -776,10 +846,10 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="43" name="MobilenetV1/MobilenetV1/Conv2d_4_pointwise/BatchNorm/batchnorm/sub/Output_0/Data_/copy_const" type="Const" version="opset1">
-			<data element_type="f32" offset="68864" shape="1,128,1,1" size="512"/>
+		<layer id="47" name="MobilenetV1/MobilenetV1/Conv2d_4_pointwise/BatchNorm/batchnorm/sub/Output_0/Data_/copy_const" type="Const" version="opset1">
+			<data element_type="f16" offset="34444" shape="1,128,1,1" size="256"/>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>1</dim>
 					<dim>128</dim>
 					<dim>1</dim>
@@ -787,7 +857,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="44" name="MobilenetV1/MobilenetV1/Conv2d_4_pointwise/BatchNorm/batchnorm/add_1" type="Add" version="opset1">
+		<layer id="48" name="MobilenetV1/MobilenetV1/Conv2d_4_pointwise/BatchNorm/batchnorm/add_1" type="Add" version="opset1">
 			<input>
 				<port id="0">
 					<dim>1</dim>
@@ -803,7 +873,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="2" precision="FP32">
+				<port id="2" precision="FP16">
 					<dim>1</dim>
 					<dim>128</dim>
 					<dim>28</dim>
@@ -811,7 +881,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="45" name="MobilenetV1/MobilenetV1/Conv2d_4_pointwise/Relu6" type="Clamp" version="opset1">
+		<layer id="49" name="MobilenetV1/MobilenetV1/Conv2d_4_pointwise/Relu6" type="Clamp" version="opset1">
 			<data max="6.0" min="0.0"/>
 			<input>
 				<port id="0">
@@ -822,7 +892,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>1</dim>
 					<dim>128</dim>
 					<dim>28</dim>
@@ -830,10 +900,10 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="46" name="99439946_const" type="Const" version="opset1">
-			<data element_type="f32" offset="69376" shape="128,1,1,3,3" size="4608"/>
+		<layer id="50" name="1011710120_const" type="Const" version="opset1">
+			<data element_type="f16" offset="34700" shape="128,1,1,3,3" size="2304"/>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>128</dim>
 					<dim>1</dim>
 					<dim>1</dim>
@@ -842,7 +912,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="47" name="MobilenetV1/MobilenetV1/Conv2d_5_depthwise/depthwise" type="GroupConvolution" version="opset1">
+		<layer id="51" name="MobilenetV1/MobilenetV1/Conv2d_5_depthwise/depthwise" type="GroupConvolution" version="opset1">
 			<data auto_pad="same_upper" dilations="1,1" output_padding="0,0" pads_begin="0,0" pads_end="0,0" strides="1,1"/>
 			<input>
 				<port id="0">
@@ -860,7 +930,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="2" precision="FP32">
+				<port id="2" precision="FP16">
 					<dim>1</dim>
 					<dim>128</dim>
 					<dim>28</dim>
@@ -868,10 +938,10 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="48" name="MobilenetV1/MobilenetV1/Conv2d_5_depthwise/BatchNorm/batchnorm/sub/Output_0/Data_/copy_const" type="Const" version="opset1">
-			<data element_type="f32" offset="73984" shape="1,128,1,1" size="512"/>
+		<layer id="52" name="MobilenetV1/MobilenetV1/Conv2d_5_depthwise/BatchNorm/batchnorm/sub/Output_0/Data_/copy_const" type="Const" version="opset1">
+			<data element_type="f16" offset="37004" shape="1,128,1,1" size="256"/>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>1</dim>
 					<dim>128</dim>
 					<dim>1</dim>
@@ -879,7 +949,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="49" name="MobilenetV1/MobilenetV1/Conv2d_5_depthwise/BatchNorm/batchnorm/add_1" type="Add" version="opset1">
+		<layer id="53" name="MobilenetV1/MobilenetV1/Conv2d_5_depthwise/BatchNorm/batchnorm/add_1" type="Add" version="opset1">
 			<input>
 				<port id="0">
 					<dim>1</dim>
@@ -895,7 +965,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="2" precision="FP32">
+				<port id="2" precision="FP16">
 					<dim>1</dim>
 					<dim>128</dim>
 					<dim>28</dim>
@@ -903,7 +973,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="50" name="MobilenetV1/MobilenetV1/Conv2d_5_depthwise/Relu6" type="Clamp" version="opset1">
+		<layer id="54" name="MobilenetV1/MobilenetV1/Conv2d_5_depthwise/Relu6" type="Clamp" version="opset1">
 			<data max="6.0" min="0.0"/>
 			<input>
 				<port id="0">
@@ -914,7 +984,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>1</dim>
 					<dim>128</dim>
 					<dim>28</dim>
@@ -922,10 +992,10 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="51" name="MobilenetV1/MobilenetV1/Conv2d_5_pointwise/BatchNorm/batchnorm/mul_156695671_const" type="Const" version="opset1">
-			<data element_type="f32" offset="74496" shape="128,128,1,1" size="65536"/>
+		<layer id="55" name="MobilenetV1/MobilenetV1/Conv2d_5_pointwise/BatchNorm/batchnorm/mul_157375739_const" type="Const" version="opset1">
+			<data element_type="f16" offset="37260" shape="128,128,1,1" size="32768"/>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>128</dim>
 					<dim>128</dim>
 					<dim>1</dim>
@@ -933,7 +1003,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="52" name="MobilenetV1/MobilenetV1/Conv2d_5_pointwise/convolution" type="Convolution" version="opset1">
+		<layer id="56" name="MobilenetV1/MobilenetV1/Conv2d_5_pointwise/convolution" type="Convolution" version="opset1">
 			<data auto_pad="same_upper" dilations="1,1" output_padding="0,0" pads_begin="0,0" pads_end="0,0" strides="1,1"/>
 			<input>
 				<port id="0">
@@ -950,7 +1020,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="2" precision="FP32">
+				<port id="2" precision="FP16">
 					<dim>1</dim>
 					<dim>128</dim>
 					<dim>28</dim>
@@ -958,10 +1028,10 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="53" name="MobilenetV1/MobilenetV1/Conv2d_5_pointwise/BatchNorm/batchnorm/sub/Output_0/Data_/copy_const" type="Const" version="opset1">
-			<data element_type="f32" offset="140032" shape="1,128,1,1" size="512"/>
+		<layer id="57" name="MobilenetV1/MobilenetV1/Conv2d_5_pointwise/BatchNorm/batchnorm/sub/Output_0/Data_/copy_const" type="Const" version="opset1">
+			<data element_type="f16" offset="70028" shape="1,128,1,1" size="256"/>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>1</dim>
 					<dim>128</dim>
 					<dim>1</dim>
@@ -969,7 +1039,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="54" name="MobilenetV1/MobilenetV1/Conv2d_5_pointwise/BatchNorm/batchnorm/add_1" type="Add" version="opset1">
+		<layer id="58" name="MobilenetV1/MobilenetV1/Conv2d_5_pointwise/BatchNorm/batchnorm/add_1" type="Add" version="opset1">
 			<input>
 				<port id="0">
 					<dim>1</dim>
@@ -985,7 +1055,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="2" precision="FP32">
+				<port id="2" precision="FP16">
 					<dim>1</dim>
 					<dim>128</dim>
 					<dim>28</dim>
@@ -993,7 +1063,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="55" name="MobilenetV1/MobilenetV1/Conv2d_5_pointwise/Relu6" type="Clamp" version="opset1">
+		<layer id="59" name="MobilenetV1/MobilenetV1/Conv2d_5_pointwise/Relu6" type="Clamp" version="opset1">
 			<data max="6.0" min="0.0"/>
 			<input>
 				<port id="0">
@@ -1004,7 +1074,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>1</dim>
 					<dim>128</dim>
 					<dim>28</dim>
@@ -1012,10 +1082,10 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="56" name="99599962_const" type="Const" version="opset1">
-			<data element_type="f32" offset="140544" shape="128,1,1,3,3" size="4608"/>
+		<layer id="60" name="1009710100_const" type="Const" version="opset1">
+			<data element_type="f16" offset="70284" shape="128,1,1,3,3" size="2304"/>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>128</dim>
 					<dim>1</dim>
 					<dim>1</dim>
@@ -1024,7 +1094,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="57" name="MobilenetV1/MobilenetV1/Conv2d_6_depthwise/depthwise" type="GroupConvolution" version="opset1">
+		<layer id="61" name="MobilenetV1/MobilenetV1/Conv2d_6_depthwise/depthwise" type="GroupConvolution" version="opset1">
 			<data auto_pad="same_upper" dilations="1,1" output_padding="0,0" pads_begin="0,0" pads_end="0,0" strides="2,2"/>
 			<input>
 				<port id="0">
@@ -1042,7 +1112,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="2" precision="FP32">
+				<port id="2" precision="FP16">
 					<dim>1</dim>
 					<dim>128</dim>
 					<dim>14</dim>
@@ -1050,10 +1120,10 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="58" name="MobilenetV1/MobilenetV1/Conv2d_6_depthwise/BatchNorm/batchnorm/sub/Output_0/Data_/copy_const" type="Const" version="opset1">
-			<data element_type="f32" offset="145152" shape="1,128,1,1" size="512"/>
+		<layer id="62" name="MobilenetV1/MobilenetV1/Conv2d_6_depthwise/BatchNorm/batchnorm/sub/Output_0/Data_/copy_const" type="Const" version="opset1">
+			<data element_type="f16" offset="72588" shape="1,128,1,1" size="256"/>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>1</dim>
 					<dim>128</dim>
 					<dim>1</dim>
@@ -1061,62 +1131,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="59" name="MobilenetV1/MobilenetV1/Conv2d_6_depthwise/BatchNorm/batchnorm/add_1" type="Add" version="opset1">
-			<input>
-				<port id="0">
-					<dim>1</dim>
-					<dim>128</dim>
-					<dim>14</dim>
-					<dim>14</dim>
-				</port>
-				<port id="1">
-					<dim>1</dim>
-					<dim>128</dim>
-					<dim>1</dim>
-					<dim>1</dim>
-				</port>
-			</input>
-			<output>
-				<port id="2" precision="FP32">
-					<dim>1</dim>
-					<dim>128</dim>
-					<dim>14</dim>
-					<dim>14</dim>
-				</port>
-			</output>
-		</layer>
-		<layer id="60" name="MobilenetV1/MobilenetV1/Conv2d_6_depthwise/Relu6" type="Clamp" version="opset1">
-			<data max="6.0" min="0.0"/>
-			<input>
-				<port id="0">
-					<dim>1</dim>
-					<dim>128</dim>
-					<dim>14</dim>
-					<dim>14</dim>
-				</port>
-			</input>
-			<output>
-				<port id="1" precision="FP32">
-					<dim>1</dim>
-					<dim>128</dim>
-					<dim>14</dim>
-					<dim>14</dim>
-				</port>
-			</output>
-		</layer>
-		<layer id="61" name="MobilenetV1/MobilenetV1/Conv2d_6_pointwise/BatchNorm/batchnorm/mul_156775679_const" type="Const" version="opset1">
-			<data element_type="f32" offset="145664" shape="256,128,1,1" size="131072"/>
-			<output>
-				<port id="1" precision="FP32">
-					<dim>256</dim>
-					<dim>128</dim>
-					<dim>1</dim>
-					<dim>1</dim>
-				</port>
-			</output>
-		</layer>
-		<layer id="62" name="MobilenetV1/MobilenetV1/Conv2d_6_pointwise/convolution" type="Convolution" version="opset1">
-			<data auto_pad="same_upper" dilations="1,1" output_padding="0,0" pads_begin="0,0" pads_end="0,0" strides="1,1"/>
+		<layer id="63" name="MobilenetV1/MobilenetV1/Conv2d_6_depthwise/BatchNorm/batchnorm/add_1" type="Add" version="opset1">
 			<input>
 				<port id="0">
 					<dim>1</dim>
@@ -1125,6 +1140,61 @@
 					<dim>14</dim>
 				</port>
 				<port id="1">
+					<dim>1</dim>
+					<dim>128</dim>
+					<dim>1</dim>
+					<dim>1</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="FP16">
+					<dim>1</dim>
+					<dim>128</dim>
+					<dim>14</dim>
+					<dim>14</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="64" name="MobilenetV1/MobilenetV1/Conv2d_6_depthwise/Relu6" type="Clamp" version="opset1">
+			<data max="6.0" min="0.0"/>
+			<input>
+				<port id="0">
+					<dim>1</dim>
+					<dim>128</dim>
+					<dim>14</dim>
+					<dim>14</dim>
+				</port>
+			</input>
+			<output>
+				<port id="1" precision="FP16">
+					<dim>1</dim>
+					<dim>128</dim>
+					<dim>14</dim>
+					<dim>14</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="65" name="MobilenetV1/MobilenetV1/Conv2d_6_pointwise/BatchNorm/batchnorm/mul_157455747_const" type="Const" version="opset1">
+			<data element_type="f16" offset="72844" shape="256,128,1,1" size="65536"/>
+			<output>
+				<port id="1" precision="FP16">
+					<dim>256</dim>
+					<dim>128</dim>
+					<dim>1</dim>
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="66" name="MobilenetV1/MobilenetV1/Conv2d_6_pointwise/convolution" type="Convolution" version="opset1">
+			<data auto_pad="same_upper" dilations="1,1" output_padding="0,0" pads_begin="0,0" pads_end="0,0" strides="1,1"/>
+			<input>
+				<port id="0">
+					<dim>1</dim>
+					<dim>128</dim>
+					<dim>14</dim>
+					<dim>14</dim>
+				</port>
+				<port id="1">
 					<dim>256</dim>
 					<dim>128</dim>
 					<dim>1</dim>
@@ -1132,7 +1202,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="2" precision="FP32">
+				<port id="2" precision="FP16">
 					<dim>1</dim>
 					<dim>256</dim>
 					<dim>14</dim>
@@ -1140,10 +1210,10 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="63" name="MobilenetV1/MobilenetV1/Conv2d_6_pointwise/BatchNorm/batchnorm/sub/Output_0/Data_/copy_const" type="Const" version="opset1">
-			<data element_type="f32" offset="276736" shape="1,256,1,1" size="1024"/>
+		<layer id="67" name="MobilenetV1/MobilenetV1/Conv2d_6_pointwise/BatchNorm/batchnorm/sub/Output_0/Data_/copy_const" type="Const" version="opset1">
+			<data element_type="f16" offset="138380" shape="1,256,1,1" size="512"/>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>1</dim>
 					<dim>256</dim>
 					<dim>1</dim>
@@ -1151,7 +1221,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="64" name="MobilenetV1/MobilenetV1/Conv2d_6_pointwise/BatchNorm/batchnorm/add_1" type="Add" version="opset1">
+		<layer id="68" name="MobilenetV1/MobilenetV1/Conv2d_6_pointwise/BatchNorm/batchnorm/add_1" type="Add" version="opset1">
 			<input>
 				<port id="0">
 					<dim>1</dim>
@@ -1167,7 +1237,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="2" precision="FP32">
+				<port id="2" precision="FP16">
 					<dim>1</dim>
 					<dim>256</dim>
 					<dim>14</dim>
@@ -1175,7 +1245,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="65" name="MobilenetV1/MobilenetV1/Conv2d_6_pointwise/Relu6" type="Clamp" version="opset1">
+		<layer id="69" name="MobilenetV1/MobilenetV1/Conv2d_6_pointwise/Relu6" type="Clamp" version="opset1">
 			<data max="6.0" min="0.0"/>
 			<input>
 				<port id="0">
@@ -1186,7 +1256,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>1</dim>
 					<dim>256</dim>
 					<dim>14</dim>
@@ -1194,10 +1264,10 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="66" name="99359938_const" type="Const" version="opset1">
-			<data element_type="f32" offset="277760" shape="256,1,1,3,3" size="9216"/>
+		<layer id="70" name="1010910112_const" type="Const" version="opset1">
+			<data element_type="f16" offset="138892" shape="256,1,1,3,3" size="4608"/>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>256</dim>
 					<dim>1</dim>
 					<dim>1</dim>
@@ -1206,7 +1276,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="67" name="MobilenetV1/MobilenetV1/Conv2d_7_depthwise/depthwise" type="GroupConvolution" version="opset1">
+		<layer id="71" name="MobilenetV1/MobilenetV1/Conv2d_7_depthwise/depthwise" type="GroupConvolution" version="opset1">
 			<data auto_pad="same_upper" dilations="1,1" output_padding="0,0" pads_begin="0,0" pads_end="0,0" strides="1,1"/>
 			<input>
 				<port id="0">
@@ -1224,7 +1294,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="2" precision="FP32">
+				<port id="2" precision="FP16">
 					<dim>1</dim>
 					<dim>256</dim>
 					<dim>14</dim>
@@ -1232,10 +1302,10 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="68" name="MobilenetV1/MobilenetV1/Conv2d_7_depthwise/BatchNorm/batchnorm/sub/Output_0/Data_/copy_const" type="Const" version="opset1">
-			<data element_type="f32" offset="286976" shape="1,256,1,1" size="1024"/>
+		<layer id="72" name="MobilenetV1/MobilenetV1/Conv2d_7_depthwise/BatchNorm/batchnorm/sub/Output_0/Data_/copy_const" type="Const" version="opset1">
+			<data element_type="f16" offset="143500" shape="1,256,1,1" size="512"/>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>1</dim>
 					<dim>256</dim>
 					<dim>1</dim>
@@ -1243,7 +1313,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="69" name="MobilenetV1/MobilenetV1/Conv2d_7_depthwise/BatchNorm/batchnorm/add_1" type="Add" version="opset1">
+		<layer id="73" name="MobilenetV1/MobilenetV1/Conv2d_7_depthwise/BatchNorm/batchnorm/add_1" type="Add" version="opset1">
 			<input>
 				<port id="0">
 					<dim>1</dim>
@@ -1259,7 +1329,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="2" precision="FP32">
+				<port id="2" precision="FP16">
 					<dim>1</dim>
 					<dim>256</dim>
 					<dim>14</dim>
@@ -1267,7 +1337,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="70" name="MobilenetV1/MobilenetV1/Conv2d_7_depthwise/Relu6" type="Clamp" version="opset1">
+		<layer id="74" name="MobilenetV1/MobilenetV1/Conv2d_7_depthwise/Relu6" type="Clamp" version="opset1">
 			<data max="6.0" min="0.0"/>
 			<input>
 				<port id="0">
@@ -1278,7 +1348,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>1</dim>
 					<dim>256</dim>
 					<dim>14</dim>
@@ -1286,10 +1356,10 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="71" name="MobilenetV1/MobilenetV1/Conv2d_7_pointwise/BatchNorm/batchnorm/mul_156855687_const" type="Const" version="opset1">
-			<data element_type="f32" offset="288000" shape="256,256,1,1" size="262144"/>
+		<layer id="75" name="MobilenetV1/MobilenetV1/Conv2d_7_pointwise/BatchNorm/batchnorm/mul_157535755_const" type="Const" version="opset1">
+			<data element_type="f16" offset="144012" shape="256,256,1,1" size="131072"/>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>256</dim>
 					<dim>256</dim>
 					<dim>1</dim>
@@ -1297,7 +1367,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="72" name="MobilenetV1/MobilenetV1/Conv2d_7_pointwise/convolution" type="Convolution" version="opset1">
+		<layer id="76" name="MobilenetV1/MobilenetV1/Conv2d_7_pointwise/convolution" type="Convolution" version="opset1">
 			<data auto_pad="same_upper" dilations="1,1" output_padding="0,0" pads_begin="0,0" pads_end="0,0" strides="1,1"/>
 			<input>
 				<port id="0">
@@ -1314,7 +1384,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="2" precision="FP32">
+				<port id="2" precision="FP16">
 					<dim>1</dim>
 					<dim>256</dim>
 					<dim>14</dim>
@@ -1322,10 +1392,10 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="73" name="MobilenetV1/MobilenetV1/Conv2d_7_pointwise/BatchNorm/batchnorm/sub/Output_0/Data_/copy_const" type="Const" version="opset1">
-			<data element_type="f32" offset="550144" shape="1,256,1,1" size="1024"/>
+		<layer id="77" name="MobilenetV1/MobilenetV1/Conv2d_7_pointwise/BatchNorm/batchnorm/sub/Output_0/Data_/copy_const" type="Const" version="opset1">
+			<data element_type="f16" offset="275084" shape="1,256,1,1" size="512"/>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>1</dim>
 					<dim>256</dim>
 					<dim>1</dim>
@@ -1333,7 +1403,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="74" name="MobilenetV1/MobilenetV1/Conv2d_7_pointwise/BatchNorm/batchnorm/add_1" type="Add" version="opset1">
+		<layer id="78" name="MobilenetV1/MobilenetV1/Conv2d_7_pointwise/BatchNorm/batchnorm/add_1" type="Add" version="opset1">
 			<input>
 				<port id="0">
 					<dim>1</dim>
@@ -1349,7 +1419,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="2" precision="FP32">
+				<port id="2" precision="FP16">
 					<dim>1</dim>
 					<dim>256</dim>
 					<dim>14</dim>
@@ -1357,7 +1427,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="75" name="MobilenetV1/MobilenetV1/Conv2d_7_pointwise/Relu6" type="Clamp" version="opset1">
+		<layer id="79" name="MobilenetV1/MobilenetV1/Conv2d_7_pointwise/Relu6" type="Clamp" version="opset1">
 			<data max="6.0" min="0.0"/>
 			<input>
 				<port id="0">
@@ -1368,7 +1438,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>1</dim>
 					<dim>256</dim>
 					<dim>14</dim>
@@ -1376,10 +1446,10 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="76" name="99559958_const" type="Const" version="opset1">
-			<data element_type="f32" offset="551168" shape="256,1,1,3,3" size="9216"/>
+		<layer id="80" name="1012510128_const" type="Const" version="opset1">
+			<data element_type="f16" offset="275596" shape="256,1,1,3,3" size="4608"/>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>256</dim>
 					<dim>1</dim>
 					<dim>1</dim>
@@ -1388,189 +1458,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="77" name="MobilenetV1/MobilenetV1/Conv2d_8_depthwise/depthwise" type="GroupConvolution" version="opset1">
-			<data auto_pad="same_upper" dilations="1,1" output_padding="0,0" pads_begin="0,0" pads_end="0,0" strides="1,1"/>
-			<input>
-				<port id="0">
-					<dim>1</dim>
-					<dim>256</dim>
-					<dim>14</dim>
-					<dim>14</dim>
-				</port>
-				<port id="1">
-					<dim>256</dim>
-					<dim>1</dim>
-					<dim>1</dim>
-					<dim>3</dim>
-					<dim>3</dim>
-				</port>
-			</input>
-			<output>
-				<port id="2" precision="FP32">
-					<dim>1</dim>
-					<dim>256</dim>
-					<dim>14</dim>
-					<dim>14</dim>
-				</port>
-			</output>
-		</layer>
-		<layer id="78" name="MobilenetV1/MobilenetV1/Conv2d_8_depthwise/BatchNorm/batchnorm/sub/Output_0/Data_/copy_const" type="Const" version="opset1">
-			<data element_type="f32" offset="560384" shape="1,256,1,1" size="1024"/>
-			<output>
-				<port id="1" precision="FP32">
-					<dim>1</dim>
-					<dim>256</dim>
-					<dim>1</dim>
-					<dim>1</dim>
-				</port>
-			</output>
-		</layer>
-		<layer id="79" name="MobilenetV1/MobilenetV1/Conv2d_8_depthwise/BatchNorm/batchnorm/add_1" type="Add" version="opset1">
-			<input>
-				<port id="0">
-					<dim>1</dim>
-					<dim>256</dim>
-					<dim>14</dim>
-					<dim>14</dim>
-				</port>
-				<port id="1">
-					<dim>1</dim>
-					<dim>256</dim>
-					<dim>1</dim>
-					<dim>1</dim>
-				</port>
-			</input>
-			<output>
-				<port id="2" precision="FP32">
-					<dim>1</dim>
-					<dim>256</dim>
-					<dim>14</dim>
-					<dim>14</dim>
-				</port>
-			</output>
-		</layer>
-		<layer id="80" name="MobilenetV1/MobilenetV1/Conv2d_8_depthwise/Relu6" type="Clamp" version="opset1">
-			<data max="6.0" min="0.0"/>
-			<input>
-				<port id="0">
-					<dim>1</dim>
-					<dim>256</dim>
-					<dim>14</dim>
-					<dim>14</dim>
-				</port>
-			</input>
-			<output>
-				<port id="1" precision="FP32">
-					<dim>1</dim>
-					<dim>256</dim>
-					<dim>14</dim>
-					<dim>14</dim>
-				</port>
-			</output>
-		</layer>
-		<layer id="81" name="MobilenetV1/MobilenetV1/Conv2d_8_pointwise/BatchNorm/batchnorm/mul_156935695_const" type="Const" version="opset1">
-			<data element_type="f32" offset="561408" shape="256,256,1,1" size="262144"/>
-			<output>
-				<port id="1" precision="FP32">
-					<dim>256</dim>
-					<dim>256</dim>
-					<dim>1</dim>
-					<dim>1</dim>
-				</port>
-			</output>
-		</layer>
-		<layer id="82" name="MobilenetV1/MobilenetV1/Conv2d_8_pointwise/convolution" type="Convolution" version="opset1">
-			<data auto_pad="same_upper" dilations="1,1" output_padding="0,0" pads_begin="0,0" pads_end="0,0" strides="1,1"/>
-			<input>
-				<port id="0">
-					<dim>1</dim>
-					<dim>256</dim>
-					<dim>14</dim>
-					<dim>14</dim>
-				</port>
-				<port id="1">
-					<dim>256</dim>
-					<dim>256</dim>
-					<dim>1</dim>
-					<dim>1</dim>
-				</port>
-			</input>
-			<output>
-				<port id="2" precision="FP32">
-					<dim>1</dim>
-					<dim>256</dim>
-					<dim>14</dim>
-					<dim>14</dim>
-				</port>
-			</output>
-		</layer>
-		<layer id="83" name="MobilenetV1/MobilenetV1/Conv2d_8_pointwise/BatchNorm/batchnorm/sub/Output_0/Data_/copy_const" type="Const" version="opset1">
-			<data element_type="f32" offset="823552" shape="1,256,1,1" size="1024"/>
-			<output>
-				<port id="1" precision="FP32">
-					<dim>1</dim>
-					<dim>256</dim>
-					<dim>1</dim>
-					<dim>1</dim>
-				</port>
-			</output>
-		</layer>
-		<layer id="84" name="MobilenetV1/MobilenetV1/Conv2d_8_pointwise/BatchNorm/batchnorm/add_1" type="Add" version="opset1">
-			<input>
-				<port id="0">
-					<dim>1</dim>
-					<dim>256</dim>
-					<dim>14</dim>
-					<dim>14</dim>
-				</port>
-				<port id="1">
-					<dim>1</dim>
-					<dim>256</dim>
-					<dim>1</dim>
-					<dim>1</dim>
-				</port>
-			</input>
-			<output>
-				<port id="2" precision="FP32">
-					<dim>1</dim>
-					<dim>256</dim>
-					<dim>14</dim>
-					<dim>14</dim>
-				</port>
-			</output>
-		</layer>
-		<layer id="85" name="MobilenetV1/MobilenetV1/Conv2d_8_pointwise/Relu6" type="Clamp" version="opset1">
-			<data max="6.0" min="0.0"/>
-			<input>
-				<port id="0">
-					<dim>1</dim>
-					<dim>256</dim>
-					<dim>14</dim>
-					<dim>14</dim>
-				</port>
-			</input>
-			<output>
-				<port id="1" precision="FP32">
-					<dim>1</dim>
-					<dim>256</dim>
-					<dim>14</dim>
-					<dim>14</dim>
-				</port>
-			</output>
-		</layer>
-		<layer id="86" name="99519954_const" type="Const" version="opset1">
-			<data element_type="f32" offset="824576" shape="256,1,1,3,3" size="9216"/>
-			<output>
-				<port id="1" precision="FP32">
-					<dim>256</dim>
-					<dim>1</dim>
-					<dim>1</dim>
-					<dim>3</dim>
-					<dim>3</dim>
-				</port>
-			</output>
-		</layer>
-		<layer id="87" name="MobilenetV1/MobilenetV1/Conv2d_9_depthwise/depthwise" type="GroupConvolution" version="opset1">
+		<layer id="81" name="MobilenetV1/MobilenetV1/Conv2d_8_depthwise/depthwise" type="GroupConvolution" version="opset1">
 			<data auto_pad="same_upper" dilations="1,1" output_padding="0,0" pads_begin="0,0" pads_end="0,0" strides="1,1"/>
 			<input>
 				<port id="0">
@@ -1588,7 +1476,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="2" precision="FP32">
+				<port id="2" precision="FP16">
 					<dim>1</dim>
 					<dim>256</dim>
 					<dim>14</dim>
@@ -1596,10 +1484,10 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="88" name="MobilenetV1/MobilenetV1/Conv2d_9_depthwise/BatchNorm/batchnorm/sub/Output_0/Data_/copy_const" type="Const" version="opset1">
-			<data element_type="f32" offset="833792" shape="1,256,1,1" size="1024"/>
+		<layer id="82" name="MobilenetV1/MobilenetV1/Conv2d_8_depthwise/BatchNorm/batchnorm/sub/Output_0/Data_/copy_const" type="Const" version="opset1">
+			<data element_type="f16" offset="280204" shape="1,256,1,1" size="512"/>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>1</dim>
 					<dim>256</dim>
 					<dim>1</dim>
@@ -1607,7 +1495,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="89" name="MobilenetV1/MobilenetV1/Conv2d_9_depthwise/BatchNorm/batchnorm/add_1" type="Add" version="opset1">
+		<layer id="83" name="MobilenetV1/MobilenetV1/Conv2d_8_depthwise/BatchNorm/batchnorm/add_1" type="Add" version="opset1">
 			<input>
 				<port id="0">
 					<dim>1</dim>
@@ -1623,7 +1511,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="2" precision="FP32">
+				<port id="2" precision="FP16">
 					<dim>1</dim>
 					<dim>256</dim>
 					<dim>14</dim>
@@ -1631,7 +1519,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="90" name="MobilenetV1/MobilenetV1/Conv2d_9_depthwise/Relu6" type="Clamp" version="opset1">
+		<layer id="84" name="MobilenetV1/MobilenetV1/Conv2d_8_depthwise/Relu6" type="Clamp" version="opset1">
 			<data max="6.0" min="0.0"/>
 			<input>
 				<port id="0">
@@ -1642,7 +1530,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>1</dim>
 					<dim>256</dim>
 					<dim>14</dim>
@@ -1650,10 +1538,10 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="91" name="MobilenetV1/MobilenetV1/Conv2d_9_pointwise/BatchNorm/batchnorm/mul_157015703_const" type="Const" version="opset1">
-			<data element_type="f32" offset="834816" shape="256,256,1,1" size="262144"/>
+		<layer id="85" name="MobilenetV1/MobilenetV1/Conv2d_8_pointwise/BatchNorm/batchnorm/mul_157615763_const" type="Const" version="opset1">
+			<data element_type="f16" offset="280716" shape="256,256,1,1" size="131072"/>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>256</dim>
 					<dim>256</dim>
 					<dim>1</dim>
@@ -1661,7 +1549,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="92" name="MobilenetV1/MobilenetV1/Conv2d_9_pointwise/convolution" type="Convolution" version="opset1">
+		<layer id="86" name="MobilenetV1/MobilenetV1/Conv2d_8_pointwise/convolution" type="Convolution" version="opset1">
 			<data auto_pad="same_upper" dilations="1,1" output_padding="0,0" pads_begin="0,0" pads_end="0,0" strides="1,1"/>
 			<input>
 				<port id="0">
@@ -1678,7 +1566,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="2" precision="FP32">
+				<port id="2" precision="FP16">
 					<dim>1</dim>
 					<dim>256</dim>
 					<dim>14</dim>
@@ -1686,10 +1574,10 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="93" name="MobilenetV1/MobilenetV1/Conv2d_9_pointwise/BatchNorm/batchnorm/sub/Output_0/Data_/copy_const" type="Const" version="opset1">
-			<data element_type="f32" offset="1096960" shape="1,256,1,1" size="1024"/>
+		<layer id="87" name="MobilenetV1/MobilenetV1/Conv2d_8_pointwise/BatchNorm/batchnorm/sub/Output_0/Data_/copy_const" type="Const" version="opset1">
+			<data element_type="f16" offset="411788" shape="1,256,1,1" size="512"/>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>1</dim>
 					<dim>256</dim>
 					<dim>1</dim>
@@ -1697,7 +1585,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="94" name="MobilenetV1/MobilenetV1/Conv2d_9_pointwise/BatchNorm/batchnorm/add_1" type="Add" version="opset1">
+		<layer id="88" name="MobilenetV1/MobilenetV1/Conv2d_8_pointwise/BatchNorm/batchnorm/add_1" type="Add" version="opset1">
 			<input>
 				<port id="0">
 					<dim>1</dim>
@@ -1713,7 +1601,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="2" precision="FP32">
+				<port id="2" precision="FP16">
 					<dim>1</dim>
 					<dim>256</dim>
 					<dim>14</dim>
@@ -1721,7 +1609,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="95" name="MobilenetV1/MobilenetV1/Conv2d_9_pointwise/Relu6" type="Clamp" version="opset1">
+		<layer id="89" name="MobilenetV1/MobilenetV1/Conv2d_8_pointwise/Relu6" type="Clamp" version="opset1">
 			<data max="6.0" min="0.0"/>
 			<input>
 				<port id="0">
@@ -1732,7 +1620,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>1</dim>
 					<dim>256</dim>
 					<dim>14</dim>
@@ -1740,10 +1628,10 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="96" name="99159918_const" type="Const" version="opset1">
-			<data element_type="f32" offset="1097984" shape="256,1,1,3,3" size="9216"/>
+		<layer id="90" name="1009310096_const" type="Const" version="opset1">
+			<data element_type="f16" offset="412300" shape="256,1,1,3,3" size="4608"/>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>256</dim>
 					<dim>1</dim>
 					<dim>1</dim>
@@ -1752,189 +1640,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="97" name="MobilenetV1/MobilenetV1/Conv2d_10_depthwise/depthwise" type="GroupConvolution" version="opset1">
-			<data auto_pad="same_upper" dilations="1,1" output_padding="0,0" pads_begin="0,0" pads_end="0,0" strides="1,1"/>
-			<input>
-				<port id="0">
-					<dim>1</dim>
-					<dim>256</dim>
-					<dim>14</dim>
-					<dim>14</dim>
-				</port>
-				<port id="1">
-					<dim>256</dim>
-					<dim>1</dim>
-					<dim>1</dim>
-					<dim>3</dim>
-					<dim>3</dim>
-				</port>
-			</input>
-			<output>
-				<port id="2" precision="FP32">
-					<dim>1</dim>
-					<dim>256</dim>
-					<dim>14</dim>
-					<dim>14</dim>
-				</port>
-			</output>
-		</layer>
-		<layer id="98" name="MobilenetV1/MobilenetV1/Conv2d_10_depthwise/BatchNorm/batchnorm/sub/Output_0/Data_/copy_const" type="Const" version="opset1">
-			<data element_type="f32" offset="1107200" shape="1,256,1,1" size="1024"/>
-			<output>
-				<port id="1" precision="FP32">
-					<dim>1</dim>
-					<dim>256</dim>
-					<dim>1</dim>
-					<dim>1</dim>
-				</port>
-			</output>
-		</layer>
-		<layer id="99" name="MobilenetV1/MobilenetV1/Conv2d_10_depthwise/BatchNorm/batchnorm/add_1" type="Add" version="opset1">
-			<input>
-				<port id="0">
-					<dim>1</dim>
-					<dim>256</dim>
-					<dim>14</dim>
-					<dim>14</dim>
-				</port>
-				<port id="1">
-					<dim>1</dim>
-					<dim>256</dim>
-					<dim>1</dim>
-					<dim>1</dim>
-				</port>
-			</input>
-			<output>
-				<port id="2" precision="FP32">
-					<dim>1</dim>
-					<dim>256</dim>
-					<dim>14</dim>
-					<dim>14</dim>
-				</port>
-			</output>
-		</layer>
-		<layer id="100" name="MobilenetV1/MobilenetV1/Conv2d_10_depthwise/Relu6" type="Clamp" version="opset1">
-			<data max="6.0" min="0.0"/>
-			<input>
-				<port id="0">
-					<dim>1</dim>
-					<dim>256</dim>
-					<dim>14</dim>
-					<dim>14</dim>
-				</port>
-			</input>
-			<output>
-				<port id="1" precision="FP32">
-					<dim>1</dim>
-					<dim>256</dim>
-					<dim>14</dim>
-					<dim>14</dim>
-				</port>
-			</output>
-		</layer>
-		<layer id="101" name="MobilenetV1/MobilenetV1/Conv2d_10_pointwise/BatchNorm/batchnorm/mul_157095711_const" type="Const" version="opset1">
-			<data element_type="f32" offset="1108224" shape="256,256,1,1" size="262144"/>
-			<output>
-				<port id="1" precision="FP32">
-					<dim>256</dim>
-					<dim>256</dim>
-					<dim>1</dim>
-					<dim>1</dim>
-				</port>
-			</output>
-		</layer>
-		<layer id="102" name="MobilenetV1/MobilenetV1/Conv2d_10_pointwise/convolution" type="Convolution" version="opset1">
-			<data auto_pad="same_upper" dilations="1,1" output_padding="0,0" pads_begin="0,0" pads_end="0,0" strides="1,1"/>
-			<input>
-				<port id="0">
-					<dim>1</dim>
-					<dim>256</dim>
-					<dim>14</dim>
-					<dim>14</dim>
-				</port>
-				<port id="1">
-					<dim>256</dim>
-					<dim>256</dim>
-					<dim>1</dim>
-					<dim>1</dim>
-				</port>
-			</input>
-			<output>
-				<port id="2" precision="FP32">
-					<dim>1</dim>
-					<dim>256</dim>
-					<dim>14</dim>
-					<dim>14</dim>
-				</port>
-			</output>
-		</layer>
-		<layer id="103" name="MobilenetV1/MobilenetV1/Conv2d_10_pointwise/BatchNorm/batchnorm/sub/Output_0/Data_/copy_const" type="Const" version="opset1">
-			<data element_type="f32" offset="1370368" shape="1,256,1,1" size="1024"/>
-			<output>
-				<port id="1" precision="FP32">
-					<dim>1</dim>
-					<dim>256</dim>
-					<dim>1</dim>
-					<dim>1</dim>
-				</port>
-			</output>
-		</layer>
-		<layer id="104" name="MobilenetV1/MobilenetV1/Conv2d_10_pointwise/BatchNorm/batchnorm/add_1" type="Add" version="opset1">
-			<input>
-				<port id="0">
-					<dim>1</dim>
-					<dim>256</dim>
-					<dim>14</dim>
-					<dim>14</dim>
-				</port>
-				<port id="1">
-					<dim>1</dim>
-					<dim>256</dim>
-					<dim>1</dim>
-					<dim>1</dim>
-				</port>
-			</input>
-			<output>
-				<port id="2" precision="FP32">
-					<dim>1</dim>
-					<dim>256</dim>
-					<dim>14</dim>
-					<dim>14</dim>
-				</port>
-			</output>
-		</layer>
-		<layer id="105" name="MobilenetV1/MobilenetV1/Conv2d_10_pointwise/Relu6" type="Clamp" version="opset1">
-			<data max="6.0" min="0.0"/>
-			<input>
-				<port id="0">
-					<dim>1</dim>
-					<dim>256</dim>
-					<dim>14</dim>
-					<dim>14</dim>
-				</port>
-			</input>
-			<output>
-				<port id="1" precision="FP32">
-					<dim>1</dim>
-					<dim>256</dim>
-					<dim>14</dim>
-					<dim>14</dim>
-				</port>
-			</output>
-		</layer>
-		<layer id="106" name="99639966_const" type="Const" version="opset1">
-			<data element_type="f32" offset="1371392" shape="256,1,1,3,3" size="9216"/>
-			<output>
-				<port id="1" precision="FP32">
-					<dim>256</dim>
-					<dim>1</dim>
-					<dim>1</dim>
-					<dim>3</dim>
-					<dim>3</dim>
-				</port>
-			</output>
-		</layer>
-		<layer id="107" name="MobilenetV1/MobilenetV1/Conv2d_11_depthwise/depthwise" type="GroupConvolution" version="opset1">
+		<layer id="91" name="MobilenetV1/MobilenetV1/Conv2d_9_depthwise/depthwise" type="GroupConvolution" version="opset1">
 			<data auto_pad="same_upper" dilations="1,1" output_padding="0,0" pads_begin="0,0" pads_end="0,0" strides="1,1"/>
 			<input>
 				<port id="0">
@@ -1952,7 +1658,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="2" precision="FP32">
+				<port id="2" precision="FP16">
 					<dim>1</dim>
 					<dim>256</dim>
 					<dim>14</dim>
@@ -1960,10 +1666,10 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="108" name="MobilenetV1/MobilenetV1/Conv2d_11_depthwise/BatchNorm/batchnorm/sub/Output_0/Data_/copy_const" type="Const" version="opset1">
-			<data element_type="f32" offset="1380608" shape="1,256,1,1" size="1024"/>
+		<layer id="92" name="MobilenetV1/MobilenetV1/Conv2d_9_depthwise/BatchNorm/batchnorm/sub/Output_0/Data_/copy_const" type="Const" version="opset1">
+			<data element_type="f16" offset="416908" shape="1,256,1,1" size="512"/>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>1</dim>
 					<dim>256</dim>
 					<dim>1</dim>
@@ -1971,7 +1677,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="109" name="MobilenetV1/MobilenetV1/Conv2d_11_depthwise/BatchNorm/batchnorm/add_1" type="Add" version="opset1">
+		<layer id="93" name="MobilenetV1/MobilenetV1/Conv2d_9_depthwise/BatchNorm/batchnorm/add_1" type="Add" version="opset1">
 			<input>
 				<port id="0">
 					<dim>1</dim>
@@ -1987,7 +1693,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="2" precision="FP32">
+				<port id="2" precision="FP16">
 					<dim>1</dim>
 					<dim>256</dim>
 					<dim>14</dim>
@@ -1995,7 +1701,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="110" name="MobilenetV1/MobilenetV1/Conv2d_11_depthwise/Relu6" type="Clamp" version="opset1">
+		<layer id="94" name="MobilenetV1/MobilenetV1/Conv2d_9_depthwise/Relu6" type="Clamp" version="opset1">
 			<data max="6.0" min="0.0"/>
 			<input>
 				<port id="0">
@@ -2006,7 +1712,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>1</dim>
 					<dim>256</dim>
 					<dim>14</dim>
@@ -2014,10 +1720,10 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="111" name="MobilenetV1/MobilenetV1/Conv2d_11_pointwise/BatchNorm/batchnorm/mul_157175719_const" type="Const" version="opset1">
-			<data element_type="f32" offset="1381632" shape="256,256,1,1" size="262144"/>
+		<layer id="95" name="MobilenetV1/MobilenetV1/Conv2d_9_pointwise/BatchNorm/batchnorm/mul_157695771_const" type="Const" version="opset1">
+			<data element_type="f16" offset="417420" shape="256,256,1,1" size="131072"/>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>256</dim>
 					<dim>256</dim>
 					<dim>1</dim>
@@ -2025,7 +1731,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="112" name="MobilenetV1/MobilenetV1/Conv2d_11_pointwise/convolution" type="Convolution" version="opset1">
+		<layer id="96" name="MobilenetV1/MobilenetV1/Conv2d_9_pointwise/convolution" type="Convolution" version="opset1">
 			<data auto_pad="same_upper" dilations="1,1" output_padding="0,0" pads_begin="0,0" pads_end="0,0" strides="1,1"/>
 			<input>
 				<port id="0">
@@ -2042,7 +1748,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="2" precision="FP32">
+				<port id="2" precision="FP16">
 					<dim>1</dim>
 					<dim>256</dim>
 					<dim>14</dim>
@@ -2050,10 +1756,10 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="113" name="MobilenetV1/MobilenetV1/Conv2d_11_pointwise/BatchNorm/batchnorm/sub/Output_0/Data_/copy_const" type="Const" version="opset1">
-			<data element_type="f32" offset="1643776" shape="1,256,1,1" size="1024"/>
+		<layer id="97" name="MobilenetV1/MobilenetV1/Conv2d_9_pointwise/BatchNorm/batchnorm/sub/Output_0/Data_/copy_const" type="Const" version="opset1">
+			<data element_type="f16" offset="548492" shape="1,256,1,1" size="512"/>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>1</dim>
 					<dim>256</dim>
 					<dim>1</dim>
@@ -2061,7 +1767,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="114" name="MobilenetV1/MobilenetV1/Conv2d_11_pointwise/BatchNorm/batchnorm/add_1" type="Add" version="opset1">
+		<layer id="98" name="MobilenetV1/MobilenetV1/Conv2d_9_pointwise/BatchNorm/batchnorm/add_1" type="Add" version="opset1">
 			<input>
 				<port id="0">
 					<dim>1</dim>
@@ -2077,7 +1783,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="2" precision="FP32">
+				<port id="2" precision="FP16">
 					<dim>1</dim>
 					<dim>256</dim>
 					<dim>14</dim>
@@ -2085,7 +1791,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="115" name="MobilenetV1/MobilenetV1/Conv2d_11_pointwise/Relu6" type="Clamp" version="opset1">
+		<layer id="99" name="MobilenetV1/MobilenetV1/Conv2d_9_pointwise/Relu6" type="Clamp" version="opset1">
 			<data max="6.0" min="0.0"/>
 			<input>
 				<port id="0">
@@ -2096,7 +1802,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>1</dim>
 					<dim>256</dim>
 					<dim>14</dim>
@@ -2104,10 +1810,10 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="116" name="99319934_const" type="Const" version="opset1">
-			<data element_type="f32" offset="1644800" shape="256,1,1,3,3" size="9216"/>
+		<layer id="100" name="1012110124_const" type="Const" version="opset1">
+			<data element_type="f16" offset="549004" shape="256,1,1,3,3" size="4608"/>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>256</dim>
 					<dim>1</dim>
 					<dim>1</dim>
@@ -2116,7 +1822,371 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="117" name="MobilenetV1/MobilenetV1/Conv2d_12_depthwise/depthwise" type="GroupConvolution" version="opset1">
+		<layer id="101" name="MobilenetV1/MobilenetV1/Conv2d_10_depthwise/depthwise" type="GroupConvolution" version="opset1">
+			<data auto_pad="same_upper" dilations="1,1" output_padding="0,0" pads_begin="0,0" pads_end="0,0" strides="1,1"/>
+			<input>
+				<port id="0">
+					<dim>1</dim>
+					<dim>256</dim>
+					<dim>14</dim>
+					<dim>14</dim>
+				</port>
+				<port id="1">
+					<dim>256</dim>
+					<dim>1</dim>
+					<dim>1</dim>
+					<dim>3</dim>
+					<dim>3</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="FP16">
+					<dim>1</dim>
+					<dim>256</dim>
+					<dim>14</dim>
+					<dim>14</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="102" name="MobilenetV1/MobilenetV1/Conv2d_10_depthwise/BatchNorm/batchnorm/sub/Output_0/Data_/copy_const" type="Const" version="opset1">
+			<data element_type="f16" offset="553612" shape="1,256,1,1" size="512"/>
+			<output>
+				<port id="1" precision="FP16">
+					<dim>1</dim>
+					<dim>256</dim>
+					<dim>1</dim>
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="103" name="MobilenetV1/MobilenetV1/Conv2d_10_depthwise/BatchNorm/batchnorm/add_1" type="Add" version="opset1">
+			<input>
+				<port id="0">
+					<dim>1</dim>
+					<dim>256</dim>
+					<dim>14</dim>
+					<dim>14</dim>
+				</port>
+				<port id="1">
+					<dim>1</dim>
+					<dim>256</dim>
+					<dim>1</dim>
+					<dim>1</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="FP16">
+					<dim>1</dim>
+					<dim>256</dim>
+					<dim>14</dim>
+					<dim>14</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="104" name="MobilenetV1/MobilenetV1/Conv2d_10_depthwise/Relu6" type="Clamp" version="opset1">
+			<data max="6.0" min="0.0"/>
+			<input>
+				<port id="0">
+					<dim>1</dim>
+					<dim>256</dim>
+					<dim>14</dim>
+					<dim>14</dim>
+				</port>
+			</input>
+			<output>
+				<port id="1" precision="FP16">
+					<dim>1</dim>
+					<dim>256</dim>
+					<dim>14</dim>
+					<dim>14</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="105" name="MobilenetV1/MobilenetV1/Conv2d_10_pointwise/BatchNorm/batchnorm/mul_157775779_const" type="Const" version="opset1">
+			<data element_type="f16" offset="554124" shape="256,256,1,1" size="131072"/>
+			<output>
+				<port id="1" precision="FP16">
+					<dim>256</dim>
+					<dim>256</dim>
+					<dim>1</dim>
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="106" name="MobilenetV1/MobilenetV1/Conv2d_10_pointwise/convolution" type="Convolution" version="opset1">
+			<data auto_pad="same_upper" dilations="1,1" output_padding="0,0" pads_begin="0,0" pads_end="0,0" strides="1,1"/>
+			<input>
+				<port id="0">
+					<dim>1</dim>
+					<dim>256</dim>
+					<dim>14</dim>
+					<dim>14</dim>
+				</port>
+				<port id="1">
+					<dim>256</dim>
+					<dim>256</dim>
+					<dim>1</dim>
+					<dim>1</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="FP16">
+					<dim>1</dim>
+					<dim>256</dim>
+					<dim>14</dim>
+					<dim>14</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="107" name="MobilenetV1/MobilenetV1/Conv2d_10_pointwise/BatchNorm/batchnorm/sub/Output_0/Data_/copy_const" type="Const" version="opset1">
+			<data element_type="f16" offset="685196" shape="1,256,1,1" size="512"/>
+			<output>
+				<port id="1" precision="FP16">
+					<dim>1</dim>
+					<dim>256</dim>
+					<dim>1</dim>
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="108" name="MobilenetV1/MobilenetV1/Conv2d_10_pointwise/BatchNorm/batchnorm/add_1" type="Add" version="opset1">
+			<input>
+				<port id="0">
+					<dim>1</dim>
+					<dim>256</dim>
+					<dim>14</dim>
+					<dim>14</dim>
+				</port>
+				<port id="1">
+					<dim>1</dim>
+					<dim>256</dim>
+					<dim>1</dim>
+					<dim>1</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="FP16">
+					<dim>1</dim>
+					<dim>256</dim>
+					<dim>14</dim>
+					<dim>14</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="109" name="MobilenetV1/MobilenetV1/Conv2d_10_pointwise/Relu6" type="Clamp" version="opset1">
+			<data max="6.0" min="0.0"/>
+			<input>
+				<port id="0">
+					<dim>1</dim>
+					<dim>256</dim>
+					<dim>14</dim>
+					<dim>14</dim>
+				</port>
+			</input>
+			<output>
+				<port id="1" precision="FP16">
+					<dim>1</dim>
+					<dim>256</dim>
+					<dim>14</dim>
+					<dim>14</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="110" name="1013710140_const" type="Const" version="opset1">
+			<data element_type="f16" offset="685708" shape="256,1,1,3,3" size="4608"/>
+			<output>
+				<port id="1" precision="FP16">
+					<dim>256</dim>
+					<dim>1</dim>
+					<dim>1</dim>
+					<dim>3</dim>
+					<dim>3</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="111" name="MobilenetV1/MobilenetV1/Conv2d_11_depthwise/depthwise" type="GroupConvolution" version="opset1">
+			<data auto_pad="same_upper" dilations="1,1" output_padding="0,0" pads_begin="0,0" pads_end="0,0" strides="1,1"/>
+			<input>
+				<port id="0">
+					<dim>1</dim>
+					<dim>256</dim>
+					<dim>14</dim>
+					<dim>14</dim>
+				</port>
+				<port id="1">
+					<dim>256</dim>
+					<dim>1</dim>
+					<dim>1</dim>
+					<dim>3</dim>
+					<dim>3</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="FP16">
+					<dim>1</dim>
+					<dim>256</dim>
+					<dim>14</dim>
+					<dim>14</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="112" name="MobilenetV1/MobilenetV1/Conv2d_11_depthwise/BatchNorm/batchnorm/sub/Output_0/Data_/copy_const" type="Const" version="opset1">
+			<data element_type="f16" offset="690316" shape="1,256,1,1" size="512"/>
+			<output>
+				<port id="1" precision="FP16">
+					<dim>1</dim>
+					<dim>256</dim>
+					<dim>1</dim>
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="113" name="MobilenetV1/MobilenetV1/Conv2d_11_depthwise/BatchNorm/batchnorm/add_1" type="Add" version="opset1">
+			<input>
+				<port id="0">
+					<dim>1</dim>
+					<dim>256</dim>
+					<dim>14</dim>
+					<dim>14</dim>
+				</port>
+				<port id="1">
+					<dim>1</dim>
+					<dim>256</dim>
+					<dim>1</dim>
+					<dim>1</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="FP16">
+					<dim>1</dim>
+					<dim>256</dim>
+					<dim>14</dim>
+					<dim>14</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="114" name="MobilenetV1/MobilenetV1/Conv2d_11_depthwise/Relu6" type="Clamp" version="opset1">
+			<data max="6.0" min="0.0"/>
+			<input>
+				<port id="0">
+					<dim>1</dim>
+					<dim>256</dim>
+					<dim>14</dim>
+					<dim>14</dim>
+				</port>
+			</input>
+			<output>
+				<port id="1" precision="FP16">
+					<dim>1</dim>
+					<dim>256</dim>
+					<dim>14</dim>
+					<dim>14</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="115" name="MobilenetV1/MobilenetV1/Conv2d_11_pointwise/BatchNorm/batchnorm/mul_157855787_const" type="Const" version="opset1">
+			<data element_type="f16" offset="690828" shape="256,256,1,1" size="131072"/>
+			<output>
+				<port id="1" precision="FP16">
+					<dim>256</dim>
+					<dim>256</dim>
+					<dim>1</dim>
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="116" name="MobilenetV1/MobilenetV1/Conv2d_11_pointwise/convolution" type="Convolution" version="opset1">
+			<data auto_pad="same_upper" dilations="1,1" output_padding="0,0" pads_begin="0,0" pads_end="0,0" strides="1,1"/>
+			<input>
+				<port id="0">
+					<dim>1</dim>
+					<dim>256</dim>
+					<dim>14</dim>
+					<dim>14</dim>
+				</port>
+				<port id="1">
+					<dim>256</dim>
+					<dim>256</dim>
+					<dim>1</dim>
+					<dim>1</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="FP16">
+					<dim>1</dim>
+					<dim>256</dim>
+					<dim>14</dim>
+					<dim>14</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="117" name="MobilenetV1/MobilenetV1/Conv2d_11_pointwise/BatchNorm/batchnorm/sub/Output_0/Data_/copy_const" type="Const" version="opset1">
+			<data element_type="f16" offset="821900" shape="1,256,1,1" size="512"/>
+			<output>
+				<port id="1" precision="FP16">
+					<dim>1</dim>
+					<dim>256</dim>
+					<dim>1</dim>
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="118" name="MobilenetV1/MobilenetV1/Conv2d_11_pointwise/BatchNorm/batchnorm/add_1" type="Add" version="opset1">
+			<input>
+				<port id="0">
+					<dim>1</dim>
+					<dim>256</dim>
+					<dim>14</dim>
+					<dim>14</dim>
+				</port>
+				<port id="1">
+					<dim>1</dim>
+					<dim>256</dim>
+					<dim>1</dim>
+					<dim>1</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="FP16">
+					<dim>1</dim>
+					<dim>256</dim>
+					<dim>14</dim>
+					<dim>14</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="119" name="MobilenetV1/MobilenetV1/Conv2d_11_pointwise/Relu6" type="Clamp" version="opset1">
+			<data max="6.0" min="0.0"/>
+			<input>
+				<port id="0">
+					<dim>1</dim>
+					<dim>256</dim>
+					<dim>14</dim>
+					<dim>14</dim>
+				</port>
+			</input>
+			<output>
+				<port id="1" precision="FP16">
+					<dim>1</dim>
+					<dim>256</dim>
+					<dim>14</dim>
+					<dim>14</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="120" name="1011310116_const" type="Const" version="opset1">
+			<data element_type="f16" offset="822412" shape="256,1,1,3,3" size="4608"/>
+			<output>
+				<port id="1" precision="FP16">
+					<dim>256</dim>
+					<dim>1</dim>
+					<dim>1</dim>
+					<dim>3</dim>
+					<dim>3</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="121" name="MobilenetV1/MobilenetV1/Conv2d_12_depthwise/depthwise" type="GroupConvolution" version="opset1">
 			<data auto_pad="same_upper" dilations="1,1" output_padding="0,0" pads_begin="0,0" pads_end="0,0" strides="2,2"/>
 			<input>
 				<port id="0">
@@ -2134,7 +2204,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="2" precision="FP32">
+				<port id="2" precision="FP16">
 					<dim>1</dim>
 					<dim>256</dim>
 					<dim>7</dim>
@@ -2142,10 +2212,10 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="118" name="MobilenetV1/MobilenetV1/Conv2d_12_depthwise/BatchNorm/batchnorm/sub/Output_0/Data_/copy_const" type="Const" version="opset1">
-			<data element_type="f32" offset="1654016" shape="1,256,1,1" size="1024"/>
+		<layer id="122" name="MobilenetV1/MobilenetV1/Conv2d_12_depthwise/BatchNorm/batchnorm/sub/Output_0/Data_/copy_const" type="Const" version="opset1">
+			<data element_type="f16" offset="827020" shape="1,256,1,1" size="512"/>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>1</dim>
 					<dim>256</dim>
 					<dim>1</dim>
@@ -2153,7 +2223,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="119" name="MobilenetV1/MobilenetV1/Conv2d_12_depthwise/BatchNorm/batchnorm/add_1" type="Add" version="opset1">
+		<layer id="123" name="MobilenetV1/MobilenetV1/Conv2d_12_depthwise/BatchNorm/batchnorm/add_1" type="Add" version="opset1">
 			<input>
 				<port id="0">
 					<dim>1</dim>
@@ -2169,7 +2239,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="2" precision="FP32">
+				<port id="2" precision="FP16">
 					<dim>1</dim>
 					<dim>256</dim>
 					<dim>7</dim>
@@ -2177,7 +2247,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="120" name="MobilenetV1/MobilenetV1/Conv2d_12_depthwise/Relu6" type="Clamp" version="opset1">
+		<layer id="124" name="MobilenetV1/MobilenetV1/Conv2d_12_depthwise/Relu6" type="Clamp" version="opset1">
 			<data max="6.0" min="0.0"/>
 			<input>
 				<port id="0">
@@ -2188,7 +2258,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>1</dim>
 					<dim>256</dim>
 					<dim>7</dim>
@@ -2196,10 +2266,10 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="121" name="MobilenetV1/MobilenetV1/Conv2d_12_pointwise/BatchNorm/batchnorm/mul_157255727_const" type="Const" version="opset1">
-			<data element_type="f32" offset="1655040" shape="512,256,1,1" size="524288"/>
+		<layer id="125" name="MobilenetV1/MobilenetV1/Conv2d_12_pointwise/BatchNorm/batchnorm/mul_157935795_const" type="Const" version="opset1">
+			<data element_type="f16" offset="827532" shape="512,256,1,1" size="262144"/>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>512</dim>
 					<dim>256</dim>
 					<dim>1</dim>
@@ -2207,7 +2277,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="122" name="MobilenetV1/MobilenetV1/Conv2d_12_pointwise/convolution" type="Convolution" version="opset1">
+		<layer id="126" name="MobilenetV1/MobilenetV1/Conv2d_12_pointwise/convolution" type="Convolution" version="opset1">
 			<data auto_pad="same_upper" dilations="1,1" output_padding="0,0" pads_begin="0,0" pads_end="0,0" strides="1,1"/>
 			<input>
 				<port id="0">
@@ -2224,7 +2294,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="2" precision="FP32">
+				<port id="2" precision="FP16">
 					<dim>1</dim>
 					<dim>512</dim>
 					<dim>7</dim>
@@ -2232,10 +2302,10 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="123" name="MobilenetV1/MobilenetV1/Conv2d_12_pointwise/BatchNorm/batchnorm/sub/Output_0/Data_/copy_const" type="Const" version="opset1">
-			<data element_type="f32" offset="2179328" shape="1,512,1,1" size="2048"/>
+		<layer id="127" name="MobilenetV1/MobilenetV1/Conv2d_12_pointwise/BatchNorm/batchnorm/sub/Output_0/Data_/copy_const" type="Const" version="opset1">
+			<data element_type="f16" offset="1089676" shape="1,512,1,1" size="1024"/>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>1</dim>
 					<dim>512</dim>
 					<dim>1</dim>
@@ -2243,7 +2313,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="124" name="MobilenetV1/MobilenetV1/Conv2d_12_pointwise/BatchNorm/batchnorm/add_1" type="Add" version="opset1">
+		<layer id="128" name="MobilenetV1/MobilenetV1/Conv2d_12_pointwise/BatchNorm/batchnorm/add_1" type="Add" version="opset1">
 			<input>
 				<port id="0">
 					<dim>1</dim>
@@ -2259,7 +2329,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="2" precision="FP32">
+				<port id="2" precision="FP16">
 					<dim>1</dim>
 					<dim>512</dim>
 					<dim>7</dim>
@@ -2267,7 +2337,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="125" name="MobilenetV1/MobilenetV1/Conv2d_12_pointwise/Relu6" type="Clamp" version="opset1">
+		<layer id="129" name="MobilenetV1/MobilenetV1/Conv2d_12_pointwise/Relu6" type="Clamp" version="opset1">
 			<data max="6.0" min="0.0"/>
 			<input>
 				<port id="0">
@@ -2278,7 +2348,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>1</dim>
 					<dim>512</dim>
 					<dim>7</dim>
@@ -2286,10 +2356,10 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="126" name="99239926_const" type="Const" version="opset1">
-			<data element_type="f32" offset="2181376" shape="512,1,1,3,3" size="18432"/>
+		<layer id="130" name="1012910132_const" type="Const" version="opset1">
+			<data element_type="f16" offset="1090700" shape="512,1,1,3,3" size="9216"/>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>512</dim>
 					<dim>1</dim>
 					<dim>1</dim>
@@ -2298,7 +2368,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="127" name="MobilenetV1/MobilenetV1/Conv2d_13_depthwise/depthwise" type="GroupConvolution" version="opset1">
+		<layer id="131" name="MobilenetV1/MobilenetV1/Conv2d_13_depthwise/depthwise" type="GroupConvolution" version="opset1">
 			<data auto_pad="same_upper" dilations="1,1" output_padding="0,0" pads_begin="0,0" pads_end="0,0" strides="1,1"/>
 			<input>
 				<port id="0">
@@ -2316,7 +2386,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="2" precision="FP32">
+				<port id="2" precision="FP16">
 					<dim>1</dim>
 					<dim>512</dim>
 					<dim>7</dim>
@@ -2324,10 +2394,10 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="128" name="MobilenetV1/MobilenetV1/Conv2d_13_depthwise/BatchNorm/batchnorm/sub/Output_0/Data_/copy_const" type="Const" version="opset1">
-			<data element_type="f32" offset="2199808" shape="1,512,1,1" size="2048"/>
+		<layer id="132" name="MobilenetV1/MobilenetV1/Conv2d_13_depthwise/BatchNorm/batchnorm/sub/Output_0/Data_/copy_const" type="Const" version="opset1">
+			<data element_type="f16" offset="1099916" shape="1,512,1,1" size="1024"/>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>1</dim>
 					<dim>512</dim>
 					<dim>1</dim>
@@ -2335,7 +2405,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="129" name="MobilenetV1/MobilenetV1/Conv2d_13_depthwise/BatchNorm/batchnorm/add_1" type="Add" version="opset1">
+		<layer id="133" name="MobilenetV1/MobilenetV1/Conv2d_13_depthwise/BatchNorm/batchnorm/add_1" type="Add" version="opset1">
 			<input>
 				<port id="0">
 					<dim>1</dim>
@@ -2351,7 +2421,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="2" precision="FP32">
+				<port id="2" precision="FP16">
 					<dim>1</dim>
 					<dim>512</dim>
 					<dim>7</dim>
@@ -2359,7 +2429,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="130" name="MobilenetV1/MobilenetV1/Conv2d_13_depthwise/Relu6" type="Clamp" version="opset1">
+		<layer id="134" name="MobilenetV1/MobilenetV1/Conv2d_13_depthwise/Relu6" type="Clamp" version="opset1">
 			<data max="6.0" min="0.0"/>
 			<input>
 				<port id="0">
@@ -2370,7 +2440,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>1</dim>
 					<dim>512</dim>
 					<dim>7</dim>
@@ -2378,10 +2448,10 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="131" name="MobilenetV1/MobilenetV1/Conv2d_13_pointwise/BatchNorm/batchnorm/mul_157335735_const" type="Const" version="opset1">
-			<data element_type="f32" offset="2201856" shape="512,512,1,1" size="1048576"/>
+		<layer id="135" name="MobilenetV1/MobilenetV1/Conv2d_13_pointwise/BatchNorm/batchnorm/mul_158015803_const" type="Const" version="opset1">
+			<data element_type="f16" offset="1100940" shape="512,512,1,1" size="524288"/>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>512</dim>
 					<dim>512</dim>
 					<dim>1</dim>
@@ -2389,7 +2459,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="132" name="MobilenetV1/MobilenetV1/Conv2d_13_pointwise/convolution" type="Convolution" version="opset1">
+		<layer id="136" name="MobilenetV1/MobilenetV1/Conv2d_13_pointwise/convolution" type="Convolution" version="opset1">
 			<data auto_pad="same_upper" dilations="1,1" output_padding="0,0" pads_begin="0,0" pads_end="0,0" strides="1,1"/>
 			<input>
 				<port id="0">
@@ -2406,7 +2476,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="2" precision="FP32">
+				<port id="2" precision="FP16">
 					<dim>1</dim>
 					<dim>512</dim>
 					<dim>7</dim>
@@ -2414,10 +2484,10 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="133" name="MobilenetV1/MobilenetV1/Conv2d_13_pointwise/BatchNorm/batchnorm/sub/Output_0/Data_/copy_const" type="Const" version="opset1">
-			<data element_type="f32" offset="3250432" shape="1,512,1,1" size="2048"/>
+		<layer id="137" name="MobilenetV1/MobilenetV1/Conv2d_13_pointwise/BatchNorm/batchnorm/sub/Output_0/Data_/copy_const" type="Const" version="opset1">
+			<data element_type="f16" offset="1625228" shape="1,512,1,1" size="1024"/>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>1</dim>
 					<dim>512</dim>
 					<dim>1</dim>
@@ -2425,7 +2495,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="134" name="MobilenetV1/MobilenetV1/Conv2d_13_pointwise/BatchNorm/batchnorm/add_1" type="Add" version="opset1">
+		<layer id="138" name="MobilenetV1/MobilenetV1/Conv2d_13_pointwise/BatchNorm/batchnorm/add_1" type="Add" version="opset1">
 			<input>
 				<port id="0">
 					<dim>1</dim>
@@ -2441,7 +2511,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="2" precision="FP32">
+				<port id="2" precision="FP16">
 					<dim>1</dim>
 					<dim>512</dim>
 					<dim>7</dim>
@@ -2449,7 +2519,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="135" name="MobilenetV1/MobilenetV1/Conv2d_13_pointwise/Relu6" type="Clamp" version="opset1">
+		<layer id="139" name="MobilenetV1/MobilenetV1/Conv2d_13_pointwise/Relu6" type="Clamp" version="opset1">
 			<data max="6.0" min="0.0"/>
 			<input>
 				<port id="0">
@@ -2460,7 +2530,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>1</dim>
 					<dim>512</dim>
 					<dim>7</dim>
@@ -2468,7 +2538,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="136" name="MobilenetV1/Logits/AvgPool_1a/AvgPool" type="AvgPool" version="opset1">
+		<layer id="140" name="MobilenetV1/Logits/AvgPool_1a/AvgPool" type="AvgPool" version="opset1">
 			<data auto_pad="valid" exclude-pad="true" kernel="7,7" pads_begin="0,0" pads_end="0,0" strides="2,2"/>
 			<input>
 				<port id="0">
@@ -2479,7 +2549,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>1</dim>
 					<dim>512</dim>
 					<dim>1</dim>
@@ -2487,10 +2557,10 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="137" name="MobilenetV1/Logits/Conv2d_1c_1x1/weights/read/Output_0/Data__const" type="Const" version="opset1">
-			<data element_type="f32" offset="3252480" shape="1001,512,1,1" size="2050048"/>
+		<layer id="141" name="MobilenetV1/Logits/Conv2d_1c_1x1/weights/read/Output_0/Data__const" type="Const" version="opset1">
+			<data element_type="f16" offset="1626252" shape="1001,512,1,1" size="1025024"/>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>1001</dim>
 					<dim>512</dim>
 					<dim>1</dim>
@@ -2498,7 +2568,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="138" name="MobilenetV1/Logits/Conv2d_1c_1x1/convolution" type="Convolution" version="opset1">
+		<layer id="142" name="MobilenetV1/Logits/Conv2d_1c_1x1/convolution" type="Convolution" version="opset1">
 			<data auto_pad="same_upper" dilations="1,1" output_padding="0,0" pads_begin="0,0" pads_end="0,0" strides="1,1"/>
 			<input>
 				<port id="0">
@@ -2515,7 +2585,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="2" precision="FP32">
+				<port id="2" precision="FP16">
 					<dim>1</dim>
 					<dim>1001</dim>
 					<dim>1</dim>
@@ -2523,10 +2593,10 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="139" name="MobilenetV1/Logits/Conv2d_1c_1x1/biases/read/Output_0/Data_/copy_const" type="Const" version="opset1">
-			<data element_type="f32" offset="5302528" shape="1,1001,1,1" size="4004"/>
+		<layer id="143" name="MobilenetV1/Logits/Conv2d_1c_1x1/biases/read/Output_0/Data_/copy_const" type="Const" version="opset1">
+			<data element_type="f16" offset="2651276" shape="1,1001,1,1" size="2002"/>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>1</dim>
 					<dim>1001</dim>
 					<dim>1</dim>
@@ -2534,7 +2604,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="140" name="MobilenetV1/Logits/Conv2d_1c_1x1/BiasAdd/Add" type="Add" version="opset1">
+		<layer id="144" name="MobilenetV1/Logits/Conv2d_1c_1x1/BiasAdd/Add" type="Add" version="opset1">
 			<input>
 				<port id="0">
 					<dim>1</dim>
@@ -2550,7 +2620,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="2" precision="FP32">
+				<port id="2" precision="FP16">
 					<dim>1</dim>
 					<dim>1001</dim>
 					<dim>1</dim>
@@ -2558,15 +2628,15 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="141" name="MobilenetV1/Logits/Conv2d_1c_1x1/BiasAdd/Add/Transpose/Cast_110094_const" type="Const" version="opset1">
-			<data element_type="i64" offset="5306532" shape="4" size="32"/>
+		<layer id="145" name="MobilenetV1/Logits/Conv2d_1c_1x1/BiasAdd/Add/Transpose/Cast_110276_const" type="Const" version="opset1">
+			<data element_type="i64" offset="2653278" shape="4" size="32"/>
 			<output>
 				<port id="1" precision="I64">
 					<dim>4</dim>
 				</port>
 			</output>
 		</layer>
-		<layer id="142" name="MobilenetV1/Logits/Conv2d_1c_1x1/BiasAdd/Add/Transpose" type="Transpose" version="opset1">
+		<layer id="146" name="MobilenetV1/Logits/Conv2d_1c_1x1/BiasAdd/Add/Transpose" type="Transpose" version="opset1">
 			<input>
 				<port id="0">
 					<dim>1</dim>
@@ -2579,7 +2649,7 @@
 				</port>
 			</input>
 			<output>
-				<port id="2" precision="FP32">
+				<port id="2" precision="FP16">
 					<dim>1</dim>
 					<dim>1</dim>
 					<dim>1</dim>
@@ -2587,15 +2657,15 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="143" name="MobilenetV1/Logits/SpatialSqueeze/Dims/Output_0/Data__const" type="Const" version="opset1">
-			<data element_type="i64" offset="5306564" shape="2" size="16"/>
+		<layer id="147" name="MobilenetV1/Logits/SpatialSqueeze/Dims/Output_0/Data__const" type="Const" version="opset1">
+			<data element_type="i64" offset="2653310" shape="2" size="16"/>
 			<output>
 				<port id="1" precision="I64">
 					<dim>2</dim>
 				</port>
 			</output>
 		</layer>
-		<layer id="144" name="MobilenetV1/Logits/SpatialSqueeze" type="Squeeze" version="opset1">
+		<layer id="148" name="MobilenetV1/Logits/SpatialSqueeze" type="Squeeze" version="opset1">
 			<input>
 				<port id="0">
 					<dim>1</dim>
@@ -2608,30 +2678,30 @@
 				</port>
 			</input>
 			<output>
-				<port id="2" precision="FP32">
+				<port id="2" precision="FP16">
 					<dim>1</dim>
 					<dim>1001</dim>
 				</port>
 			</output>
 		</layer>
-		<layer id="145" name="final_training_ops/weights/final_weights/read/MinusOne7699_const" type="Const" version="opset1">
-			<data element_type="i64" offset="5306580" shape="1" size="8"/>
+		<layer id="149" name="final_training_ops/weights/final_weights/read/MinusOne7801_const" type="Const" version="opset1">
+			<data element_type="i64" offset="2653326" shape="1" size="8"/>
 			<output>
 				<port id="1" precision="I64">
 					<dim>1</dim>
 				</port>
 			</output>
 		</layer>
-		<layer id="146" name="final_training_ops/Wx_plus_b/MatMul/1_port_transpose7574_const" type="Const" version="opset1">
-			<data element_type="f32" offset="5306588" shape="14,1001" size="56056"/>
+		<layer id="150" name="final_training_ops/Wx_plus_b/MatMul/1_port_transpose7674_const" type="Const" version="opset1">
+			<data element_type="f16" offset="2653334" shape="14,1001" size="28028"/>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>14</dim>
 					<dim>1001</dim>
 				</port>
 			</output>
 		</layer>
-		<layer id="147" name="final_training_ops/weights/final_weights/read/Shape" type="ShapeOf" version="opset3">
+		<layer id="151" name="final_training_ops/weights/final_weights/read/Shape" type="ShapeOf" version="opset3">
 			<data output_type="i64"/>
 			<input>
 				<port id="0">
@@ -2645,21 +2715,21 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="148" name="final_training_ops/weights/final_weights/read/Shape/Gather/Cast_110098_const" type="Const" version="opset1">
-			<data element_type="i32" offset="5362644" shape="1" size="4"/>
+		<layer id="152" name="final_training_ops/weights/final_weights/read/Shape/Gather/Cast_110272_const" type="Const" version="opset1">
+			<data element_type="i32" offset="2681362" shape="1" size="4"/>
 			<output>
 				<port id="1" precision="I32">
 					<dim>1</dim>
 				</port>
 			</output>
 		</layer>
-		<layer id="149" name="final_training_ops/weights/final_weights/read/Shape/Gather/Cast_210100_const" type="Const" version="opset1">
-			<data element_type="i64" offset="5362648" shape="" size="8"/>
+		<layer id="153" name="final_training_ops/weights/final_weights/read/Shape/Gather/Cast_210274_const" type="Const" version="opset1">
+			<data element_type="i64" offset="2681366" shape="" size="8"/>
 			<output>
 				<port id="1" precision="I64"/>
 			</output>
 		</layer>
-		<layer id="150" name="final_training_ops/weights/final_weights/read/Shape/Gather" type="Gather" version="opset1">
+		<layer id="154" name="final_training_ops/weights/final_weights/read/Shape/Gather" type="Gather" version="opset1">
 			<input>
 				<port id="0">
 					<dim>2</dim>
@@ -2675,7 +2745,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="151" name="final_training_ops/weights/final_weights/read/MinusOne/shapes_concat" type="Concat" version="opset1">
+		<layer id="155" name="final_training_ops/weights/final_weights/read/MinusOne/shapes_concat" type="Concat" version="opset1">
 			<data axis="0"/>
 			<input>
 				<port id="0">
@@ -2691,7 +2761,7 @@
 				</port>
 			</output>
 		</layer>
-		<layer id="152" name="MobilenetV1/Predictions/Reshape" type="Reshape" version="opset1">
+		<layer id="156" name="MobilenetV1/Predictions/Reshape" type="Reshape" version="opset1">
 			<data special_zero="False"/>
 			<input>
 				<port id="0">
@@ -2703,13 +2773,13 @@
 				</port>
 			</input>
 			<output>
-				<port id="2" precision="FP32">
+				<port id="2" precision="FP16">
 					<dim>1</dim>
 					<dim>1001</dim>
 				</port>
 			</output>
 		</layer>
-		<layer id="153" name="final_training_ops/Wx_plus_b/MatMul" type="MatMul" version="opset1">
+		<layer id="157" name="final_training_ops/Wx_plus_b/MatMul" type="MatMul" version="opset1">
 			<data transpose_a="False" transpose_b="True"/>
 			<input>
 				<port id="0">
@@ -2722,22 +2792,22 @@
 				</port>
 			</input>
 			<output>
-				<port id="2" precision="FP32">
+				<port id="2" precision="FP16">
 					<dim>1</dim>
 					<dim>14</dim>
 				</port>
 			</output>
 		</layer>
-		<layer id="154" name="final_training_ops/biases/final_biases/read/Output_0/Data_/copy_const" type="Const" version="opset1">
-			<data element_type="f32" offset="5362656" shape="1,14" size="56"/>
+		<layer id="158" name="final_training_ops/biases/final_biases/read/Output_0/Data_/copy_const" type="Const" version="opset1">
+			<data element_type="f16" offset="2681374" shape="1,14" size="28"/>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>1</dim>
 					<dim>14</dim>
 				</port>
 			</output>
 		</layer>
-		<layer id="155" name="final_training_ops/Wx_plus_b/add" type="Add" version="opset1">
+		<layer id="159" name="final_training_ops/Wx_plus_b/add" type="Add" version="opset1">
 			<input>
 				<port id="0">
 					<dim>1</dim>
@@ -2749,13 +2819,13 @@
 				</port>
 			</input>
 			<output>
-				<port id="2" precision="FP32">
+				<port id="2" precision="FP16">
 					<dim>1</dim>
 					<dim>14</dim>
 				</port>
 			</output>
 		</layer>
-		<layer id="156" name="final_result" type="SoftMax" version="opset1">
+		<layer id="160" name="final_result" type="SoftMax" version="opset1">
 			<data axis="1"/>
 			<input>
 				<port id="0">
@@ -2764,13 +2834,13 @@
 				</port>
 			</input>
 			<output>
-				<port id="1" precision="FP32">
+				<port id="1" precision="FP16">
 					<dim>1</dim>
 					<dim>14</dim>
 				</port>
 			</output>
 		</layer>
-		<layer id="157" name="final_result/sink_port_0" type="Result" version="opset1">
+		<layer id="161" name="final_result/sink_port_0" type="Result" version="opset1">
 			<input>
 				<port id="0">
 					<dim>1</dim>
@@ -2784,198 +2854,196 @@
 		<edge from-layer="1" from-port="1" to-layer="2" to-port="1"/>
 		<edge from-layer="2" from-port="2" to-layer="4" to-port="0"/>
 		<edge from-layer="3" from-port="1" to-layer="4" to-port="1"/>
-		<edge from-layer="4" from-port="2" to-layer="5" to-port="0"/>
-		<edge from-layer="5" from-port="1" to-layer="7" to-port="0"/>
-		<edge from-layer="6" from-port="1" to-layer="7" to-port="1"/>
-		<edge from-layer="7" from-port="2" to-layer="9" to-port="0"/>
-		<edge from-layer="8" from-port="1" to-layer="9" to-port="1"/>
-		<edge from-layer="9" from-port="2" to-layer="10" to-port="0"/>
-		<edge from-layer="10" from-port="1" to-layer="12" to-port="0"/>
-		<edge from-layer="11" from-port="1" to-layer="12" to-port="1"/>
-		<edge from-layer="12" from-port="2" to-layer="14" to-port="0"/>
-		<edge from-layer="13" from-port="1" to-layer="14" to-port="1"/>
-		<edge from-layer="14" from-port="2" to-layer="15" to-port="0"/>
-		<edge from-layer="15" from-port="1" to-layer="17" to-port="0"/>
-		<edge from-layer="16" from-port="1" to-layer="17" to-port="1"/>
-		<edge from-layer="17" from-port="2" to-layer="19" to-port="0"/>
-		<edge from-layer="18" from-port="1" to-layer="19" to-port="1"/>
-		<edge from-layer="19" from-port="2" to-layer="20" to-port="0"/>
-		<edge from-layer="20" from-port="1" to-layer="22" to-port="0"/>
-		<edge from-layer="21" from-port="1" to-layer="22" to-port="1"/>
-		<edge from-layer="22" from-port="2" to-layer="24" to-port="0"/>
-		<edge from-layer="23" from-port="1" to-layer="24" to-port="1"/>
-		<edge from-layer="24" from-port="2" to-layer="25" to-port="0"/>
-		<edge from-layer="25" from-port="1" to-layer="27" to-port="0"/>
-		<edge from-layer="26" from-port="1" to-layer="27" to-port="1"/>
-		<edge from-layer="27" from-port="2" to-layer="29" to-port="0"/>
-		<edge from-layer="28" from-port="1" to-layer="29" to-port="1"/>
-		<edge from-layer="29" from-port="2" to-layer="30" to-port="0"/>
-		<edge from-layer="30" from-port="1" to-layer="32" to-port="0"/>
-		<edge from-layer="31" from-port="1" to-layer="32" to-port="1"/>
-		<edge from-layer="32" from-port="2" to-layer="34" to-port="0"/>
-		<edge from-layer="33" from-port="1" to-layer="34" to-port="1"/>
-		<edge from-layer="34" from-port="2" to-layer="35" to-port="0"/>
-		<edge from-layer="35" from-port="1" to-layer="37" to-port="0"/>
-		<edge from-layer="36" from-port="1" to-layer="37" to-port="1"/>
-		<edge from-layer="37" from-port="2" to-layer="39" to-port="0"/>
-		<edge from-layer="38" from-port="1" to-layer="39" to-port="1"/>
-		<edge from-layer="39" from-port="2" to-layer="40" to-port="0"/>
-		<edge from-layer="40" from-port="1" to-layer="42" to-port="0"/>
-		<edge from-layer="41" from-port="1" to-layer="42" to-port="1"/>
-		<edge from-layer="42" from-port="2" to-layer="44" to-port="0"/>
-		<edge from-layer="43" from-port="1" to-layer="44" to-port="1"/>
-		<edge from-layer="44" from-port="2" to-layer="45" to-port="0"/>
-		<edge from-layer="45" from-port="1" to-layer="47" to-port="0"/>
-		<edge from-layer="46" from-port="1" to-layer="47" to-port="1"/>
-		<edge from-layer="47" from-port="2" to-layer="49" to-port="0"/>
-		<edge from-layer="48" from-port="1" to-layer="49" to-port="1"/>
-		<edge from-layer="49" from-port="2" to-layer="50" to-port="0"/>
-		<edge from-layer="50" from-port="1" to-layer="52" to-port="0"/>
-		<edge from-layer="51" from-port="1" to-layer="52" to-port="1"/>
-		<edge from-layer="52" from-port="2" to-layer="54" to-port="0"/>
-		<edge from-layer="53" from-port="1" to-layer="54" to-port="1"/>
-		<edge from-layer="54" from-port="2" to-layer="55" to-port="0"/>
-		<edge from-layer="55" from-port="1" to-layer="57" to-port="0"/>
-		<edge from-layer="56" from-port="1" to-layer="57" to-port="1"/>
-		<edge from-layer="57" from-port="2" to-layer="59" to-port="0"/>
-		<edge from-layer="58" from-port="1" to-layer="59" to-port="1"/>
-		<edge from-layer="59" from-port="2" to-layer="60" to-port="0"/>
-		<edge from-layer="60" from-port="1" to-layer="62" to-port="0"/>
-		<edge from-layer="61" from-port="1" to-layer="62" to-port="1"/>
-		<edge from-layer="62" from-port="2" to-layer="64" to-port="0"/>
-		<edge from-layer="63" from-port="1" to-layer="64" to-port="1"/>
-		<edge from-layer="64" from-port="2" to-layer="65" to-port="0"/>
-		<edge from-layer="65" from-port="1" to-layer="67" to-port="0"/>
-		<edge from-layer="66" from-port="1" to-layer="67" to-port="1"/>
-		<edge from-layer="67" from-port="2" to-layer="69" to-port="0"/>
-		<edge from-layer="68" from-port="1" to-layer="69" to-port="1"/>
-		<edge from-layer="69" from-port="2" to-layer="70" to-port="0"/>
-		<edge from-layer="70" from-port="1" to-layer="72" to-port="0"/>
-		<edge from-layer="71" from-port="1" to-layer="72" to-port="1"/>
-		<edge from-layer="72" from-port="2" to-layer="74" to-port="0"/>
-		<edge from-layer="73" from-port="1" to-layer="74" to-port="1"/>
-		<edge from-layer="74" from-port="2" to-layer="75" to-port="0"/>
-		<edge from-layer="75" from-port="1" to-layer="77" to-port="0"/>
-		<edge from-layer="76" from-port="1" to-layer="77" to-port="1"/>
-		<edge from-layer="77" from-port="2" to-layer="79" to-port="0"/>
-		<edge from-layer="78" from-port="1" to-layer="79" to-port="1"/>
-		<edge from-layer="79" from-port="2" to-layer="80" to-port="0"/>
-		<edge from-layer="80" from-port="1" to-layer="82" to-port="0"/>
-		<edge from-layer="81" from-port="1" to-layer="82" to-port="1"/>
-		<edge from-layer="82" from-port="2" to-layer="84" to-port="0"/>
-		<edge from-layer="83" from-port="1" to-layer="84" to-port="1"/>
-		<edge from-layer="84" from-port="2" to-layer="85" to-port="0"/>
-		<edge from-layer="85" from-port="1" to-layer="87" to-port="0"/>
-		<edge from-layer="86" from-port="1" to-layer="87" to-port="1"/>
-		<edge from-layer="87" from-port="2" to-layer="89" to-port="0"/>
-		<edge from-layer="88" from-port="1" to-layer="89" to-port="1"/>
-		<edge from-layer="89" from-port="2" to-layer="90" to-port="0"/>
-		<edge from-layer="90" from-port="1" to-layer="92" to-port="0"/>
-		<edge from-layer="91" from-port="1" to-layer="92" to-port="1"/>
-		<edge from-layer="92" from-port="2" to-layer="94" to-port="0"/>
-		<edge from-layer="93" from-port="1" to-layer="94" to-port="1"/>
-		<edge from-layer="94" from-port="2" to-layer="95" to-port="0"/>
-		<edge from-layer="95" from-port="1" to-layer="97" to-port="0"/>
-		<edge from-layer="96" from-port="1" to-layer="97" to-port="1"/>
-		<edge from-layer="97" from-port="2" to-layer="99" to-port="0"/>
-		<edge from-layer="98" from-port="1" to-layer="99" to-port="1"/>
-		<edge from-layer="99" from-port="2" to-layer="100" to-port="0"/>
-		<edge from-layer="100" from-port="1" to-layer="102" to-port="0"/>
-		<edge from-layer="101" from-port="1" to-layer="102" to-port="1"/>
-		<edge from-layer="102" from-port="2" to-layer="104" to-port="0"/>
-		<edge from-layer="103" from-port="1" to-layer="104" to-port="1"/>
-		<edge from-layer="104" from-port="2" to-layer="105" to-port="0"/>
-		<edge from-layer="105" from-port="1" to-layer="107" to-port="0"/>
-		<edge from-layer="106" from-port="1" to-layer="107" to-port="1"/>
-		<edge from-layer="107" from-port="2" to-layer="109" to-port="0"/>
-		<edge from-layer="108" from-port="1" to-layer="109" to-port="1"/>
-		<edge from-layer="109" from-port="2" to-layer="110" to-port="0"/>
-		<edge from-layer="110" from-port="1" to-layer="112" to-port="0"/>
-		<edge from-layer="111" from-port="1" to-layer="112" to-port="1"/>
-		<edge from-layer="112" from-port="2" to-layer="114" to-port="0"/>
-		<edge from-layer="113" from-port="1" to-layer="114" to-port="1"/>
-		<edge from-layer="114" from-port="2" to-layer="115" to-port="0"/>
-		<edge from-layer="115" from-port="1" to-layer="117" to-port="0"/>
-		<edge from-layer="116" from-port="1" to-layer="117" to-port="1"/>
-		<edge from-layer="117" from-port="2" to-layer="119" to-port="0"/>
-		<edge from-layer="118" from-port="1" to-layer="119" to-port="1"/>
-		<edge from-layer="119" from-port="2" to-layer="120" to-port="0"/>
-		<edge from-layer="120" from-port="1" to-layer="122" to-port="0"/>
-		<edge from-layer="121" from-port="1" to-layer="122" to-port="1"/>
-		<edge from-layer="122" from-port="2" to-layer="124" to-port="0"/>
-		<edge from-layer="123" from-port="1" to-layer="124" to-port="1"/>
-		<edge from-layer="124" from-port="2" to-layer="125" to-port="0"/>
-		<edge from-layer="125" from-port="1" to-layer="127" to-port="0"/>
-		<edge from-layer="126" from-port="1" to-layer="127" to-port="1"/>
-		<edge from-layer="127" from-port="2" to-layer="129" to-port="0"/>
-		<edge from-layer="128" from-port="1" to-layer="129" to-port="1"/>
-		<edge from-layer="129" from-port="2" to-layer="130" to-port="0"/>
-		<edge from-layer="130" from-port="1" to-layer="132" to-port="0"/>
-		<edge from-layer="131" from-port="1" to-layer="132" to-port="1"/>
-		<edge from-layer="132" from-port="2" to-layer="134" to-port="0"/>
-		<edge from-layer="133" from-port="1" to-layer="134" to-port="1"/>
-		<edge from-layer="134" from-port="2" to-layer="135" to-port="0"/>
-		<edge from-layer="135" from-port="1" to-layer="136" to-port="0"/>
-		<edge from-layer="136" from-port="1" to-layer="138" to-port="0"/>
+		<edge from-layer="4" from-port="2" to-layer="6" to-port="0"/>
+		<edge from-layer="5" from-port="1" to-layer="6" to-port="1"/>
+		<edge from-layer="6" from-port="2" to-layer="8" to-port="0"/>
+		<edge from-layer="7" from-port="1" to-layer="8" to-port="1"/>
+		<edge from-layer="8" from-port="2" to-layer="9" to-port="0"/>
+		<edge from-layer="9" from-port="1" to-layer="11" to-port="0"/>
+		<edge from-layer="10" from-port="1" to-layer="11" to-port="1"/>
+		<edge from-layer="11" from-port="2" to-layer="13" to-port="0"/>
+		<edge from-layer="12" from-port="1" to-layer="13" to-port="1"/>
+		<edge from-layer="13" from-port="2" to-layer="14" to-port="0"/>
+		<edge from-layer="14" from-port="1" to-layer="16" to-port="0"/>
+		<edge from-layer="15" from-port="1" to-layer="16" to-port="1"/>
+		<edge from-layer="16" from-port="2" to-layer="18" to-port="0"/>
+		<edge from-layer="17" from-port="1" to-layer="18" to-port="1"/>
+		<edge from-layer="18" from-port="2" to-layer="19" to-port="0"/>
+		<edge from-layer="19" from-port="1" to-layer="21" to-port="0"/>
+		<edge from-layer="20" from-port="1" to-layer="21" to-port="1"/>
+		<edge from-layer="21" from-port="2" to-layer="23" to-port="0"/>
+		<edge from-layer="22" from-port="1" to-layer="23" to-port="1"/>
+		<edge from-layer="23" from-port="2" to-layer="24" to-port="0"/>
+		<edge from-layer="24" from-port="1" to-layer="26" to-port="0"/>
+		<edge from-layer="25" from-port="1" to-layer="26" to-port="1"/>
+		<edge from-layer="26" from-port="2" to-layer="28" to-port="0"/>
+		<edge from-layer="27" from-port="1" to-layer="28" to-port="1"/>
+		<edge from-layer="28" from-port="2" to-layer="29" to-port="0"/>
+		<edge from-layer="29" from-port="1" to-layer="31" to-port="0"/>
+		<edge from-layer="30" from-port="1" to-layer="31" to-port="1"/>
+		<edge from-layer="31" from-port="2" to-layer="33" to-port="0"/>
+		<edge from-layer="32" from-port="1" to-layer="33" to-port="1"/>
+		<edge from-layer="33" from-port="2" to-layer="34" to-port="0"/>
+		<edge from-layer="34" from-port="1" to-layer="36" to-port="0"/>
+		<edge from-layer="35" from-port="1" to-layer="36" to-port="1"/>
+		<edge from-layer="36" from-port="2" to-layer="38" to-port="0"/>
+		<edge from-layer="37" from-port="1" to-layer="38" to-port="1"/>
+		<edge from-layer="38" from-port="2" to-layer="39" to-port="0"/>
+		<edge from-layer="39" from-port="1" to-layer="41" to-port="0"/>
+		<edge from-layer="40" from-port="1" to-layer="41" to-port="1"/>
+		<edge from-layer="41" from-port="2" to-layer="43" to-port="0"/>
+		<edge from-layer="42" from-port="1" to-layer="43" to-port="1"/>
+		<edge from-layer="43" from-port="2" to-layer="44" to-port="0"/>
+		<edge from-layer="44" from-port="1" to-layer="46" to-port="0"/>
+		<edge from-layer="45" from-port="1" to-layer="46" to-port="1"/>
+		<edge from-layer="46" from-port="2" to-layer="48" to-port="0"/>
+		<edge from-layer="47" from-port="1" to-layer="48" to-port="1"/>
+		<edge from-layer="48" from-port="2" to-layer="49" to-port="0"/>
+		<edge from-layer="49" from-port="1" to-layer="51" to-port="0"/>
+		<edge from-layer="50" from-port="1" to-layer="51" to-port="1"/>
+		<edge from-layer="51" from-port="2" to-layer="53" to-port="0"/>
+		<edge from-layer="52" from-port="1" to-layer="53" to-port="1"/>
+		<edge from-layer="53" from-port="2" to-layer="54" to-port="0"/>
+		<edge from-layer="54" from-port="1" to-layer="56" to-port="0"/>
+		<edge from-layer="55" from-port="1" to-layer="56" to-port="1"/>
+		<edge from-layer="56" from-port="2" to-layer="58" to-port="0"/>
+		<edge from-layer="57" from-port="1" to-layer="58" to-port="1"/>
+		<edge from-layer="58" from-port="2" to-layer="59" to-port="0"/>
+		<edge from-layer="59" from-port="1" to-layer="61" to-port="0"/>
+		<edge from-layer="60" from-port="1" to-layer="61" to-port="1"/>
+		<edge from-layer="61" from-port="2" to-layer="63" to-port="0"/>
+		<edge from-layer="62" from-port="1" to-layer="63" to-port="1"/>
+		<edge from-layer="63" from-port="2" to-layer="64" to-port="0"/>
+		<edge from-layer="64" from-port="1" to-layer="66" to-port="0"/>
+		<edge from-layer="65" from-port="1" to-layer="66" to-port="1"/>
+		<edge from-layer="66" from-port="2" to-layer="68" to-port="0"/>
+		<edge from-layer="67" from-port="1" to-layer="68" to-port="1"/>
+		<edge from-layer="68" from-port="2" to-layer="69" to-port="0"/>
+		<edge from-layer="69" from-port="1" to-layer="71" to-port="0"/>
+		<edge from-layer="70" from-port="1" to-layer="71" to-port="1"/>
+		<edge from-layer="71" from-port="2" to-layer="73" to-port="0"/>
+		<edge from-layer="72" from-port="1" to-layer="73" to-port="1"/>
+		<edge from-layer="73" from-port="2" to-layer="74" to-port="0"/>
+		<edge from-layer="74" from-port="1" to-layer="76" to-port="0"/>
+		<edge from-layer="75" from-port="1" to-layer="76" to-port="1"/>
+		<edge from-layer="76" from-port="2" to-layer="78" to-port="0"/>
+		<edge from-layer="77" from-port="1" to-layer="78" to-port="1"/>
+		<edge from-layer="78" from-port="2" to-layer="79" to-port="0"/>
+		<edge from-layer="79" from-port="1" to-layer="81" to-port="0"/>
+		<edge from-layer="80" from-port="1" to-layer="81" to-port="1"/>
+		<edge from-layer="81" from-port="2" to-layer="83" to-port="0"/>
+		<edge from-layer="82" from-port="1" to-layer="83" to-port="1"/>
+		<edge from-layer="83" from-port="2" to-layer="84" to-port="0"/>
+		<edge from-layer="84" from-port="1" to-layer="86" to-port="0"/>
+		<edge from-layer="85" from-port="1" to-layer="86" to-port="1"/>
+		<edge from-layer="86" from-port="2" to-layer="88" to-port="0"/>
+		<edge from-layer="87" from-port="1" to-layer="88" to-port="1"/>
+		<edge from-layer="88" from-port="2" to-layer="89" to-port="0"/>
+		<edge from-layer="89" from-port="1" to-layer="91" to-port="0"/>
+		<edge from-layer="90" from-port="1" to-layer="91" to-port="1"/>
+		<edge from-layer="91" from-port="2" to-layer="93" to-port="0"/>
+		<edge from-layer="92" from-port="1" to-layer="93" to-port="1"/>
+		<edge from-layer="93" from-port="2" to-layer="94" to-port="0"/>
+		<edge from-layer="94" from-port="1" to-layer="96" to-port="0"/>
+		<edge from-layer="95" from-port="1" to-layer="96" to-port="1"/>
+		<edge from-layer="96" from-port="2" to-layer="98" to-port="0"/>
+		<edge from-layer="97" from-port="1" to-layer="98" to-port="1"/>
+		<edge from-layer="98" from-port="2" to-layer="99" to-port="0"/>
+		<edge from-layer="99" from-port="1" to-layer="101" to-port="0"/>
+		<edge from-layer="100" from-port="1" to-layer="101" to-port="1"/>
+		<edge from-layer="101" from-port="2" to-layer="103" to-port="0"/>
+		<edge from-layer="102" from-port="1" to-layer="103" to-port="1"/>
+		<edge from-layer="103" from-port="2" to-layer="104" to-port="0"/>
+		<edge from-layer="104" from-port="1" to-layer="106" to-port="0"/>
+		<edge from-layer="105" from-port="1" to-layer="106" to-port="1"/>
+		<edge from-layer="106" from-port="2" to-layer="108" to-port="0"/>
+		<edge from-layer="107" from-port="1" to-layer="108" to-port="1"/>
+		<edge from-layer="108" from-port="2" to-layer="109" to-port="0"/>
+		<edge from-layer="109" from-port="1" to-layer="111" to-port="0"/>
+		<edge from-layer="110" from-port="1" to-layer="111" to-port="1"/>
+		<edge from-layer="111" from-port="2" to-layer="113" to-port="0"/>
+		<edge from-layer="112" from-port="1" to-layer="113" to-port="1"/>
+		<edge from-layer="113" from-port="2" to-layer="114" to-port="0"/>
+		<edge from-layer="114" from-port="1" to-layer="116" to-port="0"/>
+		<edge from-layer="115" from-port="1" to-layer="116" to-port="1"/>
+		<edge from-layer="116" from-port="2" to-layer="118" to-port="0"/>
+		<edge from-layer="117" from-port="1" to-layer="118" to-port="1"/>
+		<edge from-layer="118" from-port="2" to-layer="119" to-port="0"/>
+		<edge from-layer="119" from-port="1" to-layer="121" to-port="0"/>
+		<edge from-layer="120" from-port="1" to-layer="121" to-port="1"/>
+		<edge from-layer="121" from-port="2" to-layer="123" to-port="0"/>
+		<edge from-layer="122" from-port="1" to-layer="123" to-port="1"/>
+		<edge from-layer="123" from-port="2" to-layer="124" to-port="0"/>
+		<edge from-layer="124" from-port="1" to-layer="126" to-port="0"/>
+		<edge from-layer="125" from-port="1" to-layer="126" to-port="1"/>
+		<edge from-layer="126" from-port="2" to-layer="128" to-port="0"/>
+		<edge from-layer="127" from-port="1" to-layer="128" to-port="1"/>
+		<edge from-layer="128" from-port="2" to-layer="129" to-port="0"/>
+		<edge from-layer="129" from-port="1" to-layer="131" to-port="0"/>
+		<edge from-layer="130" from-port="1" to-layer="131" to-port="1"/>
+		<edge from-layer="131" from-port="2" to-layer="133" to-port="0"/>
+		<edge from-layer="132" from-port="1" to-layer="133" to-port="1"/>
+		<edge from-layer="133" from-port="2" to-layer="134" to-port="0"/>
+		<edge from-layer="134" from-port="1" to-layer="136" to-port="0"/>
+		<edge from-layer="135" from-port="1" to-layer="136" to-port="1"/>
+		<edge from-layer="136" from-port="2" to-layer="138" to-port="0"/>
 		<edge from-layer="137" from-port="1" to-layer="138" to-port="1"/>
-		<edge from-layer="138" from-port="2" to-layer="140" to-port="0"/>
-		<edge from-layer="139" from-port="1" to-layer="140" to-port="1"/>
-		<edge from-layer="140" from-port="2" to-layer="142" to-port="0"/>
+		<edge from-layer="138" from-port="2" to-layer="139" to-port="0"/>
+		<edge from-layer="139" from-port="1" to-layer="140" to-port="0"/>
+		<edge from-layer="140" from-port="1" to-layer="142" to-port="0"/>
 		<edge from-layer="141" from-port="1" to-layer="142" to-port="1"/>
 		<edge from-layer="142" from-port="2" to-layer="144" to-port="0"/>
 		<edge from-layer="143" from-port="1" to-layer="144" to-port="1"/>
-		<edge from-layer="146" from-port="1" to-layer="147" to-port="0"/>
-		<edge from-layer="147" from-port="1" to-layer="150" to-port="0"/>
-		<edge from-layer="148" from-port="1" to-layer="150" to-port="1"/>
-		<edge from-layer="149" from-port="1" to-layer="150" to-port="2"/>
-		<edge from-layer="145" from-port="1" to-layer="151" to-port="0"/>
-		<edge from-layer="150" from-port="3" to-layer="151" to-port="1"/>
-		<edge from-layer="144" from-port="2" to-layer="152" to-port="0"/>
-		<edge from-layer="151" from-port="2" to-layer="152" to-port="1"/>
-		<edge from-layer="152" from-port="2" to-layer="153" to-port="0"/>
-		<edge from-layer="146" from-port="1" to-layer="153" to-port="1"/>
-		<edge from-layer="153" from-port="2" to-layer="155" to-port="0"/>
-		<edge from-layer="154" from-port="1" to-layer="155" to-port="1"/>
-		<edge from-layer="155" from-port="2" to-layer="156" to-port="0"/>
-		<edge from-layer="156" from-port="1" to-layer="157" to-port="0"/>
+		<edge from-layer="144" from-port="2" to-layer="146" to-port="0"/>
+		<edge from-layer="145" from-port="1" to-layer="146" to-port="1"/>
+		<edge from-layer="146" from-port="2" to-layer="148" to-port="0"/>
+		<edge from-layer="147" from-port="1" to-layer="148" to-port="1"/>
+		<edge from-layer="150" from-port="1" to-layer="151" to-port="0"/>
+		<edge from-layer="151" from-port="1" to-layer="154" to-port="0"/>
+		<edge from-layer="152" from-port="1" to-layer="154" to-port="1"/>
+		<edge from-layer="153" from-port="1" to-layer="154" to-port="2"/>
+		<edge from-layer="149" from-port="1" to-layer="155" to-port="0"/>
+		<edge from-layer="154" from-port="3" to-layer="155" to-port="1"/>
+		<edge from-layer="148" from-port="2" to-layer="156" to-port="0"/>
+		<edge from-layer="155" from-port="2" to-layer="156" to-port="1"/>
+		<edge from-layer="156" from-port="2" to-layer="157" to-port="0"/>
+		<edge from-layer="150" from-port="1" to-layer="157" to-port="1"/>
+		<edge from-layer="157" from-port="2" to-layer="159" to-port="0"/>
+		<edge from-layer="158" from-port="1" to-layer="159" to-port="1"/>
+		<edge from-layer="159" from-port="2" to-layer="160" to-port="0"/>
+		<edge from-layer="160" from-port="1" to-layer="161" to-port="0"/>
 	</edges>
 	<meta_data>
 		<MO_version value="2021.1.0-1237-bece22ac675-releases/2021/1"/>
 		<cli_parameters>
-			<caffe_parser_path value="DIR"/>
-			<data_type value="float"/>
+			<data_type value="FP16"/>
 			<disable_nhwc_to_nchw value="False"/>
-			<disable_omitting_optional value="False"/>
 			<disable_resnet_optimization value="False"/>
 			<disable_weights_compression value="False"/>
 			<enable_concat_optimization value="False"/>
-			<enable_flattening_nested_params value="False"/>
-			<enable_ssd_gluoncv value="False"/>
 			<extensions value="DIR"/>
 			<framework value="tf"/>
 			<freeze_placeholder_with_value value="{}"/>
 			<generate_deprecated_IR_V7 value="False"/>
-			<input_model value="DIR/pcb_1013.pb"/>
+			<input_model value="DIR/pcb_101920.pb"/>
 			<input_model_is_text value="False"/>
-			<k value="DIR/CustomLayersMapping.xml"/>
+			<input_shape value="[1,224,224,3]"/>
 			<keep_shape_ops value="True"/>
-			<legacy_mxnet_model value="False"/>
 			<log_level value="ERROR"/>
-			<mean_scale_values value="{}"/>
-			<mean_values value="()"/>
-			<model_name value="pcb_1013"/>
+			<mean_scale_values value="[(array([128., 128., 128.]), None)]"/>
+			<mean_values value="[128,128,128]"/>
+			<model_name value="pcb_101920"/>
 			<output_dir value="DIR"/>
 			<placeholder_data_types value="{}"/>
+			<placeholder_shapes value="[  1 224 224   3]"/>
 			<progress value="False"/>
-			<remove_memory value="False"/>
-			<remove_output_softmax value="False"/>
-			<reverse_input_channels value="False"/>
-			<save_params_from_nd value="False"/>
+			<reverse_input_channels value="True"/>
+			<scale value="128.0"/>
 			<scale_values value="()"/>
 			<silent value="False"/>
 			<static_shape value="False"/>
 			<stream_output value="False"/>
-			<unset unset_cli_parameters="batch, counts, disable_fusing, disable_gfusing, finegrain_fusing, input, input_checkpoint, input_meta_graph, input_proto, input_shape, input_symbol, mean_file, mean_file_offsets, move_to_preprocess, nd_prefix_name, output, placeholder_shapes, pretrained_model_name, saved_model_dir, saved_model_tags, scale, tensorboard_logdir, tensorflow_custom_layer_libraries, tensorflow_custom_operations_config_update, tensorflow_object_detection_api_pipeline_config, tensorflow_use_custom_operations_config, transformations_config"/>
+			<unset unset_cli_parameters="batch, disable_fusing, disable_gfusing, finegrain_fusing, input, input_checkpoint, input_meta_graph, move_to_preprocess, output, saved_model_dir, saved_model_tags, tensorboard_logdir, tensorflow_custom_layer_libraries, tensorflow_custom_operations_config_update, tensorflow_object_detection_api_pipeline_config, tensorflow_use_custom_operations_config, transformations_config"/>
 		</cli_parameters>
 	</meta_data>
 </net>

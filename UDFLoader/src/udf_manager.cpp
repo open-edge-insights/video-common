@@ -252,50 +252,56 @@ void UdfManager::run(int tid, std::atomic<bool>& stop, void* varg) {
 
             // Loop over all UDFs and execute them on the queued frame
             for(auto handle : m_udfs) {
-                LOG_DEBUG_0("Running UdfHandle::process()");
+                if (frame != NULL) {
 
-                // If the application using the UDF Manager is in profiling
-                // mode, then add timestamps for UDF entry/exit, else just
-                // run the UDF
-                if(m_profile->is_profiling_enabled()) {
-                    msg_envelope_t* meta_data = frame->get_meta_data();
+                    LOG_DEBUG_0("Running UdfHandle::process()");
 
-                    // Add entry timestamp
-                    DO_PROFILING(
-                            m_profile, meta_data,
-                            handle->get_prof_entry_key().c_str());
+                    // If the application using the UDF Manager is in profiling
+                    // mode, then add timestamps for UDF entry/exit, else just
+                    // run the UDF
+                    if(m_profile->is_profiling_enabled()) {
+                        msg_envelope_t* meta_data = frame->get_meta_data();
 
-                    ret = handle->process(frame);
+                        // Add entry timestamp
+                        DO_PROFILING(
+                                m_profile, meta_data,
+                                handle->get_prof_entry_key().c_str());
 
-                    // Add exit timestamp
-                    DO_PROFILING(
-                            m_profile, meta_data,
-                            handle->get_prof_exit_key().c_str());
-                } else {
-                    // Run the UDF by itself, with no profiling timestamps
-                    ret = handle->process(frame);
+                        ret = handle->process(frame);
+
+                        // Add exit timestamp
+                        DO_PROFILING(
+                                m_profile, meta_data,
+                                handle->get_prof_exit_key().c_str());
+                    } else {
+                        // Run the UDF by itself, with no profiling timestamps
+                        ret = handle->process(frame);
+                    }
+
+                    // Check the return code from the UDF
+                    switch (ret) {
+                        case UdfRetCode::UDF_DROP_FRAME:
+                            LOG_DEBUG_0("Dropping frame");
+                            delete frame;
+                            frame = NULL;
+                            break;
+                        case UdfRetCode::UDF_ERROR:
+                            LOG_ERROR_0("Failed to process frame");
+                            delete frame;
+                            frame = NULL;
+                            break;
+                        case UdfRetCode::UDF_FRAME_MODIFIED:
+                        case UdfRetCode::UDF_OK:
+                            LOG_DEBUG_0("UDF_OK");
+                            break;
+                        default:
+                            LOG_ERROR_0("Reached default case");
+                            delete frame;
+                            frame = NULL;
+                            break;
+                    }
+                    LOG_DEBUG_0("Done with UDF handle");
                 }
-
-                // Check the return code from the UDF
-                switch(ret) {
-                    case UdfRetCode::UDF_DROP_FRAME:
-                        LOG_DEBUG_0("Dropping frame");
-                        delete frame;
-                        break;
-                    case UdfRetCode::UDF_ERROR:
-                        LOG_ERROR_0("Failed to process frame");
-                        delete frame;
-                        break;
-                    case UdfRetCode::UDF_FRAME_MODIFIED:
-                    case UdfRetCode::UDF_OK:
-                        LOG_DEBUG_0("UDF_OK");
-                        break;
-                    default:
-                        LOG_ERROR_0("Reached default case");
-                        delete frame;
-                        break;
-                }
-                LOG_DEBUG_0("Done with UDF handle");
             }
 
             if (ret == UDF_OK) {

@@ -37,7 +37,7 @@ namespace eis {
      */
         class DummyUdf : public BaseUdf {
             public:
-                DummyUdf(config_t* config) : BaseUdf(config) {};
+                explicit DummyUdf(config_t* config) : BaseUdf(config) {};
 
                 ~DummyUdf() {};
 

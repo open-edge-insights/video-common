@@ -515,7 +515,6 @@ cdef public UdfRetCode call_udf(
         assert isinstance(updated_frame, np.ndarray), 'Frame must be NumPy'
         Py_INCREF(updated_frame)
         (&output)[0] = <PyObject*> updated_frame
-        # print(output)
         ret_code = UDF_FRAME_MODIFIED
 
     if new_meta is not None:

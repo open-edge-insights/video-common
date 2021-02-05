@@ -1,4 +1,4 @@
-# Copyright (c) 2019 Intel Corporation.
+# Copyright (c) 2021 Intel Corporation.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -17,9 +17,9 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
-"""Test UDF to verify that the frame and meta-data of a frame can be modified
-from a Python UDF.
+"""Test UDF to verify modifying an actual frame.
 """
+import cv2
 import numpy as np
 
 
@@ -32,6 +32,4 @@ class Udf:
     def process(self, frame, meta):
         """Change all the values in the frame to 1 and return meta-data.
         """
-        meta['ADDED'] = 55
-        frame.fill(1)
-        return False, frame, meta
+        return False, frame, None

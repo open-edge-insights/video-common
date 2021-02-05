@@ -157,7 +157,17 @@ UdfRetCode NativeUdfHandle::process(Frame* frame) {
     try {
         ret = m_udf->process(*mat_frame, *output, meta_data);
 
-        if(!output->empty()) {
+        // Check if the UDF has changed / modified the frame it was given. In
+        // this case, output will no longer be empty (like it was after its
+        // initialization above).
+        //
+        // NOTE: output->data and mat_frame->data (i.e. the underlying void* of
+        // the frame's data) must not be pointing to the same address. In this
+        // case, the UDF pointed output to an unchanged vesion of the frame
+        // it was given. In this case, the frame was not actually modified.
+        // To avoid potential memory issues, do not tell the Frame object to
+        // change the underlying data.
+        if(!output->empty() && output->data != mat_frame->data) {
             LOG_DEBUG("Setting frame with new UDF frame");
             frame->set_data(
                     (void*) output, output->cols, output->rows,

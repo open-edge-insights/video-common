@@ -1,0 +1,12 @@
+{
+    "udfs": [
+        {
+            "name": "py_tests.same_frame",
+            "type": "python"
+        },
+        {
+            "name": "same_frame",
+            "type": "native"
+        }
+    ]
+}

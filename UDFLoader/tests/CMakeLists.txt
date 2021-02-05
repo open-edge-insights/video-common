@@ -62,6 +62,8 @@ file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/test_udf_mgr_config.json"
      DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
 file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/py_tests/"
     DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/py_tests")
+file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/test_udf_mgr_same_frame.json"
+     DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
 add_executable(udfloader-tests "udfloader_tests.cpp")
 target_link_libraries(udfloader-tests eisudfloader gtest_main)
 add_test(NAME udfloader-tests COMMAND udfloader-tests)
@@ -71,3 +73,14 @@ file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/test_image.png"
 add_executable(frame-tests "frame_tests.cpp")
 target_link_libraries(frame-tests eisudfloader gtest_main)
 add_test(NAME frame-tests COMMAND frame-tests)
+
+# Compile native UDF for testing the "same frame" issue
+add_library(same_frame SHARED "native_tests/same_frame.cpp")
+target_link_libraries(same_frame
+    PUBLIC
+        ${UDFLoader_LIBRARIES}
+        ${EISMsgEnv_LIBRARIES}
+        ${EISUtils_LIBRARIES}
+    PRIVATE
+        ${IntelSafeString_LIBRARIES}
+        ${OpenCV_LIBRARIES})

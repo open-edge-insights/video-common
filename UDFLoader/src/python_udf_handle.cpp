@@ -178,7 +178,10 @@ UdfRetCode PythonUdfHandle::process(Frame* frame) {
     }
     LOG_DEBUG_0("process done");
 
-    if(ret == UDF_FRAME_MODIFIED) {
+    // NOTE: If output == py_frame, then the UDF returned the same Python
+    // object for the frame as was passed to it, this does not count as a
+    // changed or updated frame.
+    if(ret == UDF_FRAME_MODIFIED && output != py_frame) {
         LOG_DEBUG_0("Python modified frame");
         PyArrayObject* py_array = (PyArrayObject*) output;
 
@@ -200,6 +203,14 @@ UdfRetCode PythonUdfHandle::process(Frame* frame) {
         frame->set_data((void*) output, shape[1], shape[0], shape[2],
                         PyArray_DATA(py_array), free_np_frame);
 
+        ret = UDF_OK;
+    } else if (output == py_frame) {
+        // If output == py_frame, then an extra DECREF is required to make sure
+        // the Python NumPy array is released (this will not free the
+        // underlying frame data).
+        Py_DECREF(output);
+
+        // The UDF can return OK in this instance
         ret = UDF_OK;
     }
 

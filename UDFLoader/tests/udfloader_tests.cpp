@@ -23,12 +23,17 @@
  */
 
 #include <chrono>
+#include <cassert>
 #include <gtest/gtest.h>
+#include <opencv2/opencv.hpp>
 #include <eis/utils/logger.h>
 #include <eis/utils/json_config.h>
+#include <eis/utils/string.h>
 #include "eis/udf/loader.h"
 #include "eis/udf/udf_manager.h"
 
+#define LD_PATH_SET     "LD_LIBRARY_PATH="
+#define LD_SEP          ":"
 #define ORIG_FRAME_DATA "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 #define NEW_FRAME_DATA  "\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01"
 #define DATA_LEN 10
@@ -42,6 +47,9 @@ using namespace eis::udf;
 #define ASSERT_NOT_NULL(val) { \
     if(val == NULL) FAIL() << "Value shoud not be NULL"; \
 }
+
+// Prototypes
+static char* update_ld_library_path();
 
 //
 // Helper objects
@@ -202,7 +210,8 @@ TEST(udfloader_tests, reinitialize) {
         FrameQueue* input_queue = new FrameQueue(-1);
         FrameQueue* output_queue = new FrameQueue(-1);
 
-        UdfManager* manager = new UdfManager(config, input_queue, output_queue, "");
+        UdfManager* manager = new UdfManager(
+                config, input_queue, output_queue, "");
         manager->start();
 
         Frame* frame = init_frame();
@@ -226,15 +235,140 @@ TEST(udfloader_tests, reinitialize) {
     }
 }
 
+// Free method for OpenCV read in frame, does nothing
+static void free_frame(void* varg) {
+    cv::Mat* frame = (cv::Mat*) varg;
+    delete frame;
+}
+
+/**
+ * Unit test to load in an actual image, modify it in a Python UDF, and then
+ * re-encode the image. This is to make sure the transfer of memory is all
+ * taken care of successfully.
+ */
+TEST(udfloader_tests, modify_frame_encode) {
+    try {
+        // Read in the test frame
+        cv::Mat* mat_frame = new cv::Mat();
+        *mat_frame = cv::imread("./test_image.png");
+        ASSERT_FALSE(mat_frame->empty()) << "Failed to load test_image.png";
+
+        // Initialize the frame object
+        Frame* frame = new Frame(
+                (void*) mat_frame, mat_frame->cols, mat_frame->rows,
+                mat_frame->channels(), mat_frame->data, free_frame);
+
+        // Load the JSON configuration
+        config_t* config = json_config_new("test_udf_mgr_same_frame.json");
+        ASSERT_NOT_NULL(config);
+
+        // Initialize the input/output frame queues
+        FrameQueue* input_queue = new FrameQueue(-1);
+        FrameQueue* output_queue = new FrameQueue(-1);
+
+        // Initialize the UDF manager
+        UdfManager* manager = new UdfManager(
+                config, input_queue, output_queue, "modify_frame_encode",
+                EncodeType::JPEG, 50);
+        manager->start();
+
+        // Push the frame into the input queue
+        input_queue->push(frame);
+
+        // Wait for the frame in the output queue
+        auto sleep_time = std::chrono::seconds(3);
+        ASSERT_TRUE(output_queue->wait_for(sleep_time)) << "No frame";
+
+        // Get the frame from the output queue
+        Frame* output_frame = output_queue->pop();
+        msg_envelope_t* encoded = output_frame->serialize();
+        ASSERT_NOT_NULL(encoded);
+
+        // Clean up
+        msgbus_msg_envelope_destroy(encoded);
+        delete manager;
+    } catch(const char* ex) {
+        FAIL() << ex;
+    }
+}
+
 /**
  * Overridden GTest main method
  */
 GTEST_API_ int main(int argc, char** argv) {
+    // Update the LD_LIBRARY_PATH
+    update_ld_library_path();
+
     // Parse out gTest command line parameters
     ::testing::InitGoogleTest(&argc, argv);
-    set_log_level(LOG_LVL_DEBUG);
+
+    // Check if log level provided
+    if (argc == 3) {
+        if (strcmp(argv[1], "--log-level") == 0) {
+            // LOG_INFO_0("Running msgbus tests over TCP");
+            char* log_level = argv[2];
+
+            if (strcmp(log_level, "INFO") == 0) {
+                set_log_level(LOG_LVL_INFO);
+            } else if (strcmp(log_level, "DEBUG") == 0) {
+                set_log_level(LOG_LVL_DEBUG);
+            } else if (strcmp(log_level, "ERROR") == 0) {
+                set_log_level(LOG_LVL_ERROR);
+            } else if (strcmp(log_level, "WARN") == 0) {
+                set_log_level(LOG_LVL_WARN);
+            } else {
+                LOG_ERROR("Unknown log level: %s", log_level);
+                return -1;
+            }
+        } else {
+            LOG_ERROR("Unknown parameter: %s", argv[1]);
+            return -1;
+        }
+    } else if (argc == 2) {
+        LOG_ERROR_0("Incorrect number of arguments");
+        return -1;
+    }
+
     loader = new UdfLoader();
     int res = RUN_ALL_TESTS();
     delete loader;
+
     return res;
+}
+
+/**
+ * Helper method to add the current working directory to the LD_LIBRARY_PATH.
+ *
+ * Note that this function returns the string for the environmental variable is
+ * returned. This memory needs to stay allocated until that variable is no
+ * longer needed.
+ *
+ * @return char*
+ */
+static char* update_ld_library_path() {
+    const char* ld_library_path = getenv("LD_LIBRARY_PATH");
+    size_t len = (ld_library_path != NULL) ? strlen(ld_library_path) : 0;
+
+    // Get current working directory
+   char cwd[PATH_MAX];
+   char* result = getcwd(cwd, PATH_MAX);
+   assert(result != NULL);
+
+   size_t dest_len = strlen(LD_PATH_SET) + strlen(cwd) + len + 2;
+   char* env_str = NULL;
+
+   if(ld_library_path == NULL) {
+       // Setting the environmental variable from scratch
+       env_str = concat_s(dest_len, 3, LD_PATH_SET, LD_SEP, cwd);
+   } else {
+       // Setting the environmental variable with existing path
+       env_str = concat_s(
+               dest_len, 4, LD_PATH_SET, ld_library_path, LD_SEP, cwd);
+   }
+   assert(env_str != NULL);
+
+   // Put the new LD_LIBRARY_PATH into the environment
+   putenv(env_str);
+
+   return env_str;
 }

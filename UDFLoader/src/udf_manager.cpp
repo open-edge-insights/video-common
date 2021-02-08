@@ -139,7 +139,7 @@ UdfManager::UdfManager(
             free_ptr = cfg_obj->body.object->free;
         }
         config_t* cfg = config_new(
-                (void*) cfg_obj, free_ptr, get_config_value);
+                (void*) cfg_obj, free_ptr, get_config_value, NULL);
         if(cfg == NULL) {
             throw "Failed to initialize configuration for UDF";
         }

@@ -20,52 +20,72 @@
 
 /**
  * @file
- * @brief UDF loader library entry point. Provides the object for loading UDFs
- *      into the application.
+ * @brief Python UDF
  */
 
-#ifndef _EIS_UDF_LOADER_H
-#define _EIS_UDF_LOADER_H
+#ifndef _EII_UDF_PYTHON_UDF_H
+#define _EII_UDF_PYTHON_UDF_H
 
-#include <eis/utils/config.h>
-#include "eis/udf/udf_handle.h"
+#include <Python.h>
+#include "eii/udf/udf_handle.h"
 
-namespace eis {
+namespace eii {
 namespace udf {
 
 /**
- * UDF loader object.
+ * Return value for a Python UDF.
+ *
+ * \note This is only used between the @c PythonUdfHandle and the Cython shim
  */
-class UdfLoader {
+typedef struct {
+    // UDF return code (i.e. UDF_OK, UDF_ERROR, etc.)
+    UdfRetCode return_code;
+    // Updated frame (if needed)
+    PyObject* updated_frame;
+} PythonUdfRet;
+
+/**
+ * Python UDF wrapper object
+ */
+class PythonUdfHandle : public UdfHandle {
+private:
+    // Reference to UDF Python object
+    PyObject* m_udf_obj;
+
+    // Reference to the process() method on the Python object
+    PyObject* m_udf_func;
+
 public:
     /**
      * Constructor
+     *
+     * @param name - Name of the Python UDF
      */
-    UdfLoader();
+    PythonUdfHandle(std::string name, int max_workers);
 
     /**
      * Destructor
      */
-    ~UdfLoader();
+    ~PythonUdfHandle();
 
     /**
-     * Load a UDF from a library either in the `LD_LIBRARY_PATH` or the
-     * `PYTHONPATH`.
+     * Overridden initialization method
      *
-     * For native UDF implmentations, the `load()` method will search
-     * in the LD_LIBRARY_PATH environmental variable directories. The
-     * library names are expected to follow the naming convention:
-     * `lib<name>.so`.
-     *
-     * @param name        - Name of the UDF to load
-     * @param config      - Configuration for the UDF
-     * @param max_workers - Maximum number of worker threads for executing UDFs
-     * @return @c UdfHandle, NULL if not found
+     * @param config - UDF configuration
+     * @return bool
      */
-    UdfHandle* load(std::string name, config_t* config, int max_workers);
+    bool initialize(config_t* config) override;
+
+    /**
+     * Overridden frame processing method.
+     *
+     * @param frame - Frame to process
+     * @return UdfRetCode
+     */
+    UdfRetCode process(Frame* frame) override;
 };
 
 } // udf
-} // eis
+} // eii
 
-#endif // _EIS_UDF_LOADER_H
+#endif // _EII_UDF_PYTHON_UDF_H

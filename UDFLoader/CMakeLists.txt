@@ -19,17 +19,17 @@
 # IN THE SOFTWARE.
 
 cmake_minimum_required(VERSION 3.12)
-project(eis-udf-loader VERSION 1.0.0 LANGUAGES C CXX)
+project(eii-udf-loader VERSION 1.0.0 LANGUAGES C CXX)
 
 # Define CMake options
 option(WITH_EXAMPLES "Compile with examples" OFF)
 option(WITH_TESTS    "Compile with unit tests" OFF)
 
 # Globals
-set(EIS_COMMON_CMAKE "${CMAKE_CURRENT_SOURCE_DIR}/../../cmake")
+set(EII_COMMON_CMAKE "${CMAKE_CURRENT_SOURCE_DIR}/../../cmake")
 
 # Include directory for CMake modules
-set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" "${EIS_COMMON_CMAKE}")
+set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" "${EII_COMMON_CMAKE}")
 
 # Set C++ version
 set(CMAKE_CXX_STANDARD 14)
@@ -46,8 +46,8 @@ set(CMAKE_SHARED_LINKER_FLAGS "-z noexecstack -z relro -z now")
 
 # Finding packages
 find_package(OpenCV REQUIRED)
-find_package(EISMsgEnv REQUIRED)
-find_package(EISUtils REQUIRED)
+find_package(EIIMsgEnv REQUIRED)
+find_package(EIIUtils REQUIRED)
 find_package(IntelSafeString REQUIRED)
 find_package(Python3 COMPONENTS Development NumPy REQUIRED)
 
@@ -64,8 +64,8 @@ endif()
 include_directories(
     include/
     ${OpenCV_INCLUDE_DIRS}
-    ${EISMsgEnv_INCLUDE}
-    ${EISUtils_INCLUDE}
+    ${EIIMsgEnv_INCLUDE}
+    ${EIIUtils_INCLUDE}
     ${Python3_INCLUDE_DIRS}
     ${Python3_NumPy_INCLUDE_DIRS}
     ${IntelSafeString_INCLUDE})
@@ -90,12 +90,12 @@ execute_process(
 file(GLOB SOURCES "src/*.cpp" "src/cython/udf.cpp")
 
 # Add target
-add_library(eisudfloader SHARED ${SOURCES})
-add_dependencies(eisudfloader cython-udf)
-target_link_libraries(eisudfloader
+add_library(eiiudfloader SHARED ${SOURCES})
+add_dependencies(eiiudfloader cython-udf)
+target_link_libraries(eiiudfloader
     PUBLIC
-        ${EISMsgEnv_LIBRARIES}
-        ${EISUtils_LIBRARIES}
+        ${EIIMsgEnv_LIBRARIES}
+        ${EIIUtils_LIBRARIES}
         ${OpenCV_LIBS}
         pthread
     PRIVATE
@@ -104,7 +104,7 @@ target_link_libraries(eisudfloader
 
 # If compile in debug mode, set DEBUG flag for C code
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-    target_compile_definitions(eisudfloader PRIVATE DEBUG=1)
+    target_compile_definitions(eiiudfloader PRIVATE DEBUG=1)
 endif()
 
 # Add examples if the option was selected
@@ -118,11 +118,11 @@ if(WITH_TESTS)
 endif()
 
 ##
-## Configure pkg-config file to be installed for the EIS Message Envelope lib
+## Configure pkg-config file to be installed for the EII Message Envelope lib
 ##
 
-set(PKG_CONFIG_IN  "${CMAKE_CURRENT_SOURCE_DIR}/cmake/libeisudfloader.pc.in")
-set(PKG_CONFIG_OUT "${CMAKE_CURRENT_BINARY_DIR}/libeisudfloader.pc")
+set(PKG_CONFIG_IN  "${CMAKE_CURRENT_SOURCE_DIR}/cmake/libeiiudfloader.pc.in")
+set(PKG_CONFIG_OUT "${CMAKE_CURRENT_BINARY_DIR}/libeiiudfloader.pc")
 set(DEST_DIR       "${CMAKE_INSTALL_PREFIX}")
 set(PRIVATE_LIBS   "-l")
 
@@ -136,12 +136,12 @@ configure_file(${PKG_CONFIG_IN} ${PKG_CONFIG_OUT} @ONLY)
 include(GNUInstallDirs)
 set(INSTALL_CONFIGDIR ${CMAKE_INSTALL_LIBDIR}/cmake/UDFLoader)
 
-install(TARGETS eisudfloader
-    EXPORT eisudfloader-targets
+install(TARGETS eiiudfloader
+    EXPORT eiiudfloader-targets
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
-set_target_properties(eisudfloader PROPERTIES EXPORT_NAME UDFLoader)
+set_target_properties(eiiudfloader PROPERTIES EXPORT_NAME UDFLoader)
 install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
 # Install pkg-config libudfloader.pc file
@@ -153,7 +153,7 @@ install(
 )
 
 # Export targets to a script
-install(EXPORT eisudfloader-targets
+install(EXPORT eiiudfloader-targets
     FILE
         UDFLoaderTargets.cmake
     DESTINATION
@@ -179,7 +179,7 @@ install(FILES
     DESTINATION ${INSTALL_CONFIGDIR}
 )
 
-export(EXPORT eisudfloader-targets
+export(EXPORT eiiudfloader-targets
        FILE ${CMAKE_CURRENT_BINARY_DIR}/UDFLoaderTargets.cmake)
 
 # Register package in user's package registry

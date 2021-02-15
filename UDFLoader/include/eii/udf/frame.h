@@ -23,15 +23,15 @@
  * @brief High level video frame abstraction.
  */
 
-#ifndef _EIS_UDF_FRAME_H
-#define _EIS_UDF_FRAME_H
+#ifndef _EII_UDF_FRAME_H
+#define _EII_UDF_FRAME_H
 
 #include <atomic>
 
-#include <eis/msgbus/msg_envelope.h>
-#include <eis/utils/logger.h>
+#include <eii/msgbus/msg_envelope.h>
+#include <eii/utils/logger.h>
 
-namespace eis {
+namespace eii {
 namespace udf {
 
 /**
@@ -46,7 +46,7 @@ enum EncodeType {
 /**
  * Wrapper around a frame object
  */
-class Frame : public eis::msgbus::Serializable {
+class Frame : public eii::msgbus::Serializable {
 private:
     // This pointer represents the underlying object in which the raw pixel
     // data for the frame resides. This pointer could be a GstBuffer, cv::Mat
@@ -92,7 +92,7 @@ private:
     void encode_frame();
 
     /**
-     * Function to be passed to the EIS Message Bus for freeing the frame after
+     * Function to be passed to the EII Message Bus for freeing the frame after
      * it has been transmitted over the bus.
      */
     static void msg_free_frame(void* hint) {
@@ -240,6 +240,6 @@ public:
 };
 
 } // udf
-} // eis
+} // eii
 
-#endif // _EIS_UDF_FRAME_H
+#endif // _EII_UDF_FRAME_H

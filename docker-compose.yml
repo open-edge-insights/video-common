@@ -22,7 +22,7 @@ version: '3.6'
 
 services:
 
-  ##----Start: EIS Video Images -- These Video images must be included for building any EIS video related servcies ----
+  ##----Start: EII Video Images -- These Video images must be included for building any EII video related servcies ----
 
   ## Define ia_video_common service
   ia_video_common:
@@ -32,12 +32,12 @@ services:
       context: $PWD/../common/video
       dockerfile: $PWD/../common/video/Dockerfile.videocommon
       args:
-        EIS_VERSION: ${EIS_VERSION}
+        EII_VERSION: ${EII_VERSION}
         DOCKER_REGISTRY: ${DOCKER_REGISTRY}
         # set CMAKE_BUILD_TYPE value to "Debug" to generate debug symbols
         CMAKE_BUILD_TYPE: Release
     read_only: true
-    image: ${DOCKER_REGISTRY}ia_video_common:${EIS_VERSION}
+    image: ${DOCKER_REGISTRY}ia_video_common:${EII_VERSION}
 
   ## Define ia_openvino_base service
   ia_openvino_base:
@@ -47,10 +47,10 @@ services:
       context: $PWD/../common/video
       dockerfile: $PWD/../common/video/Dockerfile.openvino
       args:
-          EIS_VERSION: ${EIS_VERSION}
+          EII_VERSION: ${EII_VERSION}
           OPENVINO_IMAGE_VERSION: ${OPENVINO_IMAGE_VERSION}
           DOCKER_REGISTRY: ${DOCKER_REGISTRY}
     read_only: true
-    image: ${DOCKER_REGISTRY}ia_openvino_base:${EIS_VERSION}
+    image: ${DOCKER_REGISTRY}ia_openvino_base:${EII_VERSION}
 
-  ##----End: EIS Video Images---- -- These Video images must be included for building any EIS video servcies ----
+  ##----End: EII Video Images---- -- These Video images must be included for building any EII video servcies ----

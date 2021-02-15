@@ -20,31 +20,52 @@
 
 /**
  * @file
- * @brief Return values for UDFs.
+ * @brief UDF loader library entry point. Provides the object for loading UDFs
+ *      into the application.
  */
 
-#ifndef _EIS_UDF_UDF_RET_CODES_H
-#define _EIS_UDF_UDF_RET_CODES_H
+#ifndef _EII_UDF_LOADER_H
+#define _EII_UDF_LOADER_H
 
-namespace eis {
+#include <eii/utils/config.h>
+#include "eii/udf/udf_handle.h"
+
+namespace eii {
 namespace udf {
 
-enum UdfRetCode {
-    // Specifies that the UDF has processed and all is good, no action needed
-    // by the caller
-    UDF_OK = 0,
+/**
+ * UDF loader object.
+ */
+class UdfLoader {
+public:
+    /**
+     * Constructor
+     */
+    UdfLoader();
 
-    // Specifies that the frame given to the process() method should dropped
-    UDF_DROP_FRAME = 1,
+    /**
+     * Destructor
+     */
+    ~UdfLoader();
 
-    // Return value used specifically for Python UDFs
-    UDF_FRAME_MODIFIED = 2,
-
-    // The UDF encountered an error
-    UDF_ERROR = 255,
+    /**
+     * Load a UDF from a library either in the `LD_LIBRARY_PATH` or the
+     * `PYTHONPATH`.
+     *
+     * For native UDF implmentations, the `load()` method will search
+     * in the LD_LIBRARY_PATH environmental variable directories. The
+     * library names are expected to follow the naming convention:
+     * `lib<name>.so`.
+     *
+     * @param name        - Name of the UDF to load
+     * @param config      - Configuration for the UDF
+     * @param max_workers - Maximum number of worker threads for executing UDFs
+     * @return @c UdfHandle, NULL if not found
+     */
+    UdfHandle* load(std::string name, config_t* config, int max_workers);
 };
 
 } // udf
-} // eis
+} // eii
 
-#endif // _EIS_UDF_UDF_RET_CODES_H
+#endif // _EII_UDF_LOADER_H

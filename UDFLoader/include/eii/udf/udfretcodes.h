@@ -20,52 +20,31 @@
 
 /**
  * @file
- * @brief Base UDF class for native UDF implementations.
+ * @brief Return values for UDFs.
  */
 
-#ifndef _EIS_UDF_BASE_UDF_H
-#define _EIS_UDF_BASE_UDF_H
+#ifndef _EII_UDF_UDF_RET_CODES_H
+#define _EII_UDF_UDF_RET_CODES_H
 
-#include <atomic>
-#include <opencv2/opencv.hpp>
-#include <eis/msgbus/msg_envelope.h>
-#include <eis/utils/config.h>
-#include "eis/udf/udfretcodes.h"
-
-namespace eis {
+namespace eii {
 namespace udf {
 
-class BaseUdf {
-protected:
-    // UDF configuration
-    //
-    // NOTE: The memory for this configuration is managed by the
-    // @c UdfHandle class and does not need to be freed in the UDF object.
-    config_t* m_config;
+enum UdfRetCode {
+    // Specifies that the UDF has processed and all is good, no action needed
+    // by the caller
+    UDF_OK = 0,
 
-public:
-    /**
-     * Constructor
-     */
-    BaseUdf(config_t* config);
+    // Specifies that the frame given to the process() method should dropped
+    UDF_DROP_FRAME = 1,
 
-    /**
-     * Destructor
-     */
-    virtual ~BaseUdf();
+    // Return value used specifically for Python UDFs
+    UDF_FRAME_MODIFIED = 2,
 
-    /**
-     * Process the given frame.
-     *
-     * @param frame - @c cv::Mat frame object
-     * @param meta  - @c msg_envelope_t for the meta data to add to the frame
-     *                after the UDF executes over it.
-     * @return @c UdfRetCode
-     */
-    virtual UdfRetCode process(cv::Mat& frame, cv::Mat& output, msg_envelope_t* meta) = 0;
+    // The UDF encountered an error
+    UDF_ERROR = 255,
 };
 
 } // udf
-} // eis
+} // eii
 
-#endif // _EIS_UDF_BASE_UDF_H
+#endif // _EII_UDF_UDF_RET_CODES_H

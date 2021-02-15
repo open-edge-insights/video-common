@@ -19,7 +19,7 @@
 # IN THE SOFTWARE.
 
 set(CMAKE_CXX_STANDARD 11)
-configure_file(${EIS_COMMON_CMAKE}/GoogleTestCMakeLists.txt.in googletest-download/CMakeLists.txt)
+configure_file(${EII_COMMON_CMAKE}/GoogleTestCMakeLists.txt.in googletest-download/CMakeLists.txt)
 execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
                 RESULT_VARIABLE result
                 WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/googletest-download)
@@ -65,13 +65,13 @@ file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/py_tests/"
 file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/test_udf_mgr_same_frame.json"
      DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
 add_executable(udfloader-tests "udfloader_tests.cpp")
-target_link_libraries(udfloader-tests eisudfloader gtest_main)
+target_link_libraries(udfloader-tests eiiudfloader gtest_main)
 add_test(NAME udfloader-tests COMMAND udfloader-tests)
 
 file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/test_image.png"
      DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
 add_executable(frame-tests "frame_tests.cpp")
-target_link_libraries(frame-tests eisudfloader gtest_main)
+target_link_libraries(frame-tests eiiudfloader gtest_main)
 add_test(NAME frame-tests COMMAND frame-tests)
 
 # Compile native UDF for testing the "same frame" issue
@@ -79,8 +79,8 @@ add_library(same_frame SHARED "native_tests/same_frame.cpp")
 target_link_libraries(same_frame
     PUBLIC
         ${UDFLoader_LIBRARIES}
-        ${EISMsgEnv_LIBRARIES}
-        ${EISUtils_LIBRARIES}
+        ${EIIMsgEnv_LIBRARIES}
+        ${EIIUtils_LIBRARIES}
     PRIVATE
         ${IntelSafeString_LIBRARIES}
         ${OpenCV_LIBRARIES})

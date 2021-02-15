@@ -19,7 +19,7 @@
 # IN THE SOFTWARE.
 
 cmake_minimum_required(VERSION 3.12)
-project(eis-udf-samples VERSION 1.0.0 LANGUAGES C CXX)
+project(eii-udf-samples VERSION 1.0.0 LANGUAGES C CXX)
 
 find_package(UDFLoader REQUIRED)
 
@@ -27,8 +27,8 @@ add_library(fps SHARED "fps.cpp")
 target_link_libraries(fps
     PUBLIC
         ${UDFLoader_LIBRARIES}
-        ${EISMsgEnv_LIBRARIES}
-        ${EISUtils_LIBRARIES}
+        ${EIIMsgEnv_LIBRARIES}
+        ${EIIUtils_LIBRARIES}
     PRIVATE
         ${IntelSafeString_LIBRARIES}
         ${OpenCV_LIBRARIES}

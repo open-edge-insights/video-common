@@ -22,10 +22,10 @@
  * @brief @c UdfHandle implementation
  */
 
-#include "eis/udf/udf_handle.h"
-#include "eis/utils/logger.h"
+#include "eii/udf/udf_handle.h"
+#include "eii/utils/logger.h"
 
-using namespace eis::udf;
+using namespace eii::udf;
 
 UdfHandle::UdfHandle(std::string name, int max_workers) :
     m_name(name), m_initialized(false), m_max_workers(max_workers),

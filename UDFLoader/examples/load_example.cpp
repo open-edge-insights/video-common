@@ -26,17 +26,17 @@
 #include <atomic>
 #include <chrono>
 #include <condition_variable>
-#include <eis/utils/logger.h>
-#include <eis/utils/json_config.h>
-#include <eis/msgbus/msgbus.h>
+#include <eii/utils/logger.h>
+#include <eii/utils/json_config.h>
+#include <eii/msgbus/msgbus.h>
 #include <opencv2/opencv.hpp>
-#include "eis/udf/udf_manager.h"
-#include "eis/udf/frame.h"
+#include "eii/udf/udf_manager.h"
+#include "eii/udf/frame.h"
 
 #define SERVICE_NAME "load-example"
 
-using namespace eis::udf;
-using namespace eis::msgbus;
+using namespace eii::udf;
+using namespace eii::msgbus;
 
 /**
  * Free method to free the underlying @c cv::Mat wrapped by the udf::Frame

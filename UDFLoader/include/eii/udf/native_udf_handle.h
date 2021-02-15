@@ -23,14 +23,14 @@
  * @brief C++ UDF
  */
 
-#ifndef _EIS_UDF_NATIVE_UDF_H
-#define _EIS_UDF_NATIVE_UDF_H
+#ifndef _EII_UDF_NATIVE_UDF_H
+#define _EII_UDF_NATIVE_UDF_H
 
 
-#include "eis/udf/udf_handle.h"
-#include "eis/udf/base_udf.h"
+#include "eii/udf/udf_handle.h"
+#include "eii/udf/base_udf.h"
 
-namespace eis {
+namespace eii {
 namespace udf {
 
 class NativeUdfHandle : public UdfHandle {
@@ -80,7 +80,7 @@ public:
     UdfRetCode process(Frame* frame) override;
 };
 
-} // eis
+} // eii
 } // udf
 
-#endif // _EIS_UDF_NATIVE_UDF_H
+#endif // _EII_UDF_NATIVE_UDF_H

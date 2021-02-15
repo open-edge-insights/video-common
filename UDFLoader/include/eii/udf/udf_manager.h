@@ -22,21 +22,21 @@
  * @file
  * @brief UDF Manager thread with input/output frame queues.
  */
-#ifndef _EIS_UDF_UDF_MANAGER_H
-#define _EIS_UDF_UDF_MANAGER_H
+#ifndef _EII_UDF_UDF_MANAGER_H
+#define _EII_UDF_UDF_MANAGER_H
 
 #include <thread>
 #include <atomic>
 #include <vector>
-#include <eis/utils/config.h>
-#include <eis/utils/thread_safe_queue.h>
-#include <eis/utils/thread_executor.hpp>
-#include <eis/utils/profiling.h>
+#include <eii/utils/config.h>
+#include <eii/utils/thread_safe_queue.h>
+#include <eii/utils/thread_executor.hpp>
+#include <eii/utils/profiling.h>
 
-#include "eis/udf/udf_handle.h"
-#include "eis/udf/frame.h"
+#include "eii/udf/udf_handle.h"
+#include "eii/udf/frame.h"
 
-namespace eis {
+namespace eii {
 namespace udf {
 
 typedef utils::ThreadSafeQueue<Frame*> FrameQueue;
@@ -132,5 +132,5 @@ public:
 };
 
 } // udf
-} // eis
-#endif // _EIS_UDF_UDF_MANAGER_H
+} // eii
+#endif // _EII_UDF_UDF_MANAGER_H

@@ -1,7 +1,7 @@
-`EIS Sample UDFs`
+`EII Sample UDFs`
 
-EIS supports loading and executing of native(c++) and python UDFs. In here,
-one can find the sample native and python UDFs(User Defined Functions) to be used with EIS components
+EII supports loading and executing of native(c++) and python UDFs. In here,
+one can find the sample native and python UDFs(User Defined Functions) to be used with EII components
 like VideoIngestion and VideoAnalytics. The UDFs can modify the frame, drop the frame and generate meta-data from the frame.
 
 ## `UDF Configuration`
@@ -228,7 +228,7 @@ User can refer to [UDF Writing HOW-TO GUIDE](./HOWTO_GUIDE_FOR_WRITING_UDF.md) f
 
 ## `Construction of Metadata in UDF`
 
-If EIS Visualizer/WebVisualizer clients are used for visualizing the classified frames, then please follow the metadata guidelines mentioned in **`Metadata Structure`** in [Visualizer](../../Visualizer/README.md) / [WebVisualizer](../../WebVisualizer/README.md) README respectively.
+If EII Visualizer/WebVisualizer clients are used for visualizing the classified frames, then please follow the metadata guidelines mentioned in **`Metadata Structure`** in [Visualizer](../../Visualizer/README.md) / [WebVisualizer](../../WebVisualizer/README.md) README respectively.
 
 **Note**: User has to make sure that the data with in meta data should be of type list, tuple, dict or primitive data types (int, float, string or bool). Also, data with in list, tuple, dict
 must contain only primitive data types.

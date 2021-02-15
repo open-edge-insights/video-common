@@ -23,16 +23,16 @@
  * @brief Handle for a UDF to be called via the loader.
  */
 
-#ifndef _EIS_UDF_UDF_HANDLE_H
-#define _EIS_UDF_UDF_HANDLE_H
+#ifndef _EII_UDF_UDF_HANDLE_H
+#define _EII_UDF_UDF_HANDLE_H
 
 #include <atomic>
 #include <string>
-#include <eis/utils/config.h>
-#include "eis/udf/frame.h"
-#include "eis/udf/udfretcodes.h"
+#include <eii/utils/config.h>
+#include "eii/udf/frame.h"
+#include "eii/udf/udfretcodes.h"
 
-namespace eis {
+namespace eii {
 namespace udf {
 
 /**
@@ -142,6 +142,6 @@ public:
 };
 
 } // udf
-} // eis
+} // eii
 
-#endif // _EIS_UDF_UDF_HANDLE_H
+#endif // _EII_UDF_UDF_HANDLE_H

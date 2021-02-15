@@ -20,72 +20,52 @@
 
 /**
  * @file
- * @brief Python UDF
+ * @brief Base UDF class for native UDF implementations.
  */
 
-#ifndef _EIS_UDF_PYTHON_UDF_H
-#define _EIS_UDF_PYTHON_UDF_H
+#ifndef _EII_UDF_BASE_UDF_H
+#define _EII_UDF_BASE_UDF_H
 
-#include <Python.h>
-#include "eis/udf/udf_handle.h"
+#include <atomic>
+#include <opencv2/opencv.hpp>
+#include <eii/msgbus/msg_envelope.h>
+#include <eii/utils/config.h>
+#include "eii/udf/udfretcodes.h"
 
-namespace eis {
+namespace eii {
 namespace udf {
 
-/**
- * Return value for a Python UDF.
- *
- * \note This is only used between the @c PythonUdfHandle and the Cython shim
- */
-typedef struct {
-    // UDF return code (i.e. UDF_OK, UDF_ERROR, etc.)
-    UdfRetCode return_code;
-    // Updated frame (if needed)
-    PyObject* updated_frame;
-} PythonUdfRet;
-
-/**
- * Python UDF wrapper object
- */
-class PythonUdfHandle : public UdfHandle {
-private:
-    // Reference to UDF Python object
-    PyObject* m_udf_obj;
-
-    // Reference to the process() method on the Python object
-    PyObject* m_udf_func;
+class BaseUdf {
+protected:
+    // UDF configuration
+    //
+    // NOTE: The memory for this configuration is managed by the
+    // @c UdfHandle class and does not need to be freed in the UDF object.
+    config_t* m_config;
 
 public:
     /**
      * Constructor
-     *
-     * @param name - Name of the Python UDF
      */
-    PythonUdfHandle(std::string name, int max_workers);
+    BaseUdf(config_t* config);
 
     /**
      * Destructor
      */
-    ~PythonUdfHandle();
+    virtual ~BaseUdf();
 
     /**
-     * Overridden initialization method
+     * Process the given frame.
      *
-     * @param config - UDF configuration
-     * @return bool
+     * @param frame - @c cv::Mat frame object
+     * @param meta  - @c msg_envelope_t for the meta data to add to the frame
+     *                after the UDF executes over it.
+     * @return @c UdfRetCode
      */
-    bool initialize(config_t* config) override;
-
-    /**
-     * Overridden frame processing method.
-     *
-     * @param frame - Frame to process
-     * @return UdfRetCode
-     */
-    UdfRetCode process(Frame* frame) override;
+    virtual UdfRetCode process(cv::Mat& frame, cv::Mat& output, msg_envelope_t* meta) = 0;
 };
 
 } // udf
-} // eis
+} // eii
 
-#endif // _EIS_UDF_PYTHON_UDF_H
+#endif // _EII_UDF_BASE_UDF_H

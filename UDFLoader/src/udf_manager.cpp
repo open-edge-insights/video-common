@@ -24,19 +24,19 @@
 
 #include <functional>
 #include <chrono>
-#include <eis/utils/logger.h>
+#include <eii/utils/logger.h>
 #include <sstream>
 #include <random>
 #include <safe_lib.h>
 #include <cstring>
 #include <iostream>
 #include <cstdlib>
-#include "eis/udf/udf_manager.h"
-#include "eis/udf/frame.h"
-#include "eis/udf/loader.h"
+#include "eii/udf/udf_manager.h"
+#include "eii/udf/frame.h"
+#include "eii/udf/loader.h"
 
-using namespace eis::udf;
-using namespace eis::utils;
+using namespace eii::udf;
+using namespace eii::utils;
 
 #define CFG_UDFS            "udfs"
 #define CFG_MAX_WORKERS     "max_workers"

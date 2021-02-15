@@ -23,14 +23,14 @@
  * @brief Resize UDF Implementation
  */
 
-#include <eis/udf/base_udf.h>
-#include <eis/utils/logger.h>
+#include <eii/udf/base_udf.h>
+#include <eii/utils/logger.h>
 #include <iostream>
 #include <opencv2/opencv.hpp>
 
-using namespace eis::udf;
+using namespace eii::udf;
 
-namespace eis {
+namespace eii {
     namespace udfsamples {
 
     /**
@@ -73,7 +73,7 @@ namespace eis {
             };
         };
     } // udf
-} // eis
+} // eii
 
 extern "C" {
 
@@ -83,7 +83,7 @@ extern "C" {
  * @return void*
  */
 void* initialize_udf(config_t* config) {
-    eis::udfsamples::ResizeUdf* udf = new eis::udfsamples::ResizeUdf(config);
+    eii::udfsamples::ResizeUdf* udf = new eii::udfsamples::ResizeUdf(config);
     return (void*) udf;
 }
 

@@ -23,13 +23,13 @@
  * @brief Dummy UDF Implementation
  */
 
-#include <eis/udf/base_udf.h>
-#include <eis/utils/logger.h>
+#include <eii/udf/base_udf.h>
+#include <eii/utils/logger.h>
 #include <iostream>
 
-using namespace eis::udf;
+using namespace eii::udf;
 
-namespace eis {
+namespace eii {
     namespace udfsamples {
 
     /**
@@ -47,7 +47,7 @@ namespace eis {
                 };
         };
     } // udf
-} // eis
+} // eii
 
 extern "C" {
 
@@ -57,7 +57,7 @@ extern "C" {
  * @return void*
  */
 void* initialize_udf(config_t* config) {
-    eis::udfsamples::DummyUdf* udf = new eis::udfsamples::DummyUdf(config);
+    eii::udfsamples::DummyUdf* udf = new eii::udfsamples::DummyUdf(config);
     return (void*) udf;
 }
 

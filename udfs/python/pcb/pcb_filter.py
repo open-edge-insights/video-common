@@ -145,7 +145,7 @@ class Udf:
 
         if self.training_mode is True:
             self.count = self.count + 1
-            cv2.imwrite("/EIS/test_videos/"+str(self.count)+".png", frame)
+            cv2.imwrite("/EII/test_videos/"+str(self.count)+".png", frame)
             return True, None, None
         else:
             if self.filter_lock is False:

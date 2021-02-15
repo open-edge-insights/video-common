@@ -22,10 +22,10 @@
  * @brief Implementation of @c BaseUdf class
  */
 
-#include <eis/utils/logger.h>
-#include "eis/udf/base_udf.h"
+#include <eii/utils/logger.h>
+#include "eii/udf/base_udf.h"
 
-using namespace eis::udf;
+using namespace eii::udf;
 
 BaseUdf::BaseUdf(config_t* config) :
     m_config(config)

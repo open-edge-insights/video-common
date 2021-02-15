@@ -24,7 +24,7 @@
  */
 #include "fps.h"
 
-using namespace eis::udf;
+using namespace eii::udf;
 
 FpsUdf::FpsUdf(config_t* config): BaseUdf(config) {
     m_frame_count = 0;

@@ -24,10 +24,10 @@
 
 #include <opencv2/opencv.hpp>
 #include <gtest/gtest.h>
-#include <eis/utils/logger.h>
-#include "eis/udf/frame.h"
+#include <eii/utils/logger.h>
+#include "eii/udf/frame.h"
 
-using namespace eis::udf;
+using namespace eii::udf;
 
 #define ASSERT_NULL(val) { \
     if(val != NULL) FAIL() << "Value should be NULL"; \

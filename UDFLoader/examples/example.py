@@ -21,6 +21,7 @@
 """
 import cv2
 
+
 class Udf:
     """Example UDF
     """

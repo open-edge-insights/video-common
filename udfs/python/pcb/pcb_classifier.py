@@ -80,7 +80,8 @@ class Udf:
 
         # Load OpenVINO model
         self.ie = IECore()
-        self.net = self.ie.read_network(model=self.model_xml, weights=self.model_bin)
+        self.net = \
+            self.ie.read_network(model=self.model_xml, weights=self.model_bin)
         self.input_blob = next(iter(self.net.input_info))
         self.output_blob = next(iter(self.net.outputs))
         self.net.batch_size = 1  # change to enable batch loading
@@ -266,7 +267,8 @@ class Udf:
                 # Defect class of 0 => BP defect
                 # (x,y) -> top left bounding box coordinates
                 # (x1,y1) -> bottom right bounding box coordinates
-                defects.append({'type': D_MISSING, 'tl': (x,y), 'br': (x1, y1)})
+                defects.append({'type': D_MISSING, 'tl': (x, y),
+                                'br': (x1, y1)})
 
         # Short defect classification
         short_bndbx = []
@@ -292,7 +294,7 @@ class Udf:
                 # Defect class of 1 => MR defect
                 # (x,y) -> top left bounding box coordinates
                 # (x1,y1) -> bottom right bounding box coordinates
-                defects.append({'type': D_SHORT, 'tl': (x,y), 'br': (x1, y1)})
+                defects.append({'type': D_SHORT, 'tl': (x, y), 'br': (x1, y1)})
 
         # Set state of random number generator after every frame to
         # overcome probabilistic nature of Flann matcher. This might
@@ -302,4 +304,3 @@ class Udf:
         metadata["defects"] = defects
 
         return False, None, metadata
-

@@ -22,13 +22,13 @@
  * @brief Implementation of the @c UdfLoader class
  */
 
-#include "eis/udf/loader.h"
-#include "eis/udf/python_udf_handle.h"
-#include "eis/udf/native_udf_handle.h"
-#include <eis/utils/logger.h>
+#include "eii/udf/loader.h"
+#include "eii/udf/python_udf_handle.h"
+#include "eii/udf/native_udf_handle.h"
+#include <eii/utils/logger.h>
 #include "cython/udf.h"
 
-using namespace eis::udf;
+using namespace eii::udf;
 
 // Globals for Python interpreter
 // PyInterpreterState* g_state;

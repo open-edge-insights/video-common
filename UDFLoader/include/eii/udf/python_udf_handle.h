@@ -23,13 +23,13 @@
  * @brief Python UDF
  */
 
-#ifndef _EIS_UDF_PYTHON_UDF_H
-#define _EIS_UDF_PYTHON_UDF_H
+#ifndef _EII_UDF_PYTHON_UDF_H
+#define _EII_UDF_PYTHON_UDF_H
 
 #include <Python.h>
-#include "eis/udf/udf_handle.h"
+#include "eii/udf/udf_handle.h"
 
-namespace eis {
+namespace eii {
 namespace udf {
 
 /**
@@ -86,6 +86,6 @@ public:
 };
 
 } // udf
-} // eis
+} // eii
 
-#endif // _EIS_UDF_PYTHON_UDF_H
+#endif // _EII_UDF_PYTHON_UDF_H

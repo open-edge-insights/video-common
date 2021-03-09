@@ -4,9 +4,9 @@ libdir=${prefix}/lib
 includedir=${prefix}/include
 
 Name: libudfloader
-Description: EIS User Defined Function (UDF) Loader libaray.
+Description: EII User Defined Function (UDF) Loader libaray.
 Version: @PROJECT_VERSION@
 
-Libs: -L${libdir} -leisutils -leismsgenv
+Libs: -L${libdir} -leiiutils -leiimsgenv
 Libs.private: @PRIVATE_LIBS@
 Cflags: -I${includedir}

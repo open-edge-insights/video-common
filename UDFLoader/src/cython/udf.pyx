@@ -41,7 +41,7 @@ from util.log import configure_logging
 cdef extern from "stdbool.h":
     ctypedef bint c_bool
 
-cdef extern from "eis/utils/config.h":
+cdef extern from "eii/utils/config.h":
     ctypedef enum config_value_type_t:
         CVT_INTEGER  = 0
         CVT_FLOATING = 1
@@ -92,7 +92,7 @@ cdef extern from "eis/utils/config.h":
     size_t config_value_array_len(const config_value_t* arr);
 
 
-cdef extern from "eis/msgbus/msg_envelope.h":
+cdef extern from "eii/msgbus/msg_envelope.h":
     ctypedef enum msgbus_ret_t:
         MSG_SUCCESS = 0
         MSG_ERR_PUB_FAILED = 1
@@ -217,14 +217,14 @@ cdef extern from "eis/msgbus/msg_envelope.h":
             msg_envelope_serialized_part_t* parts, int num_parts)
 
 
-cdef extern from "eis/udf/udfretcodes.h" namespace "eis::udf":
+cdef extern from "eii/udf/udfretcodes.h" namespace "eii::udf":
     ctypedef enum UdfRetCode:
         UDF_OK = 0
         UDF_DROP_FRAME = 1
         UDF_FRAME_MODIFIED = 2
         UDF_ERROR = 255
 
-# cdef extern from "eis/udf/python_udf_handle.h" namespace "eis::udf":
+# cdef extern from "eii/udf/python_udf_handle.h" namespace "eii::udf":
 #     ctypedef struct PythonUdfRet:
 #         UdfRetCode return_code
 #         object updated_frame

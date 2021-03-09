@@ -23,16 +23,16 @@
  * @brief Base UDF class for native UDF implementations.
  */
 
-#ifndef _EIS_UDF_BASE_UDF_H
-#define _EIS_UDF_BASE_UDF_H
+#ifndef _EII_UDF_BASE_UDF_H
+#define _EII_UDF_BASE_UDF_H
 
 #include <atomic>
 #include <opencv2/opencv.hpp>
-#include <eis/msgbus/msg_envelope.h>
-#include <eis/utils/config.h>
-#include "eis/udf/udfretcodes.h"
+#include <eii/msgbus/msg_envelope.h>
+#include <eii/utils/config.h>
+#include "eii/udf/udfretcodes.h"
 
-namespace eis {
+namespace eii {
 namespace udf {
 
 class BaseUdf {
@@ -66,6 +66,6 @@ public:
 };
 
 } // udf
-} // eis
+} // eii
 
-#endif // _EIS_UDF_BASE_UDF_H
+#endif // _EII_UDF_BASE_UDF_H

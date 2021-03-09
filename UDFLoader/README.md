@@ -1,4 +1,4 @@
-# EIS UDFLoader
+# EII UDFLoader
 
 UDFLoader is a library providing APIs for loading and executing native and python UDFs.
 
@@ -6,8 +6,8 @@ UDFLoader is a library providing APIs for loading and executing native and pytho
 
 UDFLoader depends on the below libraries. Follow their documentation to install them.
 * OpenCV - Run `source /opt/intel/openvino/bin/setupvars.sh` command
-* [EISMsgEnv](../EISMsgEnv/README.md)
-* [EISUtils](../../util/c/README.md)
+* [EIIMsgEnv](../EIIMsgEnv/README.md)
+* [EIIUtils](../../util/c/README.md)
 * [IntelSafeString](../IntelSafeString/README.md)
 * Python3 Numpy package
 
@@ -34,7 +34,7 @@ $ cmake -DCMAKE_BUILD_TYPE=Debug ..
 ## Installation
 
 > **NOTE:** This is a mandatory step to use this library in
-> C/C++ EIS modules
+> C/C++ EII modules
 
 If you wish to install this library on your system, execute the
 following command after building the library:

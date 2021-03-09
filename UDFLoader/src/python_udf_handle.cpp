@@ -30,13 +30,13 @@
 #include <cstdlib>
 #include <numpy/ndarrayobject.h>
 
-#include <eis/utils/logger.h>
-#include "eis/udf/python_udf_handle.h"
+#include <eii/utils/logger.h>
+#include "eii/udf/python_udf_handle.h"
 #include "cython/udf.h"
 
-using namespace eis::udf;
+using namespace eii::udf;
 
-#define EIS_UDF_PROCESS "process"
+#define EII_UDF_PROCESS "process"
 
 PythonUdfHandle::PythonUdfHandle(std::string name, int max_workers) :
     UdfHandle(name, max_workers)
@@ -111,7 +111,7 @@ bool PythonUdfHandle::initialize(config_t* config) {
     }
 
     // Get the process() function from the Python object
-    m_udf_func = PyObject_GetAttrString(m_udf_obj, EIS_UDF_PROCESS);
+    m_udf_func = PyObject_GetAttrString(m_udf_obj, EII_UDF_PROCESS);
     if(m_udf_func == NULL) {
         LOG_ERROR_0("Failed to get process() method from UDF");
         if(PyErr_Occurred() != NULL) {

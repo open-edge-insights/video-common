@@ -25,11 +25,11 @@
 #include <vector>
 #include <opencv2/opencv.hpp>
 #include <safe_lib.h>
-#include <eis/utils/logger.h>
+#include <eii/utils/logger.h>
 
-#include "eis/udf/frame.h"
+#include "eii/udf/frame.h"
 
-using namespace eis::udf;
+using namespace eii::udf;
 
 // Prototyes
 void free_decoded(void* varg);

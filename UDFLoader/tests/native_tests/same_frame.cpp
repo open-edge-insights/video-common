@@ -23,13 +23,13 @@
  * @brief Same File UDF Implementation
  */
 
-#include <eis/udf/base_udf.h>
-#include <eis/utils/logger.h>
+#include <eii/udf/base_udf.h>
+#include <eii/utils/logger.h>
 #include <iostream>
 
-using namespace eis::udf;
+using namespace eii::udf;
 
-namespace eis {
+namespace eii {
 namespace udftests {
 
 /**
@@ -63,7 +63,7 @@ public:
     };
 };
 }  // namespace udftests
-}  // namespace eis
+}  // namespace eii
 
 extern "C" {
 
@@ -73,7 +73,7 @@ extern "C" {
  * @return void*
  */
 void* initialize_udf(config_t* config) {
-    eis::udftests::SameFrameUdf* udf = new eis::udftests::SameFrameUdf(config);
+    eii::udftests::SameFrameUdf* udf = new eii::udftests::SameFrameUdf(config);
     return (void*) udf;
 }
 

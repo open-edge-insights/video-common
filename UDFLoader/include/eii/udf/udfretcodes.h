@@ -23,10 +23,10 @@
  * @brief Return values for UDFs.
  */
 
-#ifndef _EIS_UDF_UDF_RET_CODES_H
-#define _EIS_UDF_UDF_RET_CODES_H
+#ifndef _EII_UDF_UDF_RET_CODES_H
+#define _EII_UDF_UDF_RET_CODES_H
 
-namespace eis {
+namespace eii {
 namespace udf {
 
 enum UdfRetCode {
@@ -45,6 +45,6 @@ enum UdfRetCode {
 };
 
 } // udf
-} // eis
+} // eii
 
-#endif // _EIS_UDF_UDF_RET_CODES_H
+#endif // _EII_UDF_UDF_RET_CODES_H

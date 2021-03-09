@@ -28,12 +28,12 @@
 #include <atomic>
 #include <iostream>
 #include <sstream>
-#include <eis/utils/logger.h>
-#include "eis/udf/native_udf_handle.h"
+#include <eii/utils/logger.h>
+#include "eii/udf/native_udf_handle.h"
 
 #define DELIM ':'
 
-using namespace eis::udf;
+using namespace eii::udf;
 
 NativeUdfHandle::NativeUdfHandle(std::string name, int max_workers) :
     UdfHandle(name, max_workers)

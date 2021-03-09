@@ -26,11 +26,11 @@
 #include <cassert>
 #include <gtest/gtest.h>
 #include <opencv2/opencv.hpp>
-#include <eis/utils/logger.h>
-#include <eis/utils/json_config.h>
-#include <eis/utils/string.h>
-#include "eis/udf/loader.h"
-#include "eis/udf/udf_manager.h"
+#include <eii/utils/logger.h>
+#include <eii/utils/json_config.h>
+#include <eii/utils/string.h>
+#include "eii/udf/loader.h"
+#include "eii/udf/udf_manager.h"
 
 #define LD_PATH_SET     "LD_LIBRARY_PATH="
 #define LD_SEP          ":"
@@ -38,7 +38,7 @@
 #define NEW_FRAME_DATA  "\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01"
 #define DATA_LEN 10
 
-using namespace eis::udf;
+using namespace eii::udf;
 
 #define ASSERT_NULL(val) { \
     if(val != NULL) FAIL() << "Value should be NULL"; \

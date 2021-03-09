@@ -22,10 +22,10 @@
  * @brief Example native UDF.
  */
 
-#include <eis/udf/base_udf.h>
-#include <eis/utils/logger.h>
+#include <eii/udf/base_udf.h>
+#include <eii/utils/logger.h>
 
-namespace eis {
+namespace eii {
 namespace udf {
 
 /**
@@ -45,7 +45,7 @@ public:
 };
 
 } // udf
-} // eis
+} // eii
 
 extern "C" {
 
@@ -55,7 +55,7 @@ extern "C" {
  * @return void*
  */
 void* initialize_udf(config_t* config) {
-    eis::udf::NativeExampleUdf* udf = new eis::udf::NativeExampleUdf(config);
+    eii::udf::NativeExampleUdf* udf = new eii::udf::NativeExampleUdf(config);
 	return (void*) udf;
 }
 

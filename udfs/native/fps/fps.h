@@ -26,14 +26,14 @@
 #ifndef _FPS_H
 #define _FPS_H
 
-#include <eis/udf/base_udf.h>
-#include <eis/utils/logger.h>
+#include <eii/udf/base_udf.h>
+#include <eii/utils/logger.h>
 #include <iostream>
 #include <chrono>
 #include <safe_lib.h>
 #include <mutex>
 
-using namespace eis::udf;
+using namespace eii::udf;
 
 /**
 * FPS UDF is used to measure total frames received every second

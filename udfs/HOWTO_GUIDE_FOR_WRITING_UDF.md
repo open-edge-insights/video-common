@@ -1,15 +1,15 @@
-# **How-To GUIDE for writing UDF for EIS**
+# **How-To GUIDE for writing UDF for EII**
 
-This document describes stepwise instruction for writing a User defined Function(UDF) in C++/Python in order to make it deployable in EIS environment. It  explains APIs and configurational changes required in order to write an UDF for EIS.
+This document describes stepwise instruction for writing a User defined Function(UDF) in C++/Python in order to make it deployable in EII environment. It  explains APIs and configurational changes required in order to write an UDF for EII.
 
 ## **Introduction**
 
-UDFs(User Defined Function) are one of the cardinal feature of EIS framework. It enables users to adjoin any pre-processing or post-processing logic in data pipeline defined by EIS configuration. As of EIS 2.1 release, it supports UDFs to be implemented using following languages.
+UDFs(User Defined Function) are one of the cardinal feature of EII framework. It enables users to adjoin any pre-processing or post-processing logic in data pipeline defined by EII configuration. As of EII 2.1 release, it supports UDFs to be implemented using following languages.
 
-* C++  (It is also called **Native** UDF as EIS core components are implemented in C++)
+* C++  (It is also called **Native** UDF as EII core components are implemented in C++)
 * Python
 
-The order in which the UDFs are defined in EIS configuration file is the order in which data will flow across them. Currently there is no support for demux/mux the data flow to/fro the UDFs.
+The order in which the UDFs are defined in EII configuration file is the order in which data will flow across them. Currently there is no support for demux/mux the data flow to/fro the UDFs.
 
 All configs related to UDFs are to be in `config.json` of apps like VideoIngestion and VideoAnalytics.The UDF schema and description about keys/values in it presented in detail in the [UDF README](./README.md) file.
 
@@ -17,11 +17,11 @@ All configs related to UDFs are to be in `config.json` of apps like VideoIngesti
 
 Every UDF writing has two major part to it.
 
-* Writing actual pre/post processing logic using EIS exposed APIs.
+* Writing actual pre/post processing logic using EII exposed APIs.
 
-* Adding EIS infra specific configuration component for deploying it
+* Adding EII infra specific configuration component for deploying it
 
-### **EIS APIs for Writing Native UDFs(c++)**
+### **EII APIs for Writing Native UDFs(c++)**
 
 There are three APIs defined semantically to add the pre/post processing logic. These APIs must be implemented as method of a user defined class inherited from the Udf class named ***BaseUdf***.
 
@@ -63,7 +63,7 @@ There are three APIs defined semantically to add the pre/post processing logic. 
 
     * **Argument 2(cv::Mat &outputFrame)**: It represents the modified frame by the user. This can be used if user need to pass a modified frame forward.
 
-    * **Argument 3(msg_envelope_t\* meta)**: It represents the inference result returned by UDF. The user need to fill the **msg_envelope_t** structure as described in following [**EISMsgEnv README**](common/libs/EISMsgEnv/README.md). There are sample code suggested in the README which explains the API usage in detail.
+    * **Argument 3(msg_envelope_t\* meta)**: It represents the inference result returned by UDF. The user need to fill the **msg_envelope_t** structure as described in following [**EIIMsgEnv README**](common/libs/EIIMsgEnv/README.md). There are sample code suggested in the README which explains the API usage in detail.
 
     The *return* code details are  described as below:
 
@@ -87,7 +87,7 @@ There are three APIs defined semantically to add the pre/post processing logic. 
 
     The **"DummyUdf"** is the class name of the user defined custom UDF.
 
-### **EIS INFRASTRUCTURE RELATED CHANGES**
+### **EII INFRASTRUCTURE RELATED CHANGES**
 
 This section describes the check-list one has to ensure to be completed before exercising C++ UDF.
 
@@ -99,17 +99,17 @@ This section describes the check-list one has to ensure to be completed before e
 
 3. If the OpenVINO is used kindly follow the [safety_gear_demo](common/video/udfs/native/safety_gear_demo) example for proper linking of  **cpu_extension.so** shared object.
 
-4. An appropriate entry must exist for each UDF that need to be loaded as part of EIS deployment. The UDF entry syntax is explained in detail in the following document [UDF README](./README.md)
+4. An appropriate entry must exist for each UDF that need to be loaded as part of EII deployment. The UDF entry syntax is explained in detail in the following document [UDF README](./README.md)
 
 ## **Steps for writing Python UDFs**
 
 This section describes the process of writing a Python UDF. As discussed in the aforementioned scenario, it also has two aspects to it.
 
-* Writing the actual UDF. It needs knowledge EIS exposed python APIs
+* Writing the actual UDF. It needs knowledge EII exposed python APIs
 
-* Adding the UDF to EIS framework by altering different configs.
+* Adding the UDF to EII framework by altering different configs.
 
-### **Python APIs for writing UDF for EIS**
+### **Python APIs for writing UDF for EII**
 
 * **INITIALIZATION**
 
@@ -159,9 +159,9 @@ For reference user can find example UDFs code in below mentioned links
 
 * [Dummy UDF](./dummy.py)
 
-### **EIS Infrastructure changes**
+### **EII Infrastructure changes**
 
-For any UDF to be utilized by the EIS infrastructure, user must follow the below steps.
+For any UDF to be utilized by the EII infrastructure, user must follow the below steps.
 
 * Corresponding UDF entry must be added to the `config.json` file of apps like VideoIngestion and VideoAnalytics.
   The UDF entry syntax is explained in detail in the following document [UDF README](./README.md)
@@ -173,4 +173,4 @@ A file present in this path *./python/pcb/pcb_filter.py* must have the *name* fi
 
 ### CONCLUSION
 
-The UDFs currently supported using python and C++. UDF uses in-memory message passing instead of sockets for the communication between the pipeline and UDFs making it faster in comparison. EIS has many sample UDFs can be found in following paths [for C++](./native) & [for python](./python)
+The UDFs currently supported using python and C++. UDF uses in-memory message passing instead of sockets for the communication between the pipeline and UDFs making it faster in comparison. EII has many sample UDFs can be found in following paths [for C++](./native) & [for python](./python)

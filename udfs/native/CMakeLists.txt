@@ -19,10 +19,10 @@
 # IN THE SOFTWARE.
 
 cmake_minimum_required(VERSION 3.12)
-project(eis-udf-samples VERSION 1.0.0 LANGUAGES C CXX)
+project(eii-udf-samples VERSION 1.0.0 LANGUAGES C CXX)
 
 # Globals
-set(EIS_COMMON_CMAKE "${CMAKE_CURRENT_SOURCE_DIR}/../../cmake")
+set(EII_COMMON_CMAKE "${CMAKE_CURRENT_SOURCE_DIR}/../../cmake")
 
 # Set C++ standard to C11
 set(CMAKE_CXX_STANDARD 11)
@@ -35,7 +35,7 @@ set(CMAKE_CXX_FLAGS "-fPIE -fPIC -O2 -Wall -fstack-protector-strong -D_FORTIFY_S
 set(CMAKE_SHARED_LINKER_FLAGS "-z noexecstack -z relro -z now")
 
 # Add cmake module path
-set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" "${EIS_COMMON_CMAKE}")
+set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" "${EII_COMMON_CMAKE}")
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 if(EXISTS "${CMAKE_CURRENT_BINARY_DIR}/compile_commands.json")
@@ -46,8 +46,8 @@ if(EXISTS "${CMAKE_CURRENT_BINARY_DIR}/compile_commands.json")
 endif()
 
 # Finding libraries
-find_package(EISUtils REQUIRED)
-find_package(EISMsgEnv REQUIRED)
+find_package(EIIUtils REQUIRED)
+find_package(EIIMsgEnv REQUIRED)
 find_package(UDFLoader REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(IntelSafeString REQUIRED)
@@ -56,8 +56,8 @@ find_package(InferenceEngine 2.1 REQUIRED)
 # Set include directories
 include_directories(
     ${OpenCV_INCLUDE_DIRS}
-    ${EISMsgEnv_INCLUDE}
-    ${EISUtils_INCLUDE}
+    ${EIIMsgEnv_INCLUDE}
+    ${EIIUtils_INCLUDE}
     ${UDFLoader_INCLUDE}
     ${IntelSafeString_INCLUDE})
 

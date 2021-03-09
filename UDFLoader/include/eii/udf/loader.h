@@ -24,13 +24,13 @@
  *      into the application.
  */
 
-#ifndef _EIS_UDF_LOADER_H
-#define _EIS_UDF_LOADER_H
+#ifndef _EII_UDF_LOADER_H
+#define _EII_UDF_LOADER_H
 
-#include <eis/utils/config.h>
-#include "eis/udf/udf_handle.h"
+#include <eii/utils/config.h>
+#include "eii/udf/udf_handle.h"
 
-namespace eis {
+namespace eii {
 namespace udf {
 
 /**
@@ -66,6 +66,6 @@ public:
 };
 
 } // udf
-} // eis
+} // eii
 
-#endif // _EIS_UDF_LOADER_H
+#endif // _EII_UDF_LOADER_H

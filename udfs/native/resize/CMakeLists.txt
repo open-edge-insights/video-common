@@ -23,6 +23,8 @@ project(eii-udf-samples VERSION 1.0.0 LANGUAGES C CXX)
 
 find_package(UDFLoader REQUIRED)
 
+find_package(UDFLoader REQUIRED)
+
 add_library(resize SHARED "resize.cpp")
 target_link_libraries(resize
     PUBLIC

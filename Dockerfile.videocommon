@@ -18,14 +18,69 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+ARG OPENVINO_IMAGE_VERSION
 ARG EII_VERSION
 ARG DOCKER_REGISTRY
-ARG CMAKE_BUILD_TYPE
-FROM ${DOCKER_REGISTRY}ia_eiibase:$EII_VERSION
+FROM ${DOCKER_REGISTRY}ia_common:$EII_VERSION as common
+FROM ${DOCKER_REGISTRY}ia_openvino_base:$EII_VERSION as openvino_base
+FROM ${DOCKER_REGISTRY}ia_eiibase:$EII_VERSION as base
 
-WORKDIR ${GO_WORK_DIR}
+ENV EII_VERSION ${EII_VERSION}
+WORKDIR /eii/common
+ARG CMAKE_INSTALL_PREFIX
+ENV CMAKE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX}
+COPY --from=common ${CMAKE_INSTALL_PREFIX}/include ${CMAKE_INSTALL_PREFIX}/include
+COPY --from=common ${CMAKE_INSTALL_PREFIX}/lib ${CMAKE_INSTALL_PREFIX}/lib
+COPY --from=common ${CMAKE_INSTALL_PREFIX}/bin/protoc* ${CMAKE_INSTALL_PREFIX}/bin/
+COPY --from=common ${CMAKE_INSTALL_PREFIX}/bin/grpc* ${CMAKE_INSTALL_PREFIX}/bin/
+COPY --from=common /root/.local/bin/cythonize /root/.local/bin/cythonize
+# Copying only the installed python packages with `pip3 install --user -r` command
+COPY --from=common /root/.local/lib/python3.6/site-packages /root/.local/lib/python3.6/site-packages
+COPY --from=common /eii/common/cmake cmake
+COPY --from=common /eii/common/libs libs
+COPY --from=common /eii/common/util util
 
-# Copying udfs & UDFLoader
-COPY UDFLoader ./common/UDFLoader
-COPY udfs/native ./common/video/udfs/native
-COPY udfs/python ./common/video/udfs/python
+COPY --from=openvino_base /opt/intel/ /opt/intel
+
+COPY UDFLoader/requirements.txt UDFLoader/requirements.txt
+RUN pip3 install --user -r UDFLoader/requirements.txt
+
+COPY udfs/python/sample_onnx/requirements.txt udfs/python/sample_onnx/requirements.txt
+RUN pip3 install --user -r udfs/python/sample_onnx/requirements.txt
+
+COPY UDFLoader UDFLoader
+
+# Adding path of cython executable to PATH env
+ENV PATH="$PATH:/root/.local/bin"
+
+# Build UDF loader lib
+RUN /bin/bash -c "echo $PATH && \
+                  source /opt/intel/openvino/bin/setupvars.sh && \
+                  cd UDFLoader && \
+                  rm -rf build && \
+                  mkdir build && \
+                  cd build && \
+                  cmake -DCMAKE_INSTALL_INCLUDEDIR=$CMAKE_INSTALL_PREFIX/include -DCMAKE_INSTALL_PREFIX=$CMAKE_INSTALL_PREFIX -DWITH_TESTS=${RUN_TESTS} -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} .. && \
+                  make && \
+                  if [ "${RUN_TESTS}" = "ON" ] ; then \
+                     cd ./tests && \
+                     source ./source.sh && \
+                     ./frame-tests && \
+                     ./udfloader-tests && \
+                     cd .. ; \
+                  fi && \
+                  make install"
+
+COPY udfs/native video/udfs/native
+# Build native UDF samples
+RUN /bin/bash -c "source /opt/intel/openvino/bin/setupvars.sh && \
+                  cd video/udfs/native && \
+                  rm -rf build && \
+                  mkdir build && \
+                  cd build && \
+                  cmake -DCMAKE_INSTALL_INCLUDEDIR=$CMAKE_INSTALL_PREFIX/include -DCMAKE_INSTALL_PREFIX=$CMAKE_INSTALL_PREFIX -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} .. && \
+                  make && \
+                  make install"
+
+COPY udfs/python video/udfs/python
+

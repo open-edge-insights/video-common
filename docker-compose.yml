@@ -28,21 +28,22 @@ services:
   ia_video_common:
     depends_on:
       - ia_common
+      - ia_openvino_base
     build:
       context: $PWD/../common/video
       dockerfile: $PWD/../common/video/Dockerfile.videocommon
       args:
         EII_VERSION: ${EII_VERSION}
+        OPENVINO_IMAGE_VERSION: ${OPENVINO_IMAGE_VERSION}
         DOCKER_REGISTRY: ${DOCKER_REGISTRY}
-        # set CMAKE_BUILD_TYPE value to "Debug" to generate debug symbols
-        CMAKE_BUILD_TYPE: Release
+        CMAKE_BUILD_TYPE: "Release"
+        CMAKE_INSTALL_PREFIX: ${EII_INSTALL_PATH}
+        RUN_TESTS: "OFF"
     read_only: true
     image: ${DOCKER_REGISTRY}ia_video_common:${EII_VERSION}
 
-  ## Define ia_openvino_base service
+ ## Define ia_openvino_base service
   ia_openvino_base:
-    depends_on:
-      - ia_video_common
     build:
       context: $PWD/../common/video
       dockerfile: $PWD/../common/video/Dockerfile.openvino

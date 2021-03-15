@@ -22,8 +22,12 @@ cmake_minimum_required(VERSION 3.12)
 project(eii-udf-samples VERSION 1.0.0 LANGUAGES C CXX)
 
 find_package(UDFLoader REQUIRED)
+link_directories(${CMAKE_INSTALL_PREFIX}/lib)
+
+link_directories(${CMAKE_INSTALL_PREFIX}/lib)
 
 add_library(fps SHARED "fps.cpp")
+
 target_link_libraries(fps
     PUBLIC
         ${UDFLoader_LIBRARIES}

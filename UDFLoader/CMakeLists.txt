@@ -88,6 +88,7 @@ execute_process(
 
 # Get all source files
 file(GLOB SOURCES "src/*.cpp" "src/cython/udf.cpp")
+link_directories(${CMAKE_INSTALL_PREFIX}/lib)
 
 # Add target
 add_library(eiiudfloader SHARED ${SOURCES})

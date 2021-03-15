@@ -23,14 +23,6 @@ ARG EII_VERSION
 ARG DOCKER_REGISTRY
 
 FROM openvino/ubuntu18_runtime:${OPENVINO_IMAGE_VERSION} AS openvino
-
-FROM ${DOCKER_REGISTRY}ia_eiibase:$EII_VERSION
-
-ENV HOME ${PY_WORK_DIR}
-
-WORKDIR ${HOME}
-
+USER root
 # Copy OpenVINO arifacts
-COPY --from=openvino / /
-
 RUN cd /opt/intel/openvino/install_dependencies/ && ./install_openvino_dependencies.sh

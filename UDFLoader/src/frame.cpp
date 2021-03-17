@@ -224,6 +224,7 @@ Frame::Frame(msg_envelope_t* msg) :
             cv::Mat* decoded = new cv::Mat();
             *decoded = cv::imdecode(data, cv::IMREAD_COLOR);
             if(decoded->empty()) {
+                delete decoded;
                 throw "Failed to decode the encoded frame";
             }
             data.clear();

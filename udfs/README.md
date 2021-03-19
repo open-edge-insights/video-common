@@ -176,6 +176,19 @@ User can refer to [UDF Writing HOW-TO GUIDE](./HOWTO_GUIDE_FOR_WRITING_UDF.md) f
   }
   ```
 
+* **Jupyter Connector UDF**
+
+  Accepts the frame and publishes it to the EII JupyterNotebook service which processes the frame and publishes it back to the jupyter_connector UDF.
+
+  `UDF config`:
+
+  ```javascript
+  {
+      "name": "jupyter_connector",
+      "type": "python"
+  }
+  ```
+
 * **PCB Filter UDF**
 
   Accepts the frame and based on if `pcb` board is at the center in the frame or not,

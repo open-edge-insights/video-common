@@ -22,7 +22,5 @@ ARG OPENVINO_IMAGE_VERSION
 ARG EII_VERSION
 ARG DOCKER_REGISTRY
 
-FROM openvino/ubuntu18_runtime:${OPENVINO_IMAGE_VERSION} AS openvino
+FROM openvino/ubuntu20_data_runtime:${OPENVINO_IMAGE_VERSION} AS openvino
 USER root
-# Copy OpenVINO arifacts
-RUN cd /opt/intel/openvino/install_dependencies/ && ./install_openvino_dependencies.sh

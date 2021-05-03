@@ -35,7 +35,7 @@ COPY --from=common ${CMAKE_INSTALL_PREFIX}/bin/protoc* ${CMAKE_INSTALL_PREFIX}/b
 COPY --from=common ${CMAKE_INSTALL_PREFIX}/bin/grpc* ${CMAKE_INSTALL_PREFIX}/bin/
 COPY --from=common /root/.local/bin/cythonize /root/.local/bin/cythonize
 # Copying only the installed python packages with `pip3 install --user -r` command
-COPY --from=common /root/.local/lib/python3.6/site-packages /root/.local/lib/python3.6/site-packages
+COPY --from=common /root/.local/lib/python3.8/site-packages /root/.local/lib/python3.8/site-packages
 COPY --from=common /eii/common/cmake cmake
 COPY --from=common /eii/common/libs libs
 COPY --from=common /eii/common/util util

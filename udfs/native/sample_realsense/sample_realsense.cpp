@@ -127,7 +127,7 @@ namespace eii {
 
                     LOG_DEBUG_0("Inside RealSense UDF process function");
 
-                    set_rs2_intrinsics(meta);
+                    set_rs2_intrinsics_and_extrinsics(meta);
 
                     rs2::frameset fset = construct_rs2_frameset(frame.data);
 
@@ -136,13 +136,14 @@ namespace eii {
                     // Return first found frame for the stream specified
                     // rs2::depth_frame rs2_depth = fset.first_or_default(RS2_STREAM_DEPTH);
                     rs2::video_frame rs2_color = fset.first_or_default(RS2_STREAM_COLOR);
+                    LOG_INFO("Get distance rs2 color:%d", rs2_color.get_bytes_per_pixel());
 
                     // Do processing on depth frame
 
                     return UdfRetCode::UDF_OK;
             };
 
-            void set_rs2_intrinsics(msg_envelope_t* meta) {
+            void set_rs2_intrinsics_and_extrinsics(msg_envelope_t* meta) {
                 if (m_frame_number < 1) {
 
                     msgbus_ret_t ret;
@@ -317,6 +318,9 @@ namespace eii {
                         RS2_FORMAT_Z16,
                         depth_intrinsics });
 
+                    // Add depth sensor options
+                    depth_sensor.add_read_only_option(RS2_OPTION_DEPTH_UNITS, 0.001f);
+
                     rs2_intrinsics color_intrinsics = { m_sw_color_frame.x,
                         m_sw_color_frame.y,
                         (float)m_color_ppx,
@@ -336,9 +340,120 @@ namespace eii {
                         RS2_FORMAT_RGB8,
                         color_intrinsics });
 
+                    // Add color sensor options
+                    color_sensor.add_read_only_option(RS2_OPTION_ENABLE_AUTO_EXPOSURE, 0);
 
-                    // Adding sensor options
-                    depth_sensor.add_read_only_option(RS2_OPTION_DEPTH_UNITS, 0.001f);
+                    // Get rs2 extrinsics rotation
+                    msg_envelope_elem_body_t* rotation_arr = NULL;
+                    ret = msgbus_msg_envelope_get(meta, "rotation_arr", &rotation_arr);
+                    if(ret != MSG_SUCCESS) {
+                        throw "Failed to retrieve rs2 extrinsics rotation array";
+                    }
+
+                    msg_envelope_elem_body_t* e_r0 = msgbus_msg_envelope_elem_array_get_at(rotation_arr, 0);
+                    if(e_r0 == NULL) {
+                        throw "Failed to retrieve rs2 extrinsics rotation array element1";
+                    } else if(e_r0->type != MSG_ENV_DT_FLOATING) {
+                        throw "rotation array value must be a floating";
+                    }
+                    float r0 = e_r0->body.floating;
+
+                    msg_envelope_elem_body_t* e_r1 = msgbus_msg_envelope_elem_array_get_at(rotation_arr, 1);
+                    if(e_r1 == NULL) {
+                        throw "Failed to retrieve rs2 extrinsics rotation array element2";
+                    } else if(e_r1->type != MSG_ENV_DT_FLOATING) {
+                        throw "rotation array value must be a floating";
+                    }
+                    float r1 = e_r1->body.floating;
+
+                    msg_envelope_elem_body_t* e_r2 = msgbus_msg_envelope_elem_array_get_at(rotation_arr, 2);
+                    if(e_r2 == NULL ) {
+                        throw "Failed to retrieve rs2 extrinsics rotation array element3";
+                    } else if(e_r2->type != MSG_ENV_DT_FLOATING) {
+                        throw "rotation array value must be a floating";
+                    }
+                    float r2 = e_r2->body.floating;
+
+                    msg_envelope_elem_body_t* e_r3 = msgbus_msg_envelope_elem_array_get_at(rotation_arr, 3);
+                    if(e_r3 == NULL) {
+                        throw "Failed to retrieve rs2 extrinsics rotation array element4";
+                    } else if(e_r3->type != MSG_ENV_DT_FLOATING) {
+                        throw "rotation array value must be a floating";
+                    }
+                    float r3 = e_r3->body.floating;
+
+                    msg_envelope_elem_body_t* e_r4 = msgbus_msg_envelope_elem_array_get_at(rotation_arr, 4);
+                    if(e_r4 == NULL) {
+                        throw "Failed to retrieve rs2 extrinsics rotation array element5";
+                    } else if(e_r4->type != MSG_ENV_DT_FLOATING) {
+                        throw "rotation array value must be a floating";
+                    }
+                    float r4 = e_r4->body.floating;
+
+                    msg_envelope_elem_body_t* e_r5 = msgbus_msg_envelope_elem_array_get_at(rotation_arr, 5);
+                    if(e_r5 == NULL) {
+                        throw "Failed to retrieve rs2 extrinsics rotation array element6";
+                    } else if(e_r5->type != MSG_ENV_DT_FLOATING) {
+                        throw "rotation array value must be a floating";
+                    }
+                    float r5 = e_r5->body.floating;
+
+                    msg_envelope_elem_body_t* e_r6 = msgbus_msg_envelope_elem_array_get_at(rotation_arr, 6);
+                    if(e_r6 == NULL) {
+                        throw "Failed to retrieve rs2 extrinsics rotation array element7";
+                    } else if(e_r6->type != MSG_ENV_DT_FLOATING) {
+                        throw "rotation array value must be a floating";
+                    }
+                    float r6 = e_r6->body.floating;
+
+                    msg_envelope_elem_body_t* e_r7 = msgbus_msg_envelope_elem_array_get_at(rotation_arr, 7);
+                    if(e_r7 == NULL) {
+                        throw "Failed to retrieve rs2 extrinsics rotation array element8";
+                    } else if(e_r7->type != MSG_ENV_DT_FLOATING) {
+                        throw "rotation array value must be a floating";
+                    }
+                    float r7 = e_r7->body.floating;
+
+                    msg_envelope_elem_body_t* e_r8 = msgbus_msg_envelope_elem_array_get_at(rotation_arr, 8);
+                    if(e_r8 ==  NULL) {
+                        throw "Failed to retrieve rs2 extrinsics rotation array element9";
+                    } else if(e_r8->type != MSG_ENV_DT_FLOATING) {
+                        throw "rotation array value must be a floating";
+                    }
+                    float r8 = e_r8->body.floating;
+
+                    msg_envelope_elem_body_t* translation_arr = NULL;
+                    ret = msgbus_msg_envelope_get(meta, "translation_arr", &translation_arr);
+                    if(ret != MSG_SUCCESS) {
+                        throw "Failed to retrieve rs2 extrinsics translation array";
+                    }
+
+                    msg_envelope_elem_body_t* e_t0 = msgbus_msg_envelope_elem_array_get_at(translation_arr, 0);
+                    if(e_t0 == NULL) {
+                        throw "Failed to retrieve rs2 extrinsics translation array element1";
+                    } else if(e_t0->type != MSG_ENV_DT_FLOATING) {
+                        throw "translation array value must be a floating";
+                    }
+                    float t0 = e_t0->body.floating;
+
+                    msg_envelope_elem_body_t* e_t1 = msgbus_msg_envelope_elem_array_get_at(translation_arr, 1);
+                    if(e_t1 == NULL) {
+                        throw "Failed to retrieve rs2 extrinsics translation array element2";
+                    } else if(e_t1->type != MSG_ENV_DT_FLOATING) {
+                        throw "translation array value must be a floating";
+                    }
+                    float t1 = e_t1->body.floating;
+
+                    msg_envelope_elem_body_t* e_t2 = msgbus_msg_envelope_elem_array_get_at(translation_arr, 2);
+                    if(e_t2 == NULL ) {
+                        throw "Failed to retrieve rs2 extrinsics translation array element3";
+                    } else if(e_t2->type != MSG_ENV_DT_FLOATING) {
+                        throw "translation array value must be a floating";
+                    }
+                    float t2 = e_t2->body.floating;
+
+                    // Assign extrinsic transformation parameters to a specific profile (sensor)
+                    m_depth_stream.register_extrinsics_to(m_color_stream, { { r0,r1,r2,r3,r4,r5,r6,r7,r8 },{ t0,t1,t2 } });
 
                     // Specify synochronization model for using syncer class with synthetic streams
                     dev.create_matcher(RS2_MATCHER_DLR_C);
@@ -350,9 +465,6 @@ namespace eii {
                     // Start the sensor for passing frame to the syncer callback
                     depth_sensor.start(m_sync);
                     color_sensor.start(m_sync);
-
-                    // Assign extrinsic transformation parameters to a specific profile (sensor)
-                    m_depth_stream.register_extrinsics_to(m_color_stream, { { 1,0,0,0,1,0,0,0,1 },{ 0,0,0 } });
                 }
 
             }

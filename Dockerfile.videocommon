@@ -45,13 +45,17 @@ COPY --from=common /eii/common/util util
 
 COPY --from=openvino_base /opt/intel/ /opt/intel
 
-COPY UDFLoader/requirements.txt UDFLoader/requirements.txt
+COPY UDFLoader UDFLoader
+
 RUN pip3 install --user -r UDFLoader/requirements.txt
 
-COPY udfs/python/sample_onnx/requirements.txt udfs/python/sample_onnx/requirements.txt
-RUN pip3 install --user -r udfs/python/sample_onnx/requirements.txt
+COPY udfs/python video/udfs/python
 
-COPY UDFLoader UDFLoader
+COPY install_pip_requirements.py video/udfs/python/install_pip_requirements.py
+
+RUN cd video/udfs/python && \
+    python3 install_pip_requirements.py && \
+    rm -f install_pip_requirements.py
 
 # Adding path of cython executable to PATH env
 ENV PATH="$PATH:/root/.local/bin"
@@ -109,5 +113,4 @@ RUN /bin/bash -c "source /opt/intel/openvino/bin/setupvars.sh && \
                   make && \
                   make install"
 
-COPY udfs/python video/udfs/python
 

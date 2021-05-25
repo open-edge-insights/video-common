@@ -376,15 +376,15 @@ cdef public object load_udf(const char* name, config_t* config) with gil:
         return lib.Udf(*args)
     except AttributeError:
         err = f'{py_name} module is missing the Udf class'
-        log.error(err)
+        log.exception(err)
         raise AttributeError()
     except ImportError:
         err = f'Failed to load UDF: {py_name}'
-        log.error(err)
+        log.exception(err)
         raise ImportError()
     except Exception as ex:
         err = f'Unexpected error while loading UDF {py_name}: {ex}'
-        log.error(err, exc_info=True)
+        log.exception(err)
         raise
 
 

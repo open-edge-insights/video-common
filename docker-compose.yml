@@ -34,7 +34,7 @@ services:
       dockerfile: $PWD/../common/video/Dockerfile.videocommon
       args:
         EII_VERSION: ${EII_VERSION}
-        OPENVINO_IMAGE_VERSION: ${OPENVINO_IMAGE_VERSION}
+        LIBREALSENSE_VERSION: ${LIBREALSENSE_VERSION}
         DOCKER_REGISTRY: ${DOCKER_REGISTRY}
         CMAKE_BUILD_TYPE: "Release"
         CMAKE_INSTALL_PREFIX: ${EII_INSTALL_PATH}

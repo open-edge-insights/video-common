@@ -18,17 +18,20 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-ARG OPENVINO_IMAGE_VERSION
 ARG EII_VERSION
 ARG DOCKER_REGISTRY
+
 FROM ${DOCKER_REGISTRY}ia_common:$EII_VERSION as common
 FROM ${DOCKER_REGISTRY}ia_openvino_base:$EII_VERSION as openvino_base
 FROM ${DOCKER_REGISTRY}ia_eiibase:$EII_VERSION as base
 
-ENV EII_VERSION ${EII_VERSION}
 WORKDIR /eii/common
+
 ARG CMAKE_INSTALL_PREFIX
 ENV CMAKE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX}
+ARG LIBREALSENSE_VERSION
+ENV LIBREALSENSE_VERSION ${LIBREALSENSE_VERSION}
+
 COPY --from=common ${CMAKE_INSTALL_PREFIX}/include ${CMAKE_INSTALL_PREFIX}/include
 COPY --from=common ${CMAKE_INSTALL_PREFIX}/lib ${CMAKE_INSTALL_PREFIX}/lib
 COPY --from=common ${CMAKE_INSTALL_PREFIX}/bin/protoc* ${CMAKE_INSTALL_PREFIX}/bin/
@@ -54,8 +57,6 @@ COPY UDFLoader UDFLoader
 ENV PATH="$PATH:/root/.local/bin"
 
 # Build Intel® RealSense™ SDK 2.0
-ARG LIBREALSENSE_VER=https://github.com/IntelRealSense/librealsense/archive/v2.41.0.tar.gz
-
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     libssl-dev \
@@ -67,15 +68,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     pkg-config && \
     rm -rf /var/lib/apt/lists/*
 
-RUN wget -O - ${LIBREALSENSE_VER} | tar xz && \
-    cd librealsense-2.41.0 && \
+ARG LIBREALSENSE=https://github.com/IntelRealSense/librealsense/archive/v${LIBREALSENSE_VERSION}.tar.gz
+
+RUN wget -O - ${LIBREALSENSE} | tar xz && \
+    cd librealsense-${LIBREALSENSE_VERSION} && \
     mkdir build && \
     cd build && \
     cmake ../ -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX} && \
     make && \
     make install && \
     cd ../ && \
-    rm -rf librealsense-2.41.0
+    rm -rf librealsense-${LIBREALSENSE_VERSION}
 
 # Build UDF loader lib
 RUN /bin/bash -c "echo $PATH && \

@@ -28,7 +28,7 @@ import onnxruntime as rt
 from azureml.core.model import Model
 from azureml.core import Workspace
 from azureml.core.authentication import ServicePrincipalAuthentication
-
+import tempfile
 
 def softmax(x):
     """Calculate softmax value
@@ -76,8 +76,9 @@ class Udf:
 
             self.log.debug(
                     f'Downloading AzureML model "{model_name}" from workspace')
+            tmp_dir = tempfile.gettempdir()
             model_name = Model(azure_ws, model_name).download(
-                    target_dir='/tmp', exist_ok=True)
+                    target_dir=tmp_dir, exist_ok=True)
             self.log.info('Model download successful')
 
         self.log.info('Initializing ONNX runtime session')

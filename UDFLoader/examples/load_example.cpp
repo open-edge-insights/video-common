@@ -85,11 +85,22 @@ int main(int argc, char** argv) {
         cv::Mat* cv_frame = new cv::Mat();
         *cv_frame = cv::imread("load_example_frame.png");
 
+        char** data = (char**)malloc(sizeof(char*)*1);
+        data[0] = (char*) cv_frame->data;
+        data[1] = new char[14];
+        memcpy(data[1], "Hello, World2", 14);
+
         // Create udf::Frame object from the cv::Mat and push into publisher
         Frame* frame = new Frame(
                 (void*) cv_frame, cv_frame->cols, cv_frame->rows,
-                cv_frame->channels(), cv_frame->data, free_cv_frame,
+                cv_frame->channels(), (void**) data, free_cv_frame, 2,
                 EncodeType::JPEG, 50);
+
+        bool result = frame->set_multi_frame_parameters(1, 14, 1, 1, "none", 100);
+        if (result != true) {
+            throw "Failed to set multi frame parameters";
+        }
+
         input_queue->push(frame);
 
         LOG_INFO_0("Waiting for processed frame...");

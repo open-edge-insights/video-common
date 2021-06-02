@@ -464,9 +464,6 @@ cdef object msg_envelope_to_python(msg_envelope_t* msg):
     if num_parts <= 0:
         raise RuntimeError('Error serializing to Python representation')
 
-    if num_parts > 2:
-        warnings.warn('The Python library only supports 2 parts!')
-
     try:
         if num_parts == 2:
             parts[1].shared.owned = False
@@ -512,10 +509,16 @@ cdef public UdfRetCode call_udf(
         return UDF_DROP_FRAME
 
     if updated_frame is not None:
-        assert isinstance(updated_frame, np.ndarray), 'Frame must be NumPy'
-        Py_INCREF(updated_frame)
-        (&output)[0] = <PyObject*> updated_frame
-        ret_code = UDF_FRAME_MODIFIED
+        if isinstance(updated_frame, np.ndarray):
+            Py_INCREF(updated_frame)
+            (&output)[0] = <PyObject*> updated_frame
+            ret_code = UDF_FRAME_MODIFIED
+        elif isinstance(updated_frame, list):
+            for i, fr in enumerate(updated_frame):
+                assert isinstance(fr, np.ndarray), 'Frame must be NumPy'
+                Py_INCREF(fr)
+                (&output)[i] = <PyObject*> fr
+            ret_code = UDF_FRAME_MODIFIED
 
     if new_meta is not None:
         for k,v in new_meta.items():

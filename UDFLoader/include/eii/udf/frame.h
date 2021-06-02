@@ -58,16 +58,19 @@ private:
     // Underlying free method for the frame
     void (*m_free_frame)(void*);
 
+    // Total number of frames
+    int m_num_frames;
+
     // This pointer points to the underlying bytes for the frame, i.e. the
     // bytes for the raw pixels of the frame. Note that the memory for this
     // void* is ultimatly residing in the m_frame's memory, this is just a
     // pointer to that underlying data provided to the constructor.
-    void* m_data;
+    void** m_data;
 
     // This is only used when the frame was deserialized from a
     // msg_envelope_t and then reserialized. This keeps track of the actual
     // underlying blob memory (i.e. the frame's pixel data).
-    owned_blob_t* m_blob_ptr;
+    owned_blob_t** m_blob_ptr;
 
     // Meta-data associated with the frame
     msg_envelope_t* m_meta_data;
@@ -96,22 +99,32 @@ private:
      * it has been transmitted over the bus.
      */
     static void msg_free_frame(void* hint) {
-        LOG_DEBUG("Freeing frame...");
+        LOG_DEBUG_0("Freeing frame...");
         // Cast to a frame pointer
         Frame* frame = (Frame*) hint;
-
-        // Free frame data (if given a free function)
-        if(frame->m_free_frame != NULL) {
-            LOG_DEBUG("Calling m_free_frame");
-            frame->m_free_frame(frame->m_frame);
+        if (frame == NULL) {
+            LOG_DEBUG_0("Returning because frame is NULL...");
+            return;
         }
 
         // Free the owned blob for the frame data if this was deserialized from
         // a msg_envelope_t
-        if(frame->m_blob_ptr != NULL) {
-            owned_blob_destroy(frame->m_blob_ptr);
+        if (frame->m_blob_ptr != NULL) {
+            for (int i = 0; i < frame->m_num_frames; i++) {
+                if (frame->m_blob_ptr[i]->owned == true) {
+                    if (i == (frame->m_num_frames - 1) ) {
+                        owned_blob_destroy(frame->m_blob_ptr[i]);
+                    }
+                }
+            }
+            free(frame->m_blob_ptr);
+            frame->m_blob_ptr = NULL;
         }
 
+        // Free frame data (if given a free function)
+        if (frame->m_free_frame != NULL && frame->m_frame != NULL) {
+            frame->m_free_frame(frame->m_frame);
+        }
         delete frame;
     };
 
@@ -138,9 +151,9 @@ public:
      * @param encode_level      - (Optional) Encode level
      *                            (value depends on encoding type)
      */
-    Frame(void* frame, int width, int height, int channels, void* data,
-            void (*free_frame)(void*), EncodeType encode=EncodeType::NONE,
-            int encode_level=0);
+    Frame(void* frame, int width, int height, int channels, void** data,
+            void (*free_frame)(void*), int num_frames,
+            EncodeType encode=EncodeType::NONE, int encode_level=0);
 
     /**
      * Deserialize constructor
@@ -156,44 +169,81 @@ public:
 
     /**
     * Get frame encoding type
+    * 
+    * @param index - index of frame
     *
     * @return EncodeType
     */
-    EncodeType get_encode_type();
+    EncodeType get_encode_type(int index = 0);
 
     /**
     * Get frame encoding level
+    * 
+    * @param index - index of frame
+    * 
     * @return int
     */
-    int get_encode_level();
+    int get_encode_level(int index = 0);
 
     /**
      * Get frame width.
+     * 
+     * @param index - index of frame
      *
      * @return int
      */
-    int get_width();
+    int get_width(int index = 0);
 
     /**
      * Get frame height.
+     * 
+     * @param index - index of frame
      *
      * @return int
      */
-    int get_height();
+    int get_height(int index = 0);
 
     /**
      * Get number of channels in the frame.
+     * 
+     * @param index - index of frame
      *
      * @return int
      */
-    int get_channels();
+    int get_channels(int index = 0);
 
     /**
      * Get the underlying frame data.
+     * 
+     * @param index - index of frame to be fetched
      *
      * @return void*
      */
-    void* get_data();
+    void* get_data(int index);
+
+    /**
+     * Get the number of frames in Frame object.
+     *
+     *
+     * @return void*
+     */
+    int get_number_of_frames();
+
+    /**
+     * Set the required parameters for multi frames.
+     * 
+     * @param index - index of frame
+     * @param width - width of frame 
+     * @param height - height of frame 
+     * @param channels - channels of frame 
+     * @param encoding_type - encoding_type of frame 
+     * @param encoding_level - encoding_level of frame 
+     *
+     * @return bool
+     */
+    bool set_multi_frame_parameters(int index, int width,
+                                    int height, int channels,
+                                    char* encoding_type, int encoding_level);
 
     /**
      * Set new data on the frame.
@@ -203,9 +253,10 @@ public:
      * @param height            - Frame height
      * @param data              - Constant pointer to the underlying frame data
      * @param free_frame        - Function to free the underlying frame
+     * @param index             - index of frame to be set
      */
     void set_data(void* frame, int width, int height, int channels, void* data,
-                  void (*free_frame)(void*));
+                  void (*free_frame)(void*), int index);
 
     /**
      * Set the encoding for the frame.

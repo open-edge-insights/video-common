@@ -23,7 +23,7 @@
  * @brief RealSense UDF Implementation
  */
 
-#include <eii/udf/base_udf.h>
+#include <eii/udf/raw_base_udf.h>
 #include <eii/utils/logger.h>
 #include <iostream>
 #include <opencv2/opencv.hpp>
@@ -50,7 +50,7 @@ namespace eii {
     /**
      * The RealSense UDF
      */
-        class RealSenseUdf : public BaseUdf {
+        class RealSenseUdf : public RawBaseUdf {
             private:
                 // Depth intrinsics width
                 int m_depth_width;
@@ -115,7 +115,7 @@ namespace eii {
                 rs2::syncer m_sync;
 
             public:
-                RealSenseUdf(config_t* config): BaseUdf(config) {
+                RealSenseUdf(config_t* config): RawBaseUdf(config) {
 
                     m_frame_number = 0;
 
@@ -123,13 +123,13 @@ namespace eii {
 
                 ~RealSenseUdf() {};
 
-                UdfRetCode process(cv::Mat& frame, cv::Mat& output, msg_envelope_t* meta) override {
+                UdfRetCode process(Frame* frame) override {
 
                     LOG_DEBUG_0("Inside RealSense UDF process function");
 
-                    set_rs2_intrinsics_and_extrinsics(meta);
+                    set_rs2_intrinsics_and_extrinsics(frame->get_meta_data());
 
-                    rs2::frameset fset = construct_rs2_frameset(frame.data);
+                    rs2::frameset fset = construct_rs2_frameset(frame->get_data(0), frame->get_data(1));
 
                     ++m_frame_number;
 
@@ -469,11 +469,11 @@ namespace eii {
 
             }
 
-            rs2::frameset construct_rs2_frameset(void* color) {
+            rs2::frameset construct_rs2_frameset(void* color, void* depth_frame) {
 
 
-                /* TODO: Verify with multi frame support
-                depth_sensor.on_video_frame({(void *)depth_frame, // Frame pixels from capture API
+                if (depth_frame != NULL) {
+                    depth_sensor.on_video_frame({(void *)depth_frame, // Frame pixels from capture API
                     [](void*) {}, // Custom deleter (if required)
                     m_sw_depth_frame.x * m_sw_depth_frame.bpp,
                     m_sw_depth_frame.bpp, // Stride and Bytes-per-pixel
@@ -481,7 +481,7 @@ namespace eii {
                     RS2_TIMESTAMP_DOMAIN_HARDWARE_CLOCK, // Timestamp
                     m_frame_number, // Frame# for potential m_sync services
                     m_depth_stream});
-                */
+                }
 
                 color_sensor.on_video_frame({color, // Frame pixels from capture API
                     [](void*) {}, // Custom deleter (if required)

@@ -60,9 +60,9 @@ static char* update_ld_library_path();
  */
 class TestFrame {
 public:
-    uint8_t* data;
+    uint8_t** data;
 
-    TestFrame(uint8_t* data) : data(data)
+    TestFrame(uint8_t** data) : data(data)
     {};
 
     ~TestFrame() { delete[] data; };
@@ -74,13 +74,14 @@ void test_frame_free(void* hint) {
 }
 
 Frame* init_frame() {
-    uint8_t* data = new uint8_t[DATA_LEN];
-    memcpy(data, ORIG_FRAME_DATA, DATA_LEN);
+    uint8_t** data = (uint8_t**)malloc(sizeof(uint8_t*));
+    data[0] = new uint8_t[DATA_LEN];
+    memcpy(data[0], ORIG_FRAME_DATA, DATA_LEN);
 
     TestFrame* tf = new TestFrame(data);
 
     Frame* frame = new Frame(
-            (void*) tf, DATA_LEN, 1, 1, (void*) data, test_frame_free);
+            (void*) tf, DATA_LEN, 1, 1, (void**) data, test_frame_free, 1);
 
     return frame;
 }
@@ -108,7 +109,7 @@ TEST(udfloader_tests, py_modify) {
     ASSERT_EQ(ret, UdfRetCode::UDF_OK);
 
     // Verify frame data is correct
-    uint8_t* frame_data = (uint8_t*) frame->get_data();
+    uint8_t* frame_data = (uint8_t*) frame->get_data(0);
     for(int i = 0; i < DATA_LEN; i++) {
         ASSERT_EQ(frame_data[i], NEW_FRAME_DATA[i]);
     }
@@ -248,15 +249,20 @@ static void free_frame(void* varg) {
  */
 TEST(udfloader_tests, modify_frame_encode) {
     try {
+
+        char** data = (char**)malloc(sizeof(char*));
+        
         // Read in the test frame
         cv::Mat* mat_frame = new cv::Mat();
         *mat_frame = cv::imread("./test_image.png");
         ASSERT_FALSE(mat_frame->empty()) << "Failed to load test_image.png";
 
+        data[0] = (char*)mat_frame->data;
+
         // Initialize the frame object
         Frame* frame = new Frame(
                 (void*) mat_frame, mat_frame->cols, mat_frame->rows,
-                mat_frame->channels(), mat_frame->data, free_frame);
+                mat_frame->channels(), (void**) data, free_frame, 1);
 
         // Load the JSON configuration
         config_t* config = json_config_new("test_udf_mgr_same_frame.json");

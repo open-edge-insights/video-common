@@ -32,8 +32,13 @@
 
 #define COLOR_BYTES_PER_PIXEL 3
 #define DEPTH_BYTES_PER_PIXEL 2
+#define COLOR_FRAME_CHANNELS 3
+// This is the order in which EII ingestion pushes frame.
+#define RGB_FRAME_INDEX 0
+#define DEPTH_FRAME_INDEX 1
 
 using namespace eii::udf;
+using namespace cv;
 
 // Software_device can be used to generate frames from synthetic or
 // external sources and pass them into SDK processing functionality.
@@ -114,6 +119,9 @@ namespace eii {
                 // For Synchronizing frames using the syncer class
                 rs2::syncer m_sync;
 
+                // Colorizing the depth frame.
+                rs2::colorizer color_map;
+
             public:
                 RealSenseUdf(config_t* config): RawBaseUdf(config) {
 
@@ -129,19 +137,31 @@ namespace eii {
 
                     set_rs2_intrinsics_and_extrinsics(frame->get_meta_data());
 
-                    rs2::frameset fset = construct_rs2_frameset(frame->get_data(0), frame->get_data(1));
+                    rs2::frameset fset = construct_rs2_frameset(frame->get_data(RGB_FRAME_INDEX), frame->get_data(DEPTH_FRAME_INDEX));
 
                     ++m_frame_number;
 
                     // Return first found frame for the stream specified
-                    // rs2::depth_frame rs2_depth = fset.first_or_default(RS2_STREAM_DEPTH);
+                    rs2::depth_frame rs2_depth = fset.first_or_default(RS2_STREAM_DEPTH);
                     rs2::video_frame rs2_color = fset.first_or_default(RS2_STREAM_COLOR);
-                    LOG_INFO("Get distance rs2 color:%d", rs2_color.get_bytes_per_pixel());
+                    if ((rs2_depth == NULL) || (rs2_color == NULL)) {
+                        LOG_ERROR_0("The color or depth frame returned NULL");
+                    }
 
                     // Do processing on depth frame
+                    const int width = rs2_depth.as<rs2::video_frame>().get_width();
+                    const int height = rs2_depth.as<rs2::video_frame>().get_height();
+                    Mat image(Size(width, height), CV_8UC3, (void*)rs2_depth.apply_filter(color_map).get_data(), Mat::AUTO_STEP);
+
+                    /*
+                     * We are overwritting the RGB frame with colorized depth frame
+                     * to avoid the visualizer changes and showcase the sanity of depth
+                     * data. EII framework will take care of freeeing the frame.
+                     */
+                    frame->set_data((void*)frame, width, height, COLOR_FRAME_CHANNELS, (void*)image.data, NULL, RGB_FRAME_INDEX);
 
                     return UdfRetCode::UDF_OK;
-            };
+                };
 
             void set_rs2_intrinsics_and_extrinsics(msg_envelope_t* meta) {
                 if (m_frame_number < 1) {
@@ -516,5 +536,3 @@ void* initialize_udf(config_t* config) {
 }
 
 } // extern "C"
-
-

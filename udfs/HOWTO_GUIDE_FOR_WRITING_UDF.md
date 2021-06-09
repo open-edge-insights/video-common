@@ -87,6 +87,71 @@ There are three APIs defined semantically to add the pre/post processing logic. 
 
     The **"DummyUdf"** is the class name of the user defined custom UDF.
 
+---
+
+### **EII APIs for Writing Raw Native UDFs(c++) for Multi Frame Support**
+
+There are three APIs defined semantically to add the pre/post processing logic. These APIs must be implemented as method of a user defined class inherited from the Udf class named ***RawUdf***.
+
+* #### **INITIALIZATION & DE-INITIALIZATION**
+
+    ``` C++
+        class RealSenseUdf : public RawBaseUdf {
+                public:
+                    RealSenseUdf(config_t* config) : RawBaseUdf(config) {
+                        //initialization Code can be added here
+                    };
+
+                    ~RealSenseUdf() {
+                        // Any de-initialization logic to be added here
+                    };
+        };
+
+    ```
+
+    The **RealSenseUdf** in the above code snippet is the user defined class and the constructor of the class initialize the UDF's specific data-structure. The only argument passed to this function is **config** which depicts configuration details mentioned in the `config.json` file of apps liks VideoIngestion and VideoAnalytics which process UDFs. The API to consume **config** is defined in [Util README](../common/util/c/README.md)
+
+
+* #### **PROCESSING THE ACTUAL DATA**
+
+    The API to utilize the ingested input looks as below:
+
+    ``` C++
+    UdfRetCode
+    process(Frame* frame) override {
+        // Logic for processing the frame & returning the inference result.
+    }
+    ```
+
+    This function is a override method which user need to define in its UDF file.
+
+    The *argument* details are described as below:
+
+    * **Argument 1(Frame* frame)**: It represents the frame object.
+
+    The *return* code details are  described as below:
+
+    * **UdfRetCode**: User need to return appropriate macro as mentioned below:
+        * **UDF_OK** - UDF has processed the frame gracefully.
+        * **UDF_DROP_FRAME** - The frame passed to process function need to be dropped.
+        * **UDF_ERROR** - it should be returned for any kind of error in UDF.
+
+* #### **LINKING UdfLoader AND CUSTOM-UDF**
+
+    The **initialize_udf()** function need to defined as follows to create a link between UdfLoader module and respective UDF. This function ensure UdfLoader to call proper constructor and process() function of respective UDF.
+
+    ```C++
+    extern "C" {
+        void *initialize_udf(config_t *config) {
+            RealSenseUdf *udf = new RealSenseUdf(config);
+            return (void *)udf;
+        }
+    }
+    ```
+
+    The **"RealSenseUdf"** is the class name of the user defined custom UDF.
+
+
 ### **EII INFRASTRUCTURE RELATED CHANGES**
 
 This section describes the check-list one has to ensure to be completed before exercising C++ UDF.

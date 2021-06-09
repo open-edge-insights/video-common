@@ -36,7 +36,8 @@ Below is the JSON schema for UDF json object configuration:
               "type": "string",
               "enum": [
                 "native",
-                "python"
+                "python",
+                "raw_native"
               ]
             },
             "name": {
@@ -155,6 +156,19 @@ User can refer to [UDF Writing HOW-TO GUIDE](./HOWTO_GUIDE_FOR_WRITING_UDF.md) f
 
   > **Note** The fps results will be logged in `DEBUG` LOG_LEVEL, added to the metadata with the AppName as the key and will be
   > displayed in the visualizer.
+
+* **Sample Realsense UDF**
+
+  Accepts the color and depth frame, converts to rs2::frame type by using rs2::software_device simulation, enables a color filter on the depth frame using rs2::colorizer.
+
+  `UDF config`:
+
+  ```javascript
+  {
+      "name": "sample_realsense",
+      "type": "raw_native",
+  }
+  ```
 
   ----
 ### `Python UDFs`

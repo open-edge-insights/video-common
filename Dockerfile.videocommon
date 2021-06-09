@@ -37,34 +37,6 @@ ENV LIBREALSENSE_VERSION ${LIBREALSENSE_VERSION}
 # installing the requirements.txt below
 RUN pip3 freeze | xargs pip3 uninstall -y
 
-COPY --from=common ${CMAKE_INSTALL_PREFIX}/include ${CMAKE_INSTALL_PREFIX}/include
-COPY --from=common ${CMAKE_INSTALL_PREFIX}/lib ${CMAKE_INSTALL_PREFIX}/lib
-COPY --from=common ${CMAKE_INSTALL_PREFIX}/bin/protoc* ${CMAKE_INSTALL_PREFIX}/bin/
-COPY --from=common ${CMAKE_INSTALL_PREFIX}/bin/grpc* ${CMAKE_INSTALL_PREFIX}/bin/
-COPY --from=common /root/.local/bin/cythonize /root/.local/bin/cythonize
-# Copying only the installed python packages with `pip3 install --user -r` command
-COPY --from=common /root/.local/lib/python3.8/site-packages /root/.local/lib/python3.8/site-packages
-COPY --from=common /eii/common/cmake cmake
-COPY --from=common /eii/common/libs libs
-COPY --from=common /eii/common/util util
-
-COPY --from=openvino_base /opt/intel/ /opt/intel
-
-COPY UDFLoader UDFLoader
-
-RUN pip3 install --user -r UDFLoader/requirements.txt
-
-COPY udfs/python video/udfs/python
-
-COPY install_pip_requirements.py video/udfs/python/install_pip_requirements.py
-
-RUN cd video/udfs/python && \
-    python3 install_pip_requirements.py && \
-    rm -f install_pip_requirements.py
-
-# Adding path of cython executable to PATH env
-ENV PATH="$PATH:/root/.local/bin"
-
 # Build Intel® RealSense™ SDK 2.0
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
@@ -88,6 +60,36 @@ RUN wget -O - ${LIBREALSENSE} | tar xz && \
     make install && \
     cd ../ && \
     rm -rf librealsense-${LIBREALSENSE_VERSION}
+
+COPY --from=common ${CMAKE_INSTALL_PREFIX}/include ${CMAKE_INSTALL_PREFIX}/include
+COPY --from=common ${CMAKE_INSTALL_PREFIX}/lib ${CMAKE_INSTALL_PREFIX}/lib
+COPY --from=common ${CMAKE_INSTALL_PREFIX}/bin/protoc* ${CMAKE_INSTALL_PREFIX}/bin/
+COPY --from=common ${CMAKE_INSTALL_PREFIX}/bin/grpc* ${CMAKE_INSTALL_PREFIX}/bin/
+COPY --from=common /root/.local/bin/cythonize /root/.local/bin/cythonize
+# Copying only the installed python packages with `pip3 install --user -r` command
+COPY --from=common /root/.local/lib/python3.8/site-packages /root/.local/lib/python3.8/site-packages
+COPY --from=common /eii/common/cmake cmake
+COPY --from=common /eii/common/libs libs
+COPY --from=common /eii/common/util util
+
+COPY --from=openvino_base /opt/intel/ /opt/intel
+
+COPY UDFLoader/requirements.txt UDFLoader/requirements.txt
+
+RUN pip3 install --user -r UDFLoader/requirements.txt
+
+COPY udfs/python video/udfs/python
+
+COPY install_pip_requirements.py video/udfs/python/install_pip_requirements.py
+
+RUN cd video/udfs/python && \
+    python3 install_pip_requirements.py && \
+    rm -f install_pip_requirements.py
+
+# Adding path of cython executable to PATH env
+ENV PATH="$PATH:/root/.local/bin"
+
+COPY UDFLoader UDFLoader
 
 # Build UDF loader lib
 RUN /bin/bash -c "echo $PATH && \

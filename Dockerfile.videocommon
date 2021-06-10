@@ -32,6 +32,11 @@ ENV CMAKE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX}
 ARG LIBREALSENSE_VERSION
 ENV LIBREALSENSE_VERSION ${LIBREALSENSE_VERSION}
 
+# Uninstalling python packages installed at /usr/lib/python3/dist-packages
+# in ia_eiibase image as some of them were considered while
+# installing the requirements.txt below
+RUN pip3 freeze | xargs pip3 uninstall -y
+
 COPY --from=common ${CMAKE_INSTALL_PREFIX}/include ${CMAKE_INSTALL_PREFIX}/include
 COPY --from=common ${CMAKE_INSTALL_PREFIX}/lib ${CMAKE_INSTALL_PREFIX}/lib
 COPY --from=common ${CMAKE_INSTALL_PREFIX}/bin/protoc* ${CMAKE_INSTALL_PREFIX}/bin/

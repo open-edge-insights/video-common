@@ -239,17 +239,13 @@ User can refer to [UDF Writing HOW-TO GUIDE](./HOWTO_GUIDE_FOR_WRITING_UDF.md) f
 
 * **Sample ONNX UDF**
 
-  This UDF mainly demonstrates the model deployment on edge devices via AzureBridge service only. As the Sample ONNX UDF depends on below python dependencies, please have these included in the [vi_requirements.txt](../../../VideoIngestion/vi_requirements.txt) or [va_requirements.txt](../../../VideoAnalytics/va_requirements.txt) based on where the sample onnx udf goes into:
-  ```python
-  onnxruntime==1.2.0
-  azureml-core==1.18.0
-  ```
-  Additionally, please follow the below steps:
-  * Rebuild VideoIngestion and VideoAnalytics docker images by referring [Build and push EII containers](../../../AzureBridge/README.md#build-and-push-eii-containers)
+  This UDF mainly demonstrates the model deployment on edge devices via AzureBridge service only.
+
+  Please follow the below steps:
   * Configure the sample ONNX UDF by following [Sample ONNX UDF configuration guide](../../../AzureBridge/README.md#sample-eii-onnx-udf)
   * Follow [Single-Node Azure IOT Edge Deployment](../../../AzureBridge/README.md#single-node-azure-iot-edge-deployment) to deploy the required modules
 
-  For more details on EISAzureBridge setup, please refer [AzureBridge README.md](../../../AzureBridge/README.md)
+  For more details on AzureBridge setup, please refer [AzureBridge README.md](../../../AzureBridge/README.md)
 ----
 
 ## `Construction of Metadata in UDF`

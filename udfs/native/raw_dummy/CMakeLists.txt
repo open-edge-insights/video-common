@@ -1,4 +1,4 @@
-# Copyright (c) 2019 Intel Corporation.
+# Copyright (c) 2021 Intel Corporation.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -17,21 +17,25 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
-"""Simple example UDF.
-"""
-import cv2
 
+cmake_minimum_required(VERSION 3.12)
+project(eii-udf-samples VERSION 1.0.0 LANGUAGES C CXX)
 
-class Udf:
-    """Example UDF
-    """
-    def __init__(self, param1, param2):
-        """Constructor
-        """
-        print(f'[PYTHON::INFO] param1={param1}, param2={param2}')
+find_package(UDFLoader REQUIRED)
+link_directories(${CMAKE_INSTALL_PREFIX}/lib)
 
-    def process(self, frame, meta):
-        """Process frame.
-        """
-        frame = cv2.resize(frame[0], (960, 600))
-        return False, frame, None
+add_library(raw_dummy SHARED "raw_dummy.cpp")
+target_link_libraries(raw_dummy
+    PUBLIC
+        ${UDFLoader_LIBRARIES}
+        ${EIIMsgEnv_LIBRARIES}
+        ${EIIUtils_LIBRARIES}
+    PRIVATE
+        ${IntelSafeString_LIBRARIES}
+        ${OpenCV_LIBRARIES}
+    )
+
+install(
+    TARGETS raw_dummy
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})

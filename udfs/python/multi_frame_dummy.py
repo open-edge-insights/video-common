@@ -49,11 +49,10 @@ class Udf:
         self.log.debug(f"In process() method...")
 
         # Simple test to return modified numpy frames
-        # op_frames = []
-        # arr = np.array((1, 2, 3, 4, 5))
-        # arr_two = np.array((5, 6, 7, 8, 9))
-        # op_frames.append(arr)
-        # op_frames.append(arr_two)
-        # return False, op_frames, None
+        op_frames = []
+        arr = np.array([[[1, 2, 3], [4, 5, 6]], [[1, 2, 3], [4, 5, 6]]])
+        arr_two = np.array([[[1, 2, 3], [4, 5, 6]], [[1, 2, 3], [4, 5, 6]]])
+        op_frames.append(arr)
+        op_frames.append(arr_two)
 
-        return False, None, None
+        return False, op_frames, None

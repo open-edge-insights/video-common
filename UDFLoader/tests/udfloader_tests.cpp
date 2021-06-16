@@ -60,12 +60,12 @@ static char* update_ld_library_path();
  */
 class TestFrame {
 public:
-    uint8_t** data;
+    uint8_t* data;
 
-    TestFrame(uint8_t** data) : data(data)
+    TestFrame(uint8_t* data) : data(data)
     {};
 
-    ~TestFrame() { delete[] data; };
+    ~TestFrame() { delete data; };
 };
 
 void test_frame_free(void* hint) {
@@ -73,15 +73,22 @@ void test_frame_free(void* hint) {
     delete tf;
 }
 
-Frame* init_frame() {
-    uint8_t** data = (uint8_t**)malloc(sizeof(uint8_t*));
-    data[0] = new uint8_t[DATA_LEN];
-    memcpy(data[0], ORIG_FRAME_DATA, DATA_LEN);
+Frame* init_frame(bool multi=false) {
+    uint8_t* data = new uint8_t[DATA_LEN];
+    memset(data, '\x00', DATA_LEN);
 
     TestFrame* tf = new TestFrame(data);
 
     Frame* frame = new Frame(
-            (void*) tf, DATA_LEN, 1, 1, (void**) data, test_frame_free, 1);
+            (void*) tf, test_frame_free, (void*) data, DATA_LEN, 1, 1);
+
+    if (multi) {
+        uint8_t* data2 = new uint8_t[DATA_LEN];
+        memset(data2, '\00', DATA_LEN);
+        TestFrame* tf2 = new TestFrame(data2);
+        frame->add_frame(
+            (void*) tf2, test_frame_free, (void*) data, DATA_LEN, 1, 1);
+    }
 
     return frame;
 }
@@ -108,8 +115,55 @@ TEST(udfloader_tests, py_modify) {
     UdfRetCode ret = handle->process(frame);
     ASSERT_EQ(ret, UdfRetCode::UDF_OK);
 
+    // Verify frame data is correct for the 0th frame
+    uint8_t* frame_data = (uint8_t*) frame->get_data(0);
+    for(int i = 0; i < DATA_LEN; i++) {
+        ASSERT_EQ(frame_data[i], NEW_FRAME_DATA[i]);
+    }
+
+    // Verify that the added meta-data shows up in the meta-data of the frame
+    msg_envelope_t* meta = frame->get_meta_data();
+    ASSERT_NOT_NULL(meta);
+
+    msg_envelope_elem_body_t* added;
+    msgbus_ret_t m_ret = msgbus_msg_envelope_get(meta, "ADDED", &added);
+    ASSERT_EQ(m_ret, MSG_SUCCESS);
+    ASSERT_EQ(added->type, MSG_ENV_DT_INT);
+    ASSERT_EQ(added->body.integer, 55);
+
+    // Clean up
+    delete frame;
+    delete handle;
+}
+
+// Test to modify the underlying multi frame from a Python UDF and to modify
+// the meta data. This test also tests the UDFLoader's ability to load a UDF
+// that is in a Python package.
+TEST(udfloader_tests, py_multi_frame_modify) {
+    // Load a configuration
+    config_t* config = json_config_new("test_config.json");
+    ASSERT_NOT_NULL(config);
+
+    // Initialize the UDFLoader and load the UDF
+    UdfHandle* handle = loader->load("py_tests.modify", config, 1);
+    ASSERT_NOT_NULL(handle);
+
+    // Initialize the frame to use
+    Frame* frame = init_frame(true);
+    ASSERT_NOT_NULL(frame);
+
+    // Execute the UDF over the frame
+    UdfRetCode ret = handle->process(frame);
+    ASSERT_EQ(ret, UdfRetCode::UDF_OK);
+
     // Verify frame data is correct
     uint8_t* frame_data = (uint8_t*) frame->get_data(0);
+    for(int i = 0; i < DATA_LEN; i++) {
+        ASSERT_EQ(frame_data[i], NEW_FRAME_DATA[i]);
+    }
+
+    // Verify frame data is correct for the 1th frame
+    frame_data = (uint8_t*) frame->get_data(1);
     for(int i = 0; i < DATA_LEN; i++) {
         ASSERT_EQ(frame_data[i], NEW_FRAME_DATA[i]);
     }
@@ -236,6 +290,85 @@ TEST(udfloader_tests, reinitialize) {
     }
 }
 
+void free_cv_frame(void* varg) {
+    cv::Mat* mat = (cv::Mat*) varg;
+    delete mat;
+}
+
+void base_real_img_test(
+        const char* config_fn, const char* img, const char* udf, bool multi) {
+    // Load a configuration
+    config_t* config = json_config_new(config_fn);
+    ASSERT_NOT_NULL(config);
+
+    // Initialize the UDFLoader and load the UDF
+    UdfHandle* handle = loader->load(udf, config, 1);
+    ASSERT_NOT_NULL(handle);
+
+    cv::Mat* cv_frame = new cv::Mat();
+    *cv_frame = cv::imread(img);
+
+    Frame* frame = new Frame(
+            (void*) cv_frame,  free_cv_frame, cv_frame->data,
+            cv_frame->cols, cv_frame->rows, cv_frame->channels());
+
+    if (multi) {
+        cv::Mat* cv_frame2 = new cv::Mat();
+        *cv_frame2 = cv_frame->clone();
+
+        frame->add_frame((void*) cv_frame2,  free_cv_frame, cv_frame2->data,
+                cv_frame2->cols, cv_frame2->rows, cv_frame2->channels());
+    }
+
+    // Execute the UDF over the frame
+    UdfRetCode ret = handle->process(frame);
+    ASSERT_EQ(ret, UdfRetCode::UDF_OK);
+
+    // Clean up
+    delete frame;
+    delete handle;
+}
+
+TEST(udfloader_tests, native_same_frame) {
+    base_real_img_test(
+            "./test_udf_load_native_same_frame.json",
+            "./test_image.png",
+            "native_udf",
+            false);
+}
+
+TEST(udfloader_tests, native_resize) {
+    base_real_img_test(
+            "./test_udf_load_native_same_frame.json",
+            "./test_image.png",
+            "native_udf",
+            false);
+}
+
+TEST(udfloader_tests, raw_native_same_frame) {
+    base_real_img_test(
+            "./test_udf_load_raw_native_same_frame.json",
+            "./test_image.png",
+            "raw_native_udf",
+            false);
+}
+
+TEST(udfloader_tests, raw_native_resize) {
+    base_real_img_test(
+            "./test_udf_load_raw_native_resize.json",
+            "./test_image.png",
+            "raw_native_udf",
+            false);
+}
+
+TEST(udfloader_tests, raw_native_resize_multi) {
+    base_real_img_test(
+            "./test_udf_load_raw_native_resize.json",
+            "./test_image.png",
+            "raw_native_udf",
+            true);
+}
+
 // Free method for OpenCV read in frame, does nothing
 static void free_frame(void* varg) {
     cv::Mat* frame = (cv::Mat*) varg;
@@ -247,22 +380,17 @@ static void free_frame(void* varg) {
  * re-encode the image. This is to make sure the transfer of memory is all
  * taken care of successfully.
  */
-TEST(udfloader_tests, modify_frame_encode) {
+TEST(udfloader_tests, ) {
     try {
-
-        char** data = (char**)malloc(sizeof(char*));
-        
         // Read in the test frame
         cv::Mat* mat_frame = new cv::Mat();
         *mat_frame = cv::imread("./test_image.png");
         ASSERT_FALSE(mat_frame->empty()) << "Failed to load test_image.png";
 
-        data[0] = (char*)mat_frame->data;
-
         // Initialize the frame object
         Frame* frame = new Frame(
-                (void*) mat_frame, mat_frame->cols, mat_frame->rows,
-                mat_frame->channels(), (void**) data, free_frame, 1);
+                (void*) mat_frame, free_frame, (void*) mat_frame->data,
+                mat_frame->cols, mat_frame->rows, mat_frame->channels());
 
         // Load the JSON configuration
         config_t* config = json_config_new("test_udf_mgr_same_frame.json");

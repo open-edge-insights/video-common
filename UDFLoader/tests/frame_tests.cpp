@@ -46,12 +46,12 @@ using namespace eii::udf;
  */
 class TestFrame {
 public:
-    char** data;
+    char* data;
 
-    TestFrame(char** data) : data(data)
+    TestFrame(char* data) : data(data)
     {};
 
-    ~TestFrame() { delete[] data; };
+    ~TestFrame() { delete data; };
 };
 
 void test_frame_free(void* hint) {
@@ -63,37 +63,33 @@ void test_frame_free(void* hint) {
 
 Frame* init_frame() {
 
-    char** data = (char**) malloc(sizeof(char*));
-    data[0] = new char[14];
-    memcpy(data[0], "Hello, World!", 14);
+    char* data = new char[14];
+    memcpy(data, "Hello, World!", 14);
 
     TestFrame* tf = new TestFrame(data);
 
     Frame* frame = new Frame(
-            (void*) tf, 14, 1, 1, (void**) data, test_frame_free, 1);
+            (void*) tf, test_frame_free, (void*) data, 14, 1, 1);
 
     return frame;
 }
 
 Frame* init_multi_frame() {
+    char* data1 = new char[14];
+    char* data2 = new char[14];
+    memcpy(data1, "Hello, World1", 14);
+    memcpy(data2, "Hello, World2", 14);
 
-    char** data = (char**)malloc(sizeof(char*)*2);
-    data[0] = new char[14];
-    memcpy(data[0], "Hello, World1", 14);
+    TestFrame* tf1 = new TestFrame(data1);
+    TestFrame* tf2 = new TestFrame(data2);
 
-    data[1] = new char[14];
-    memcpy(data[1], "Hello, World2", 14);
-
-    TestFrame* tf = new TestFrame(data);
-
-    Frame* frame = new Frame(
-            (void*) tf, 14, 1, 1, (void**) data, test_frame_free, 2);
-
-    // User can call this consecutively for multiple frames
-    bool result = frame->set_multi_frame_parameters(1, 14, 1, 1, "none", 100);
-    if (result != true) {
-        throw "Failed to set multi frame parameters";
-    }
+    Frame* frame = new Frame();
+    frame->add_frame(
+            (void*) tf1, test_frame_free, (void*) data1, 14, 1, 1,
+            EncodeType::NONE, 0);
+    frame->add_frame(
+            (void*) tf2, test_frame_free, (void*) data2, 14, 1, 1,
+            EncodeType::NONE, 0);
 
     return frame;
 }
@@ -105,6 +101,16 @@ protected:
         set_log_level(LOG_LVL_DEBUG);
     }
 };
+
+/**
+ * Free method to free the underlying @c cv::Mat wrapped by the udf::Frame
+ * object.
+ */
+void free_cv_frame(void* frame) {
+    LOG_DEBUG_0("Freeing load-example frame");
+    cv::Mat* mat = (cv::Mat*) frame;
+    delete mat;
+}
 
 //
 // Tests
@@ -357,7 +363,7 @@ TEST_F(frame_tests, multi_frame_basic_init) {
     ASSERT_EQ(frame->get_width(1), 14);
     ASSERT_EQ(frame->get_height(1), 1);
     ASSERT_EQ(frame->get_channels(1), 1);
-    ASSERT_EQ(frame->get_encode_level(1), 100);
+    ASSERT_EQ(frame->get_encode_level(1), 0);
     ASSERT_EQ(frame->get_encode_type(1), EncodeType::NONE);
 
     delete frame;
@@ -466,9 +472,14 @@ TEST_F(frame_tests, multi_frame_basic_deserialize) {
     ASSERT_NOT_NULL(env);
 
     // Add basic meta-data
+    msg_envelope_elem_body_t* handle = msgbus_msg_envelope_new_string(
+            "img-handle-test");
+    ASSERT_NOT_NULL(handle);
+    msgbus_ret_t ret = msgbus_msg_envelope_put(env, "img_handle", handle);
+    ASSERT_EQ(ret, MSG_SUCCESS);
     msg_envelope_elem_body_t* w = msgbus_msg_envelope_new_integer(14);
     ASSERT_NOT_NULL(w);
-    msgbus_ret_t ret = msgbus_msg_envelope_put(env, "width", w);
+    ret = msgbus_msg_envelope_put(env, "width", w);
     ASSERT_EQ(ret, MSG_SUCCESS);
     msg_envelope_elem_body_t* h = msgbus_msg_envelope_new_integer(1);
     ASSERT_NOT_NULL(h);
@@ -497,9 +508,38 @@ TEST_F(frame_tests, multi_frame_basic_deserialize) {
     char* blob_data_two = (char*) malloc(sizeof(char) * 14);
     memcpy(blob_data_two, "Hello, World2", 14);
     blob_data_two[13] = '\0';
-    msg_envelope_elem_body_t* b_2 = msgbus_msg_envelope_new_blob(blob_data_two, 14);
+    msg_envelope_elem_body_t* b_2 = msgbus_msg_envelope_new_blob(
+            blob_data_two, 14);
     ASSERT_NOT_NULL(b_2);
     ret = msgbus_msg_envelope_put(env, NULL, b_2);
+    ASSERT_EQ(ret, MSG_SUCCESS);
+
+    // Add additional frames meta-data
+    msg_envelope_elem_body_t* obj = msgbus_msg_envelope_new_object();
+    msg_envelope_elem_body_t* handle2 = msgbus_msg_envelope_new_string(
+            "img-handle2-test");
+    ASSERT_NOT_NULL(handle2);
+    ret = msgbus_msg_envelope_elem_object_put(obj, "img_handle", handle2);
+    ASSERT_EQ(ret, MSG_SUCCESS);
+    msg_envelope_elem_body_t* w2 = msgbus_msg_envelope_new_integer(14);
+    ASSERT_NOT_NULL(w2);
+    ret = msgbus_msg_envelope_elem_object_put(obj, "width", w2);
+    ASSERT_EQ(ret, MSG_SUCCESS);
+    msg_envelope_elem_body_t* h2 = msgbus_msg_envelope_new_integer(1);
+    ASSERT_NOT_NULL(h2);
+    ret = msgbus_msg_envelope_elem_object_put(obj, "height", h2);
+    ASSERT_EQ(ret, MSG_SUCCESS);
+    msg_envelope_elem_body_t* c2 = msgbus_msg_envelope_new_integer(1);
+    ASSERT_NOT_NULL(c2);
+    ret = msgbus_msg_envelope_elem_object_put(obj, "channels", c2);
+    ASSERT_EQ(ret, MSG_SUCCESS);
+
+    msg_envelope_elem_body_t* arr = msgbus_msg_envelope_new_array();
+    ASSERT_NOT_NULL(arr);
+    ret = msgbus_msg_envelope_elem_array_add(arr, obj);
+    ASSERT_EQ(ret, MSG_SUCCESS);
+
+    ret = msgbus_msg_envelope_put(env, "additional_frames", arr);
     ASSERT_EQ(ret, MSG_SUCCESS);
 
     // Deserialize the frame
@@ -509,6 +549,12 @@ TEST_F(frame_tests, multi_frame_basic_deserialize) {
     ASSERT_EQ(frame->get_width(), 14);
     ASSERT_EQ(frame->get_height(), 1);
     ASSERT_EQ(frame->get_channels(), 1);
+    EXPECT_TRUE(frame->get_img_handle() == "img-handle-test");
+
+    ASSERT_EQ(frame->get_width(1), 14);
+    ASSERT_EQ(frame->get_height(1), 1);
+    ASSERT_EQ(frame->get_channels(1), 1);
+    EXPECT_TRUE(frame->get_img_handle(1) == "img-handle2-test");
 
     // Verify data
     char* frame_data = (char*) frame->get_data(0);
@@ -536,9 +582,14 @@ TEST_F(frame_tests, multi_frame_deserialize_reserialize) {
     ASSERT_NOT_NULL(env);
 
     // Add basic meta-data
+    msg_envelope_elem_body_t* handle = msgbus_msg_envelope_new_string(
+            "img-handle-test");
+    ASSERT_NOT_NULL(handle);
+    msgbus_ret_t ret = msgbus_msg_envelope_put(env, "img_handle", handle);
+    ASSERT_EQ(ret, MSG_SUCCESS);
     msg_envelope_elem_body_t* w = msgbus_msg_envelope_new_integer(14);
     ASSERT_NOT_NULL(w);
-    msgbus_ret_t ret = msgbus_msg_envelope_put(env, "width", w);
+    ret = msgbus_msg_envelope_put(env, "width", w);
     ASSERT_EQ(ret, MSG_SUCCESS);
     msg_envelope_elem_body_t* h = msgbus_msg_envelope_new_integer(1);
     ASSERT_NOT_NULL(h);
@@ -561,18 +612,54 @@ TEST_F(frame_tests, multi_frame_deserialize_reserialize) {
     char* blob_data_two = (char*) malloc(sizeof(char) * 14);
     memcpy(blob_data_two, "Hello, World2", 14);
     blob_data_two[13] = '\0';
-    msg_envelope_elem_body_t* b_2 = msgbus_msg_envelope_new_blob(blob_data_two, 14);
+    msg_envelope_elem_body_t* b_2 = msgbus_msg_envelope_new_blob(
+            blob_data_two, 14);
     ASSERT_NOT_NULL(b_2);
     ret = msgbus_msg_envelope_put(env, NULL, b_2);
     ASSERT_EQ(ret, MSG_SUCCESS);
 
+    // Add additional frames meta-data
+    msg_envelope_elem_body_t* obj = msgbus_msg_envelope_new_object();
+    msg_envelope_elem_body_t* handle2 = msgbus_msg_envelope_new_string(
+            "img-handle2-test");
+    ASSERT_NOT_NULL(handle2);
+    ret = msgbus_msg_envelope_elem_object_put(obj, "img_handle", handle2);
+    ASSERT_EQ(ret, MSG_SUCCESS);
+    msg_envelope_elem_body_t* w2 = msgbus_msg_envelope_new_integer(14);
+    ASSERT_NOT_NULL(w2);
+    ret = msgbus_msg_envelope_elem_object_put(obj, "width", w2);
+    ASSERT_EQ(ret, MSG_SUCCESS);
+    msg_envelope_elem_body_t* h2 = msgbus_msg_envelope_new_integer(1);
+    ASSERT_NOT_NULL(h2);
+    ret = msgbus_msg_envelope_elem_object_put(obj, "height", h2);
+    ASSERT_EQ(ret, MSG_SUCCESS);
+    msg_envelope_elem_body_t* c2 = msgbus_msg_envelope_new_integer(1);
+    ASSERT_NOT_NULL(c2);
+    ret = msgbus_msg_envelope_elem_object_put(obj, "channels", c2);
+    ASSERT_EQ(ret, MSG_SUCCESS);
+
+    msg_envelope_elem_body_t* arr = msgbus_msg_envelope_new_array();
+    ASSERT_NOT_NULL(arr);
+    ret = msgbus_msg_envelope_elem_array_add(arr, obj);
+    ASSERT_EQ(ret, MSG_SUCCESS);
+
+    ret = msgbus_msg_envelope_put(env, "additional_frames", arr);
+    ASSERT_EQ(ret, MSG_SUCCESS);
+
     // Deserialize the frame
     Frame* frame = new Frame(env);
+    ASSERT_NULL(env->blob);
 
     // Verify common meta-data
     ASSERT_EQ(frame->get_width(), 14);
     ASSERT_EQ(frame->get_height(), 1);
     ASSERT_EQ(frame->get_channels(), 1);
+    EXPECT_TRUE(frame->get_img_handle() == "img-handle-test");
+
+    ASSERT_EQ(frame->get_width(1), 14);
+    ASSERT_EQ(frame->get_height(1), 1);
+    ASSERT_EQ(frame->get_channels(1), 1);
+    EXPECT_TRUE(frame->get_img_handle(1) == "img-handle2-test");
 
     // Verify data
     char* frame_data = (char*) frame->get_data(0);
@@ -591,9 +678,15 @@ TEST_F(frame_tests, multi_frame_deserialize_reserialize) {
     ASSERT_EQ(ret, MSG_SUCCESS);
 
     // Modifying the data
-    char* data = (char*) frame->get_data(0);
+    char* data = new char[8];
     memcpy(data, "Goodbye", 8);
     data[7] = '\0';
+    frame->set_data(0, (void*) data, free, (void*) data, 8, 1, 1);
+
+    ASSERT_EQ(frame->get_width(), 8);
+    ASSERT_EQ(frame->get_height(), 1);
+    ASSERT_EQ(frame->get_channels(), 1);
+    EXPECT_TRUE(frame->get_img_handle(1) == "img-handle2-test");
 
     // Serialize the frame
     msg_envelope_t* s = frame->serialize();
@@ -642,15 +735,10 @@ TEST_F(frame_tests, encode_decode_png) {
     // Read in the test frame
     cv::Mat mat_frame = cv::imread("./test_image.png");
 
-    char** data = (char**) malloc(sizeof(char*));
-    int size = mat_frame.cols * mat_frame.rows * mat_frame.channels();
-    data[0] = new char[size];
-    memcpy(data[0], mat_frame.data, size);
-
     // Initialize the frame objectj
     Frame* frame = new Frame(
-            (void*) &mat_frame, mat_frame.cols, mat_frame.rows,
-            mat_frame.channels(), (void**) data, free_frame, 1,
+            (void*) &mat_frame, free_frame, (void*) mat_frame.data,
+            mat_frame.cols, mat_frame.rows, mat_frame.channels(),
             EncodeType::PNG, 4);
 
     LOG_DEBUG_0("After frame creation");
@@ -686,15 +774,10 @@ TEST_F(frame_tests, encode_decode_jpeg) {
     // Read in the test frame
     cv::Mat mat_frame = cv::imread("./test_image.png");
 
-    char** data = (char**) malloc(sizeof(char*));
-    int size = mat_frame.cols * mat_frame.rows * mat_frame.channels();
-    data[0] = new char[size];
-    memcpy(data[0], mat_frame.data, size);
-
     // Initialize the frame object
     Frame* frame = new Frame(
-            (void*) &mat_frame, mat_frame.cols, mat_frame.rows,
-            mat_frame.channels(), (void**) data, free_frame, 1,
+            (void*) &mat_frame, free_frame, (void*) mat_frame.data,
+            mat_frame.cols, mat_frame.rows, mat_frame.channels(),
             EncodeType::JPEG, 50);
 
     // Serialize the frame
@@ -715,4 +798,82 @@ TEST_F(frame_tests, encode_decode_jpeg) {
     // Clean up
     // delete decoded;
     msgbus_msg_envelope_destroy(serialized);
+}
+
+/**
+ * Helper for a base unit test to call set_data() on a specific index. This
+ * also allows for chnaging the encoding type to make sure this works across
+ * all enc types.
+ */
+void base_set_data_test(int index, EncodeType enc_type, int enc_lvl) {
+    try {
+        const char* fn = "./test_image.png";
+        Frame* frame = new Frame();
+
+        for (int i = 0; i < 2; i++) {
+            // Read multiple frames
+            cv::Mat* cv_frame = new cv::Mat();
+            *cv_frame = cv::imread(fn);
+            frame->add_frame(
+                (void*) cv_frame, free_cv_frame, (void*) cv_frame->data,
+                cv_frame->cols, cv_frame->rows, cv_frame->channels(),
+                enc_type, enc_lvl);
+        }
+
+        // Call set_data() to change frame 1
+        cv::Mat* cv_frame = new cv::Mat();
+        *cv_frame = cv::imread(fn);
+
+        LOG_DEBUG_0("Setting data");
+        frame->set_data(
+            index, (void*) cv_frame, free_cv_frame, (void*) cv_frame->data,
+            cv_frame->cols, cv_frame->rows, cv_frame->channels());
+
+        // Serialize the frame
+        LOG_DEBUG_0("Serializing frame");
+        msg_envelope_t* encoded = frame->serialize();
+
+        // Deserialize the frame
+        LOG_DEBUG_0("Deserializing serialized frame");
+        Frame* decoded = new Frame(encoded);
+
+        // Re-encode
+        LOG_DEBUG_0("Reserializing again");
+        msg_envelope_t* serialized = decoded->serialize();
+
+        // Clean up
+        // delete decoded;
+        LOG_DEBUG_0("Destroying serialized frame");
+        msgbus_msg_envelope_destroy(serialized);
+    } catch (const char* ex) {
+        LOG_ERROR("Test failed: %s", ex);
+        throw ex;
+    }
+}
+
+/**
+ * Attempt @c Frame::set_data() with non-zero index.
+ */
+TEST_F(frame_tests, multi_frame_set_data_1_jpeg) {
+    base_set_data_test(1, EncodeType::JPEG, 50);
+}
+
+TEST_F(frame_tests, multi_frame_set_data_1_png) {
+    base_set_data_test(1, EncodeType::PNG, 4);
+}
+
+TEST_F(frame_tests, multi_frame_set_data_1) {
+    base_set_data_test(1, EncodeType::NONE, 0);
+}
+
+TEST_F(frame_tests, multi_frame_set_data_0_jpeg) {
+    base_set_data_test(0, EncodeType::JPEG, 50);
+}
+
+TEST_F(frame_tests, multi_frame_set_data_0_png) {
+    base_set_data_test(0, EncodeType::PNG, 4);
+}
+
+TEST_F(frame_tests, multi_frame_set_data_0) {
+    base_set_data_test(0, EncodeType::NONE, 0);
 }

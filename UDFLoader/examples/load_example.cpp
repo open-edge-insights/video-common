@@ -83,23 +83,19 @@ int main(int argc, char** argv) {
 
         // Load OpenCV frame
         cv::Mat* cv_frame = new cv::Mat();
+        cv::Mat* cv_frame2 = new cv::Mat();
+
         *cv_frame = cv::imread("load_example_frame.png");
+        *cv_frame2 = cv_frame->clone();
 
-        char** data = (char**)malloc(sizeof(char*)*1);
-        data[0] = (char*) cv_frame->data;
-        data[1] = new char[14];
-        memcpy(data[1], "Hello, World2", 14);
-
-        // Create udf::Frame object from the cv::Mat and push into publisher
         Frame* frame = new Frame(
-                (void*) cv_frame, cv_frame->cols, cv_frame->rows,
-                cv_frame->channels(), (void**) data, free_cv_frame, 2,
+                (void*) cv_frame,  free_cv_frame, cv_frame->data,
+                cv_frame->cols, cv_frame->rows, cv_frame->channels(),
                 EncodeType::JPEG, 50);
 
-        bool result = frame->set_multi_frame_parameters(1, 14, 1, 1, "none", 100);
-        if (result != true) {
-            throw "Failed to set multi frame parameters";
-        }
+        frame->add_frame((void*) cv_frame2,  free_cv_frame, cv_frame2->data,
+                cv_frame2->cols, cv_frame2->rows, cv_frame2->channels(),
+                EncodeType::JPEG, 50);
 
         input_queue->push(frame);
 

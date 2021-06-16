@@ -20,50 +20,35 @@
 
 /**
  * @file
- * @brief Same File UDF Implementation
+ * @brief Dummy UDF Implementation
  */
 
-#include <eii/udf/base_udf.h>
+#include <eii/udf/raw_base_udf.h>
 #include <eii/utils/logger.h>
 #include <iostream>
 
 using namespace eii::udf;
 
 namespace eii {
-namespace udftests {
+namespace udfsamples {
 
 /**
-* The Same Frame UDF - Does not do any processing on the given frames, but
-* returns as the "outputted frame" the same frame it receieved to process.
-*/
-class SameFrameUdf : public BaseUdf {
+ * The Raw Dummy UDF - does no processing
+ */
+class RawDummyUdf : public RawBaseUdf {
 public:
-    /**
-     * Constructor
-     *
-     * @param config - UDF configuration
-     */
-    SameFrameUdf(config_t* config) : BaseUdf(config) {};
+    explicit RawDummyUdf(config_t* config) : RawBaseUdf(config) {};
 
-    /**
-     * Destructor
-     */
-    ~SameFrameUdf() {};
+    ~RawDummyUdf() {};
 
-    UdfRetCode process(
-            cv::Mat& frame, cv::Mat& output, msg_envelope_t* meta) override {
-        LOG_DEBUG("In %s method...", __PRETTY_FUNCTION__);
-
-        // Assign the output to the same memory as the input frame, this is
-        // to make sure that the UDF Loader/Manager does not accidentally
-        // free the "output" memory thinking it is a new frame
-        output = frame;
-
+    UdfRetCode process(Frame* frame) override {
+        LOG_INFO("Received frame with %d frames",
+                frame->get_number_of_frames());
         return UdfRetCode::UDF_OK;
     };
 };
-}  // namespace udftests
-}  // namespace eii
+} // udf
+} // eii
 
 extern "C" {
 
@@ -73,9 +58,9 @@ extern "C" {
  * @return void*
  */
 void* initialize_udf(config_t* config) {
-    eii::udftests::SameFrameUdf* udf = new eii::udftests::SameFrameUdf(config);
+    eii::udfsamples::RawDummyUdf* udf = new eii::udfsamples::RawDummyUdf(config);
     return (void*) udf;
 }
 
-}  // extern "C"
+} // extern "C"
 

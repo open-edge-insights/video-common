@@ -33,5 +33,9 @@ class Udf:
         """Change all the values in the frame to 1 and return meta-data.
         """
         meta['ADDED'] = 55
-        frame.fill(1)
+        if isinstance(frame, list):
+            for i in range(len(frame)):
+                frame[i].fill(1)
+        else:
+            frame.fill(1)
         return False, frame, meta

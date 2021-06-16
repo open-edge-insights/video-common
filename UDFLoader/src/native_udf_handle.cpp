@@ -170,9 +170,8 @@ UdfRetCode NativeUdfHandle::process(Frame* frame) {
         if(!output->empty() && output->data != mat_frame->data) {
             LOG_DEBUG("Setting frame with new UDF frame");
             frame->set_data(
-                    (void*) output, output->cols, output->rows,
-                    output->channels(), (void*) output->data,
-                    free_native_cv_frame, 0);
+                    0, (void*) output, free_native_cv_frame, (void*) output->data,
+                    output->cols, output->rows, output->channels());
         } else {
             delete output;
         }

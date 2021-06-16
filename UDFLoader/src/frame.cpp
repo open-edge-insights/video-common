@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Intel Corporation.
+// Copyright (c) 2021 Intel Corporation.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to
@@ -22,6 +22,8 @@
  * @brief Implementation of @c Frame class
  */
 
+#include <sstream>
+#include <random>
 #include <vector>
 #include <opencv2/opencv.hpp>
 #include <safe_lib.h>
@@ -29,239 +31,304 @@
 
 #include "eii/udf/frame.h"
 
+#define UUID_LENGTH 5
+
 using namespace eii::udf;
 
 // Prototyes
-void free_decoded(void* varg);
-void free_encoded(void* varg);
+static void free_decoded(void* varg);
+static void free_encoded(void* varg);
+static void free_msg_env_blob(void* varg);
+static void free_frame_data(void* varg);
+static void free_frame_data_final(void* varg);
+static cv::Mat* decode_frame(
+        EncodeType encode_type, uchar* encoded_data, size_t len);
+static void add_frame_meta_env(msg_envelope_t* env, FrameMetaData* meta);
+static void add_frame_meta_obj(
+        msg_envelope_elem_body_t* obj, FrameMetaData* meta);
+static EncodeType str_to_encode_type(const char* value);
+static std::string generate_image_handle(int len);
+
+// Simple struct for use with free_frame_data_final()
+class FinalFreeWrapper {
+private:
+    // Reference to the frame object to delete
+    Frame* m_frame;
+
+    // Reference to the final piece of frame data which needs to be deleted.
+    FrameData* m_frame_data;
+
+public:
+    FinalFreeWrapper(Frame* frame, FrameData* fd) :
+        m_frame(frame), m_frame_data(fd)
+    {};
+
+    ~FinalFreeWrapper() {
+        delete m_frame_data;
+        delete m_frame;
+    };
+};
 
 /**
  * Helper method to verify the correct encoding level is set for the given
  * encoding type.
  */
-bool verify_encoding_level(EncodeType encode_type, int encode_level);
+static bool verify_encoding_level(EncodeType encode_type, int encode_level);
 
 
-Frame::Frame(void* frame, int width, int height, int channels, void** data,
-             void (*free_frame)(void*), int num_frames, EncodeType encode_type,
-             int encode_level) :
-    Serializable(NULL), m_frame(frame), m_free_frame(free_frame),
-    m_data(data), m_blob_ptr(NULL), m_meta_data(NULL), m_width(width),
-    m_height(height), m_channels(channels),
-    m_num_frames(num_frames), m_serialized(false),
-    m_encode_type(encode_type), m_encode_level(encode_level)
+Frame::Frame(
+        void* frame, void (*free_frame)(void*), void* data,
+        int width, int height, int channels, EncodeType encode_type,
+        int encode_level) :
+    Serializable(NULL), m_meta_data(NULL), m_additional_frames_arr(NULL),
+    m_serialized(false)
 {
-    if(m_free_frame == NULL) {
+    if(free_frame == NULL) {
         throw "The free_frame() method cannot be NULL";
     }
     if(!verify_encoding_level(encode_type, encode_level)) {
         throw "Encode level invalid for the encoding type";
     }
 
-    msgbus_ret_t ret = MSG_SUCCESS;
+    // Generate image handle for the frame
+    std::string img_handle = generate_image_handle(UUID_LENGTH);
+
+    // TODO(kmidkiff): Image handle????
+    FrameMetaData* meta = new FrameMetaData(
+            img_handle, width, height, channels, encode_type, encode_level);
+    FrameData* fd = new FrameData(frame, free_frame, data, meta);
+    this->m_frames.push_back(fd);
+
+    try {
+        m_meta_data = msgbus_msg_envelope_new(CT_JSON);
+        if(m_meta_data == NULL) {
+            throw "Failed to initialize meta data envelope";
+        }
+        add_frame_meta_env(m_meta_data, meta);
+    } catch (const char* ex) {
+        // Free allocated memory in error case
+        delete fd;
+        msgbus_msg_envelope_destroy(m_meta_data);
+        throw ex;
+    }
+}
+
+Frame::Frame() :
+    Serializable(NULL), m_meta_data(NULL), m_additional_frames_arr(NULL),
+    m_serialized(false)
+{
     m_meta_data = msgbus_msg_envelope_new(CT_JSON);
     if(m_meta_data == NULL) {
         throw "Failed to initialize meta data envelope";
     }
+}
 
-    // Add frame details to meta data
-    msg_envelope_elem_body_t* e_width = msgbus_msg_envelope_new_integer(
-            width);
-    if(e_width == NULL) {
-        throw "Failed to initialize width meta-data";
+#define MSG_TYPE_STR(value) #value
+
+void get_meta_from_env(
+        msg_envelope_t* env, const char* key,
+        msg_envelope_elem_body_t** dest, msg_envelope_data_type_t expected) {
+    msgbus_ret_t ret = msgbus_msg_envelope_get(env, key, dest);
+    if (ret != MSG_SUCCESS) {
+        LOG_ERROR("Frame meta-data missing key: %s", key);
+        throw "Failed to get meta-data key";
+    } else if ((*dest)->type != expected) {
+        LOG_ERROR("Incorrect meta-data type, expceted: %s, got: %s",
+                MSG_TYPE_STR(expected), MSG_TYPE_STR((*dest)->type));
+        throw "Meta-data incorrect type";
     }
-    ret = msgbus_msg_envelope_put(m_meta_data, "width", e_width);
-    if(ret != MSG_SUCCESS) {
-        throw "Failed to put width meta-data";
-    }
+}
 
-    // Add height
-    msg_envelope_elem_body_t* e_height = msgbus_msg_envelope_new_integer(
-            height);
-    if(e_height == NULL) {
-        throw "Failed to initialize height meta-data";
-    }
-
-    ret = msgbus_msg_envelope_put(m_meta_data, "height", e_height);
-    if(ret != MSG_SUCCESS) {
-        msgbus_msg_envelope_elem_destroy(e_width);
-        throw "Failed to put height meta-data";
-    }
-
-    // Add channels
-    msg_envelope_elem_body_t* e_channels = msgbus_msg_envelope_new_integer(
-            channels);
-    if(e_channels == NULL) {
-        throw "Failed to initialize channels meta-data";
-    }
-    ret = msgbus_msg_envelope_put(m_meta_data, "channels", e_channels);
-    if(ret != MSG_SUCCESS) {
-        msgbus_msg_envelope_elem_destroy(e_height);
-        msgbus_msg_envelope_elem_destroy(e_width);
-        throw "Failed to put channels meta-data";
-    }
-
-    // Add encoding (if type is not NONE)
-    if(encode_type != EncodeType::NONE) {
-        msg_envelope_elem_body_t* e_enc_type = NULL;
-        if(encode_type == EncodeType::JPEG) {
-            e_enc_type = msgbus_msg_envelope_new_string("jpeg");
-        } else {
-            e_enc_type = msgbus_msg_envelope_new_string("png");
-        }
-        if(e_enc_type == NULL) {
-            throw "Failed initialize encoding type meta-data";
-        }
-
-        msg_envelope_elem_body_t* e_enc_lvl = msgbus_msg_envelope_new_integer(
-                encode_level);
-        if(e_enc_lvl == NULL) {
-            throw "Failed to initialize encoding level meta-data";
-        }
-
-        ret = msgbus_msg_envelope_put(m_meta_data, "encoding_type", e_enc_type);
-        if(ret != MSG_SUCCESS) {
-            throw "Failed to put encoding type in object";
-        }
-
-        ret = msgbus_msg_envelope_put(m_meta_data, "encoding_level", e_enc_lvl);
-        if(ret != MSG_SUCCESS) {
-            throw "Failed to put encoding level in object";
-        }
+void get_meta_from_obj(
+        msg_envelope_elem_body_t* obj, const char* key,
+        msg_envelope_elem_body_t** dest, msg_envelope_data_type_t expected) {
+    (*dest) = msgbus_msg_envelope_elem_object_get(obj, key);
+    if ((*dest) == NULL) {
+        LOG_ERROR("Frame meta-data missing key: %s", key);
+        throw "Failed to get meta-data key";
+    } else if ((*dest)->type != expected) {
+        LOG_ERROR("Incorrect meta-data type, expceted: %s, got: %s",
+                MSG_TYPE_STR(expected), MSG_TYPE_STR((*dest)->type));
+        throw "Meta-data incorrect type";
     }
 }
 
 Frame::Frame(msg_envelope_t* msg) :
-    Serializable(msg), m_frame(NULL), m_free_frame(NULL),
-    m_blob_ptr(NULL), m_meta_data(msg), m_serialized(false)
+    Serializable(NULL), m_meta_data(NULL), m_additional_frames_arr(NULL),
+    m_serialized(false)
 {
-    msgbus_ret_t ret = MSG_SUCCESS;
+    // TODO(kmidkiff): VERIFY IT IS CT_JSON
 
-    // Get frame data
+    msgbus_ret_t ret = MSG_SUCCESS;
     msg_envelope_elem_body_t* blob = NULL;
+    msg_envelope_elem_body_t* width = NULL;
+    msg_envelope_elem_body_t* height = NULL;
+    msg_envelope_elem_body_t* channels = NULL;
+    msg_envelope_elem_body_t* enc_type = NULL;
+    msg_envelope_elem_body_t* enc_lvl = NULL;
+    msg_envelope_elem_body_t* img_handle = NULL;
+    msg_envelope_elem_body_t* obj = NULL;
+    EncodeType encode_type = EncodeType::NONE;
+
     ret = msgbus_msg_envelope_get(msg, NULL, &blob);
     if(ret != MSG_SUCCESS) {
         throw "Failed to retrieve frame blob from  msg envelope";
-    } else if (blob->type == MSG_ENV_DT_BLOB) {
-        m_num_frames = 1;
-        m_data = (void**) malloc(sizeof(void*) * m_num_frames);
-        if (m_data == NULL) {
-            throw "Malloc failed for m_data";
-        }
-        m_data[0] = (void*) blob->body.blob->data;
-    } else if (blob->type == MSG_ENV_DT_ARRAY) {
-        m_num_frames = blob->body.array->len;
-        m_data = (void**) malloc(sizeof(void*) * m_num_frames);
-        if (m_data == NULL) {
-            throw "Malloc failed for m_data";
-        }
-        msg_envelope_elem_body_t* env_get_data;
-        for (int i = 0; i < m_num_frames; i++) {
-            env_get_data = msgbus_msg_envelope_elem_array_get_at(blob, i);
-            m_data[i] = (void*) env_get_data->body.blob->data;
-        }
-        env_get_data = NULL;
     }
 
-    // Get frame width
-    msg_envelope_elem_body_t* width = NULL;
-    ret = msgbus_msg_envelope_get(msg, "width", &width);
-    if(ret != MSG_SUCCESS) {
-        throw "Failed to retrieve width";
-    } else if(width->type != MSG_ENV_DT_INT) {
-        throw "Frame width must be an integer";
+    // After getting the blob from the serialize message, set the blob to
+    // NULL in the envelope, that way this function has taken over the
+    // ownership of the memory...
+    msg->blob = NULL;
+
+    m_meta_data = msg;
+
+    int num_frames = 1;
+    if (blob->type == MSG_ENV_DT_ARRAY) {
+        num_frames = blob->body.array->len;
+        get_meta_from_env(
+                msg, "additional_frames", &m_additional_frames_arr,
+                MSG_ENV_DT_ARRAY);
     }
-    m_width = width->body.integer;
 
-    // Get frame height
-    msg_envelope_elem_body_t* height = NULL;
-    ret = msgbus_msg_envelope_get(msg, "height", &height);
-    if(ret != MSG_SUCCESS) {
-        throw "Failed to retrieve height";
-    } else if(height->type != MSG_ENV_DT_INT) {
-        throw "Frame height must be an integer";
-    }
-    m_height = height->body.integer;
-
-    // Get frame channels
-    msg_envelope_elem_body_t* channels = NULL;
-    ret = msgbus_msg_envelope_get(msg, "channels", &channels);
-    if(ret != MSG_SUCCESS) {
-        throw "Failed to retrieve channels";
-    } else if(channels->type != MSG_ENV_DT_INT) {
-        throw "Frame channels must be an integer";
-    }
-    m_channels = channels->body.integer;
-
-    // Get encoding from configuation
-    msg_envelope_elem_body_t* enc_type = NULL;
-    ret = msgbus_msg_envelope_get(msg, "encoding_type", &enc_type);
-    if(ret == MSG_SUCCESS) {
-        LOG_DEBUG_0("Frame is encoded");
-        if(enc_type->type != MSG_ENV_DT_STRING) {
-            throw "Encoding type must be a string";
-        }
-
-        msg_envelope_elem_body_t* enc_lvl = NULL;
-        ret = msgbus_msg_envelope_get(msg, "encoding_level", &enc_lvl);
-        if(enc_lvl == NULL) {
-            throw "Encoding level missing from frame meta-data";
-        } else if(enc_lvl->type != MSG_ENV_DT_INT) {
-            throw "Encoding level must be an integer";
-        }
-
-        int ind_jpeg = 0;
-        strcmp_s(enc_type->body.string, strlen(enc_type->body.string),
-                "jpeg", &ind_jpeg);
-
-        int ind_png = 0;
-        strcmp_s(enc_type->body.string, strlen(enc_type->body.string),
-                 "png", &ind_png);
-
-        if(ind_jpeg == 0 || ind_png == 0) {
-            m_encode_level = enc_lvl->body.integer;
-
-            if(ind_jpeg == 0) {
-                LOG_DEBUG_0("Frame encoded as a JPEG");
-                m_encode_type = EncodeType::JPEG;
-            } else if(ind_png == 0) {
-                LOG_DEBUG_0("Frame encoded as a PNG");
-                m_encode_type = EncodeType::PNG;
+    for (int i = 0; i < num_frames; i++) {
+        msg_envelope_elem_body_t* frame = NULL;
+        if (blob->type == MSG_ENV_DT_ARRAY) {
+            LOG_DEBUG("GETTING FRAME BLOB: %d", i);
+            frame = msgbus_msg_envelope_elem_array_get_at(blob, i);
+            if (frame == NULL) {
+                LOG_ERROR("No frame at index %d", i);
+                throw "Failed to obtain frame from array";
             }
+
+            frame->body.blob->shared->owned = false;
+
+            owned_blob_t* shared = owned_blob_copy(frame->body.blob->shared);
+            shared->owned = true;
+
+            // Manually create a new blob
+            msg_envelope_elem_body_t* elem = NULL;
+            msg_envelope_blob_t* b = NULL;
+
+            b = (msg_envelope_blob_t*) malloc(sizeof(msg_envelope_blob_t));
+            if(b == NULL) {
+                throw "Failed to initialize new blob";
+            }
+            b->shared = shared;
+            b->len = shared->len;
+            b->data = shared->bytes;
+
+            elem = (msg_envelope_elem_body_t*) malloc(
+                    sizeof(msg_envelope_elem_body_t));
+            if(elem == NULL) {
+                throw "Failed to initailize new element";
+            }
+
+            elem->type = MSG_ENV_DT_BLOB;
+            elem->body.blob = b;
+
+            frame = elem;
+        } else {
+            frame = blob;
+        }
+
+        if (i == 0) {
+            get_meta_from_env(msg, "width", &width, MSG_ENV_DT_INT);
+            get_meta_from_env(msg, "height", &height, MSG_ENV_DT_INT);
+            get_meta_from_env(msg, "channels", &channels, MSG_ENV_DT_INT);
+
+            // The following three meta-data items can be missing
+            msgbus_msg_envelope_get(msg, "img_handle", &img_handle);
+            msgbus_msg_envelope_get(msg, "encoding_type", &enc_type);
+            msgbus_msg_envelope_get(msg, "encoding_level", &enc_lvl);
+        } else {
+            obj = msgbus_msg_envelope_elem_array_get_at(
+                    m_additional_frames_arr, i - 1);
+            if (obj == NULL) {
+                throw "Failed to get additional array element";
+            } else if (obj->type != MSG_ENV_DT_OBJECT) {
+                throw "Additional array element must be objects";
+            }
+
+            get_meta_from_obj(obj, "width", &width, MSG_ENV_DT_INT);
+            get_meta_from_obj(obj, "height", &height, MSG_ENV_DT_INT);
+            get_meta_from_obj(obj, "channels", &channels, MSG_ENV_DT_INT);
+
+            // The following three meta-data items can be missing
+            img_handle = msgbus_msg_envelope_elem_object_get(
+                    obj, "img_handle");
+            enc_type = msgbus_msg_envelope_elem_object_get(
+                    obj, "encoding_type");
+            enc_lvl = msgbus_msg_envelope_elem_object_get(
+                    obj, "encoding_level");
+        }
+
+        std::string img_handle_str = "";
+        if (img_handle != NULL) {
+            if (img_handle->type != MSG_ENV_DT_STRING) {
+                throw "Image handle must be a string";
+            }
+            img_handle_str = std::string(img_handle->body.string);
+        }
+
+        if (enc_type != NULL) {
+            if(enc_type->type != MSG_ENV_DT_STRING) {
+                throw "Encoding type must be a string";
+            } else if (enc_lvl == NULL) {
+                throw "Missing encoding level";
+            } else if (enc_lvl->type != MSG_ENV_DT_INT) {
+                throw "Encoding level must be an integer";
+            }
+
+            // Parse encoding type (NOTE: Function call throws exceptions)
+            encode_type = str_to_encode_type(enc_type->body.string);
 
             // Construct vector of bytes to pass to cv::imdecode
-            std::vector<uchar> data;
-            uchar* buf = NULL;
-            size_t len = 0;
-            if (blob->type == MSG_ENV_DT_ARRAY) {
-                msg_envelope_elem_body_t* env_get_data = msgbus_msg_envelope_elem_array_get_at(blob, 0);
-                buf = (uchar*) env_get_data->body.blob->data;
-                len = (size_t) env_get_data->body.blob->len;
-            }
-            if (blob->type == MSG_ENV_DT_BLOB) {
-                buf = (uchar*) blob->body.blob->data;
-                len = (size_t) blob->body.blob->len;
-            }
-            data.assign(buf, buf + len);
-            // Decode the frame
-            // TODO: Should we always decode as color?
-            cv::Mat* decoded = new cv::Mat();
-            *decoded = cv::imdecode(data, cv::IMREAD_COLOR);
-            if(decoded->empty()) {
-                delete decoded;
-                throw "Failed to decode the encoded frame";
-            }
-            data.clear();
-            this->set_data((void*) decoded, decoded->cols, decoded->rows,
-                           decoded->channels(), decoded->data, free_decoded, 0);
+            uchar* buf = (uchar*) frame->body.blob->data;
+            size_t len = (size_t) frame->body.blob->len;
+            cv::Mat* decoded = decode_frame(encode_type, buf, len);
+
+            // TODO(kmidkiff): Should check that the metadata is correct
+            // with what was decoded
+            FrameMetaData* meta = new FrameMetaData(
+                    img_handle_str,
+                    width->body.integer, height->body.integer,
+                    channels->body.integer, encode_type,
+                    enc_lvl->body.integer);
+            FrameData* fd = new FrameData(
+                    (void*) decoded, free_decoded,
+                    (void*) decoded->data, meta);
+            m_frames.push_back(fd);
+
+            msgbus_msg_envelope_elem_destroy(frame);
         } else {
-            throw "Unknown encoding type";
+            // TODO(kmidkiff): This could modify meta-data if enc level was
+            // still specified (but this would be incorrect data...)
+            FrameMetaData* meta = new FrameMetaData(
+                    img_handle_str,
+                    width->body.integer, height->body.integer,
+                    channels->body.integer, EncodeType::NONE, 0);
+            FrameData* fd = new FrameData(
+                    (void*) frame, free_msg_env_blob,
+                    (void*) frame->body.blob->data, meta);
+            m_frames.push_back(fd);
         }
-    } else {
-        LOG_DEBUG_0("Frame is not encoded");
-        m_encode_type = EncodeType::NONE;
-        m_encode_level = 0;
+
+        width = NULL;
+        height = NULL;
+        channels = NULL;
+        enc_type = NULL;
+        enc_lvl = NULL;
+        frame = NULL;
     }
+
+    if (blob->type == MSG_ENV_DT_ARRAY) {
+        // Destroy the empty blob array
+        msgbus_msg_envelope_elem_destroy(blob);
+    }
+
+    // TODO(kmidkiff): There could be a memory leak of FrameData added to the
+    // m_frame vector if an error happens after one or more frames have already
+    // been added...
 }
 
 Frame::Frame(const Frame& src) {
@@ -270,129 +337,57 @@ Frame::Frame(const Frame& src) {
 }
 
 Frame::~Frame() {
-    if(!m_serialized.load()) {
-        // Free the underlying frame if the m_free_frame method is set
-        if(m_free_frame != NULL) {
-            this->m_free_frame(this->m_frame);
+    // All other memory after being serialized is no longer the Frame object's
+    // responsibility to free
+    if (!m_serialized.load()) {
+        for (int i = 0; i < this->get_number_of_frames(); i++) {
+            FrameData* fd = this->m_frames[i];
+            delete fd;
         }
-
-        // Destroy the meta data message envelope if the frame is not from a
-        // deserialized message and if the frame itself has not been serialized
-        if(m_msg == NULL && !m_serialized.load()) {
-            msgbus_msg_envelope_destroy(m_meta_data);
-        }
+        msgbus_msg_envelope_destroy(m_meta_data);
     }
-
-    // else: If m_msg is not NULL, then the Frame was deserialized from a
-    // msg_envelope_t received over the msgbus. If this is the case, then
-    // the Deserialized() destructure will delete the m_msg envelope struct
-    // cleaning up all data used by this object.
 }
 
-
-// local helper function to fetch any multi frame parameters
-msg_envelope_elem_body_t* fetch_multi_frame_parameter(msg_envelope_t* meta_data, int index, char* key) {
-    msg_envelope_elem_body_t* additional_frames_arr;
-    msgbus_ret_t ret = msgbus_msg_envelope_get(meta_data, "additional_frames", &additional_frames_arr);
-    if (ret != MSG_SUCCESS) {
-        LOG_INFO_0("Failed to fetch additional_frames object");
-        throw "Failed to fetch additional_frames object";
+std::string Frame::get_img_handle(int index) {
+    if (index > (int) m_frames.size()) {
+        throw "Index out of range";
     }
-    if (additional_frames_arr->type != MSG_ENV_DT_ARRAY) {
-        LOG_INFO_0("additional_frames type not an array");
-        throw "additional_frames type not an array";
-    }
-    msg_envelope_elem_body_t* obj = msgbus_msg_envelope_elem_array_get_at(additional_frames_arr, (index - 1));
-    if (obj == NULL) {
-        LOG_INFO_0("Unable to fetch meta-data");
-        throw "Unable to fetch meta-data";
-    }
-    msg_envelope_elem_body_t* key_obj = msgbus_msg_envelope_elem_object_get(obj, key);
-    if (key_obj == NULL) {
-        LOG_INFO_0("Unable to fetch requested element from metadata");
-        throw "Unable to fetch requested element from metadata";
-    }
-    return key_obj;
+    return m_frames[index]->get_meta_data()->get_img_handle();
 }
 
 int Frame::get_width(int index) {
-    if (index == 0)
-        return m_width;
-    msg_envelope_elem_body_t* width = fetch_multi_frame_parameter(m_meta_data, index, "width");
-    if (width == NULL) {
-        LOG_INFO_0("Unable to fetch width in additional frames array");
-        throw "Unable to fetch width in additional frames array";
+    if (index > (int) m_frames.size()) {
+        throw "Index out of range";
     }
-    if (width->type != MSG_ENV_DT_INT) {
-        LOG_INFO_0("width not an integer");
-        throw "width not an integer";
-    }
-    return width->body.integer;
+    return m_frames[index]->get_meta_data()->get_width();
 }
 
 int Frame::get_height(int index) {
-    if (index == 0)
-        return m_height;
-    msg_envelope_elem_body_t* height = fetch_multi_frame_parameter(m_meta_data, index, "height");
-    if (height == NULL) {
-        throw "Unable to fetch height in additional frames array";
+    if (index > (int) m_frames.size()) {
+        throw "Index out of range";
     }
-    if (height->type != MSG_ENV_DT_INT) {
-        throw "height not an integer";
-    }
-    return height->body.integer;
+    return m_frames[index]->get_meta_data()->get_height();
 }
 
 int Frame::get_channels(int index) {
-    if (index == 0)
-        return m_channels;
-    msg_envelope_elem_body_t* channels = fetch_multi_frame_parameter(m_meta_data, index, "channels");
-    if (channels == NULL) {
-        throw "Unable to fetch channels in additional frames array";
+    if (index > (int) m_frames.size()) {
+        throw "Index out of range";
     }
-    if (channels->type != MSG_ENV_DT_INT) {
-        throw "channels not an integer";
-    }
-    return channels->body.integer;
+    return m_frames[index]->get_meta_data()->get_channels();
 }
 
 EncodeType Frame::get_encode_type(int index) {
-    if (index == 0)
-        return m_encode_type;
-    msg_envelope_elem_body_t* encoding_type = fetch_multi_frame_parameter(m_meta_data, index, "encoding_type");
-    if (encoding_type == NULL) {
-        throw "Unable to fetch encoding_type in additional frames array";
+    if (index > (int) m_frames.size()) {
+        throw "Index out of range";
     }
-    if (encoding_type->type != MSG_ENV_DT_STRING) {
-        throw "encoding_type not a string";
-    }
-    char* enc_type = encoding_type->body.string;
-    EncodeType encd_type = EncodeType::NONE;
-    if (strcmp(enc_type, "jpeg") == 0) {
-        encd_type = EncodeType::JPEG;
-        LOG_DEBUG_0("Encoding type is jpeg");
-    } else if (strcmp(enc_type, "png") == 0) {
-        encd_type = EncodeType::PNG;
-        LOG_DEBUG_0("Encoding type is png");
-    } else if (strcmp(enc_type, "none") == 0) {
-        LOG_DEBUG_0("Encoding disabled");
-    } else {
-        throw "Encoding type is not supported";
-    }
-    return encd_type;
+    return m_frames[index]->get_meta_data()->get_encode_type();
 }
 
 int Frame::get_encode_level(int index) {
-    if (index == 0)
-        return m_encode_level;
-    msg_envelope_elem_body_t* encoding_level = fetch_multi_frame_parameter(m_meta_data, index, "encoding_level");
-    if (encoding_level == NULL) {
-        throw "Unable to fetch encoding_level in additional frames array";
+    if (index > (int) m_frames.size()) {
+        throw "Index out of range";
     }
-    if (encoding_level->type != MSG_ENV_DT_INT) {
-        throw "encoding_level not an integer";
-    }
-    return encoding_level->body.integer;
+    return m_frames[index]->get_meta_data()->get_encode_level();
 }
 
 void* Frame::get_data(int index) {
@@ -401,770 +396,591 @@ void* Frame::get_data(int index) {
                 "Writable data method called after frame serialization");
         return NULL;
     }
-    return m_data[index];
+    if (index > (int) m_frames.size()) {
+        throw "Index out of range";
+    }
+    return m_frames[index]->get_data();
 }
 
 int Frame::get_number_of_frames() {
-    return m_num_frames;
+    return (int) m_frames.size();
 }
 
-bool Frame::set_multi_frame_parameters(int index, int width,
-                                       int height, int channels,
-                                       char* encoding_type,
-                                       int encoding_level) {
-    if (index == 0) {
-        this->m_width = width;
-        this->m_height = height;
-        this->m_channels = channels;
-        this->m_encode_level = encoding_level;
-        if (strcmp(encoding_type, "jpeg") == 0) {
-            m_encode_type = EncodeType::JPEG;
-            LOG_DEBUG_0("Encoding type is jpeg");
-        } else if (strcmp(encoding_type, "png") == 0) {
-            m_encode_type = EncodeType::PNG;
-            LOG_DEBUG_0("Encoding type is png");
-        } else {
-            throw "Encoding type is not supported";
-        }
-        return true;
-    }
-    msg_envelope_t* meta_data = this->get_meta_data();
-    if (meta_data == NULL) {
-        throw "Unable to fetch meta-data";
-    }
+void Frame::add_frame(
+        void* frame, void (*free_frame)(void*), void* data,
+        int width, int height, int channels, EncodeType encode_type,
+        int encode_level) {
     msgbus_ret_t ret = MSG_SUCCESS;
-    msg_envelope_elem_body_t* additional_frames = \
-        msgbus_msg_envelope_new_array();
-    if (additional_frames == NULL) {
-        msgbus_msg_envelope_elem_destroy(additional_frames);
-        throw "Unable to fetch meta-data";
-    }
+    msg_envelope_elem_body_t* obj = NULL;
+    std::string img_handle = generate_image_handle(UUID_LENGTH);
+    FrameMetaData* meta = new FrameMetaData(
+            img_handle, width, height, channels, encode_type, encode_level);
 
-    msg_envelope_elem_body_t* obj = msgbus_msg_envelope_new_object();
-    if (obj == NULL) {
-        msgbus_msg_envelope_elem_destroy(additional_frames);
-        msgbus_msg_envelope_elem_destroy(obj);
-        throw "Unable to fetch meta-data";
-    }
-    msg_envelope_elem_body_t* e_width = msgbus_msg_envelope_new_integer(width);
-    if (e_width == NULL) {
-        msgbus_msg_envelope_elem_destroy(additional_frames);
-        msgbus_msg_envelope_elem_destroy(obj);
-        msgbus_msg_envelope_elem_destroy(e_width);
-        throw "Unable to fetch meta-data";
-    }
-    ret = msgbus_msg_envelope_elem_object_put(obj, "width", e_width);
-    if (ret != MSG_SUCCESS) {
-        msgbus_msg_envelope_elem_destroy(additional_frames);
-        msgbus_msg_envelope_elem_destroy(obj);
-        msgbus_msg_envelope_elem_destroy(e_width);
-        throw "Unable to put width into meta-data";
-    }
-    msg_envelope_elem_body_t* e_height = \
-        msgbus_msg_envelope_new_integer(height);
-    if (e_height == NULL) {
-        msgbus_msg_envelope_elem_destroy(additional_frames);
-        msgbus_msg_envelope_elem_destroy(obj);
-        msgbus_msg_envelope_elem_destroy(e_width);
-        msgbus_msg_envelope_elem_destroy(e_height);
-        throw "Unable to fetch meta-data";
-    }
-    ret = msgbus_msg_envelope_elem_object_put(obj, "height", e_height);
-    if (ret != MSG_SUCCESS) {
-        msgbus_msg_envelope_elem_destroy(additional_frames);
-        msgbus_msg_envelope_elem_destroy(obj);
-        msgbus_msg_envelope_elem_destroy(e_width);
-        msgbus_msg_envelope_elem_destroy(e_height);
-        throw "Unable to put height into meta-data";
-    }
-    msg_envelope_elem_body_t* e_channels = \
-        msgbus_msg_envelope_new_integer(channels);
-    if (e_channels == NULL) {
-        msgbus_msg_envelope_elem_destroy(additional_frames);
-        msgbus_msg_envelope_elem_destroy(obj);
-        msgbus_msg_envelope_elem_destroy(e_width);
-        msgbus_msg_envelope_elem_destroy(e_height);
-        msgbus_msg_envelope_elem_destroy(e_channels);
-        throw "Unable to fetch meta-data";
-    }
-    ret = msgbus_msg_envelope_elem_object_put(obj, "channels", e_channels);
-    if (ret != MSG_SUCCESS) {
-        msgbus_msg_envelope_elem_destroy(additional_frames);
-        msgbus_msg_envelope_elem_destroy(obj);
-        msgbus_msg_envelope_elem_destroy(e_width);
-        msgbus_msg_envelope_elem_destroy(e_height);
-        msgbus_msg_envelope_elem_destroy(e_channels);
-        throw "Unable to put channels into meta-data";
-    }
-    msg_envelope_elem_body_t* e_encoding_type = \
-        msgbus_msg_envelope_new_string(encoding_type);
-    if (e_encoding_type == NULL) {
-        msgbus_msg_envelope_elem_destroy(additional_frames);
-        msgbus_msg_envelope_elem_destroy(obj);
-        msgbus_msg_envelope_elem_destroy(e_width);
-        msgbus_msg_envelope_elem_destroy(e_height);
-        msgbus_msg_envelope_elem_destroy(e_channels);
-        msgbus_msg_envelope_elem_destroy(e_encoding_type);
-        throw "Unable to fetch meta-data";
-    }
-    ret = msgbus_msg_envelope_elem_object_put(obj, "encoding_type",
-                                              e_encoding_type);
-    if (ret != MSG_SUCCESS) {
-        msgbus_msg_envelope_elem_destroy(additional_frames);
-        msgbus_msg_envelope_elem_destroy(obj);
-        msgbus_msg_envelope_elem_destroy(e_width);
-        msgbus_msg_envelope_elem_destroy(e_height);
-        msgbus_msg_envelope_elem_destroy(e_channels);
-        msgbus_msg_envelope_elem_destroy(e_encoding_type);
-        throw "Unable to put channels into meta-data";
-    }
-    msg_envelope_elem_body_t* e_encoding_level = \
-        msgbus_msg_envelope_new_integer(encoding_level);
-    if (e_encoding_level == NULL) {
-        msgbus_msg_envelope_elem_destroy(additional_frames);
-        msgbus_msg_envelope_elem_destroy(obj);
-        msgbus_msg_envelope_elem_destroy(e_width);
-        msgbus_msg_envelope_elem_destroy(e_height);
-        msgbus_msg_envelope_elem_destroy(e_channels);
-        msgbus_msg_envelope_elem_destroy(e_encoding_type);
-        msgbus_msg_envelope_elem_destroy(e_encoding_level);
-        throw "Unable to fetch meta-data";
-    }
-    ret = msgbus_msg_envelope_elem_object_put(obj, "encoding_level",
-                                              e_encoding_level);
-    if (ret != MSG_SUCCESS) {
-        msgbus_msg_envelope_elem_destroy(additional_frames);
-        msgbus_msg_envelope_elem_destroy(obj);
-        msgbus_msg_envelope_elem_destroy(e_width);
-        msgbus_msg_envelope_elem_destroy(e_height);
-        msgbus_msg_envelope_elem_destroy(e_channels);
-        msgbus_msg_envelope_elem_destroy(e_encoding_type);
-        msgbus_msg_envelope_elem_destroy(e_encoding_level);
-        throw "Unable to put channels into meta-data";
-    }
+    try {
+        if (this->get_number_of_frames() == 0) {
+            // Adding the first frame to the frame object
+            add_frame_meta_env(m_meta_data, meta);
+        } else {
+            msg_envelope_elem_body_t* obj = msgbus_msg_envelope_new_object();
+            if (obj == NULL) {
+                throw "Failed to initialize message envelope object";
+            }
+            add_frame_meta_obj(obj, meta);
 
-    ret = msgbus_msg_envelope_elem_array_add(additional_frames, obj);
-    if (ret != MSG_SUCCESS) {
-        msgbus_msg_envelope_elem_destroy(additional_frames);
-        msgbus_msg_envelope_elem_destroy(obj);
-        msgbus_msg_envelope_elem_destroy(e_width);
-        msgbus_msg_envelope_elem_destroy(e_height);
-        msgbus_msg_envelope_elem_destroy(e_channels);
-        msgbus_msg_envelope_elem_destroy(e_encoding_type);
-        msgbus_msg_envelope_elem_destroy(e_encoding_level);
-        throw "Unable to put channels into meta-data";
-    }
+            if (m_additional_frames_arr == NULL) {
+                // Need to create the additional array
+                m_additional_frames_arr = msgbus_msg_envelope_new_array();
+                if (m_additional_frames_arr == NULL) {
+                    throw "Failed to initialize additional_frames array";
+                }
 
-    ret = msgbus_msg_envelope_put(meta_data, "additional_frames",
-                                  additional_frames);
-    if (ret != MSG_SUCCESS) {
-        msgbus_msg_envelope_elem_destroy(additional_frames);
-        msgbus_msg_envelope_elem_destroy(obj);
-        msgbus_msg_envelope_elem_destroy(e_width);
-        msgbus_msg_envelope_elem_destroy(e_height);
-        msgbus_msg_envelope_elem_destroy(e_channels);
-        msgbus_msg_envelope_elem_destroy(e_encoding_type);
-        msgbus_msg_envelope_elem_destroy(e_encoding_level);
-        throw "Unable to put channels into meta-data";
+                // Add here so that the meta-data is not changed if adding the
+                // object to the array fails
+                ret = msgbus_msg_envelope_elem_array_add(
+                        m_additional_frames_arr, obj);
+                if (ret != MSG_SUCCESS) {
+                    msgbus_msg_envelope_elem_destroy(m_additional_frames_arr);
+                    m_additional_frames_arr = NULL;
+                    throw "Failed to add meta object to array";
+                }
+
+                ret = msgbus_msg_envelope_put(
+                        m_meta_data, "additional_frames",
+                        m_additional_frames_arr);
+                if (ret != MSG_SUCCESS) {
+                    msgbus_msg_envelope_elem_destroy(m_additional_frames_arr);
+                    m_additional_frames_arr = NULL;
+                    throw "Failed to add additional frames array to meta-data";
+                }
+            } else {
+                // No free needed for the array, because it previously existed
+                // in the meta data envelope, if this fails, no changes will
+                // have occurred to the underlying meta-data
+                ret = msgbus_msg_envelope_elem_array_add(
+                        m_additional_frames_arr, obj);
+                if (ret != MSG_SUCCESS) {
+                    throw "Failed to add meta object to array";
+                }
+            }
+        }
+
+        // Add the frame
+        FrameData* fd = new FrameData(frame, free_frame, data, meta);
+        this->m_frames.push_back(fd);
+    } catch (const char* ex) {
+        delete meta;
+        if (obj != NULL) {
+            msgbus_msg_envelope_elem_destroy(obj);
+        }
+        throw ex;
     }
-    return true;
+}
+
+// Helper defines to remove frame meta data from the root meta-data message
+// envelope or from the additional_frames meta-data array object.
+#define REMOVE_META(env, key) { \
+    ret = msgbus_msg_envelope_remove(env, key); \
+    if (ret != MSG_SUCCESS && ret != MSG_ERR_ELEM_NOT_EXIST) { \
+        LOG_ERROR("[%d] Failed to remove meta data: %s", ret,  key); \
+        throw "Failed to remove old meta-data key from envelope"; \
+    } \
+}
+#define REMOVE_META_OBJ(obj, key) { \
+    ret = msgbus_msg_envelope_elem_object_remove(obj, key); \
+    if (ret != MSG_SUCCESS && ret != MSG_ERR_ELEM_NOT_EXIST) { \
+        LOG_ERROR("[%d] Failed to remove meta data: %s", ret,  key); \
+        throw "Failed to remove old meta-data key from object"; \
+    } \
 }
 
 void Frame::set_data(
-        void* frame, int width, int height, int channels, void* data,
-        void (*free_frame)(void*), int index)
+        int index, void* frame, void (*free_frame)(void*), void* data,
+        int width, int height, int channels)
 {
     msgbus_ret_t ret = MSG_SUCCESS;
 
-    if(m_serialized.load()) {
+    if (index > this->get_number_of_frames() - 1) {
+        throw "Index out-of-range";
+    }
+
+    if (m_serialized.load()) {
         LOG_ERROR_0("Cannot set data after serialization");
         throw "Cannot set data after serialization";
     }
 
-    // Release old data
-    if(m_msg == NULL) {
-        LOG_DEBUG("Setting new free_Frame");
-        // Initialized from the first constructor
-        this->m_free_frame(this->m_frame);
-        this->m_free_frame = free_frame;
-    } else {
-        // This is a deserialized frame
-        // NOTE: This doing major surgery on the underlying data in the
-        // message envlope, this is not generally recommend and should
-        // probably be made better in the future
 
-        int len = width * height * channels;
+    // Replace the old frame data in m_frames and delete the old frame data
+    FrameData* old_fd = this->m_frames[index];
+    FrameMetaData* old_meta = old_fd->get_meta_data();
+
+    // Constructing the new FrameData
+    FrameMetaData* new_meta = new FrameMetaData(
+            old_meta->get_img_handle(),
+            width, height, channels,
+            old_meta->get_encode_type(),
+            old_meta->get_encode_level());
+    FrameData* new_fd = new FrameData(frame, free_frame, data, new_meta);
+
+    this->m_frames[index] = new_fd;
+
+    // Update the meta-data
+    // NOTE: An error here is somewhat irrecoverable
+    try {
         if (index == 0) {
-            if (m_encode_type != EncodeType::NONE) {
-                len = ((std::vector<uchar>*) frame)->size();
-            }
-        }
 
-        if (m_msg->blob->type == MSG_ENV_DT_BLOB) {
+            // Remove old values
+            REMOVE_META(m_meta_data, "img_handle");
+            REMOVE_META(m_meta_data, "width");
+            REMOVE_META(m_meta_data, "height");
+            REMOVE_META(m_meta_data, "channels");
+            REMOVE_META(m_meta_data, "encoding_type");
+            REMOVE_META(m_meta_data, "encoding_level");
 
-            // Create the new blob element
-            msg_envelope_elem_body_t* blob = msgbus_msg_envelope_new_blob(
-                    (char*) data, len);
-            if (blob == NULL) {
-                throw "Failed to initialize new blob in Frame::set_data()";
-            }
+            // Add the new meta-data values
+            add_frame_meta_env(m_meta_data, new_meta);
+        } else {
+            // Update meta-data in additional frames list
+            // NOTE: This is just a sanity check, THIS SHOULD NEVER HAPPEN
+            assert(m_additional_frames_arr != NULL);
 
-            // Destroy the old blob
-            msgbus_msg_envelope_elem_destroy(m_msg->blob);
-
-            // Set old blob to NULL so that it can be set again
-            m_msg->blob = NULL;
-
-            // Set correct ownership/blob pointers for memory management
-            blob->body.blob->shared->ptr = frame;
-            blob->body.blob->shared->free = free_frame;
-            blob->body.blob->shared->owned = true;
-
-            // Re-add the blob to the message envelope
-            ret = msgbus_msg_envelope_put(m_msg, NULL, blob);
-            if (ret != MSG_SUCCESS) {
-                throw "Failed to re-add new blob data to received msg envelope";
-            }
-        } else if (m_msg->blob->type == MSG_ENV_DT_ARRAY) {
-            // TODO
-            // Add a put_at method for linked_list and replace this
-            // way of resetting all blobs with that API
-
-            // Create the new blob element
-            msg_envelope_elem_body_t* blob = msgbus_msg_envelope_new_blob(
-                    (char*) data, len);
-            if (blob == NULL) {
-                throw "Failed to initialize new blob in Frame::set_data()";
+            // Construct new meta-data object
+            //
+            // NOTE: Getting index - 1, because index - is technically at the
+            // root level of the frame meta-data in the msg_envelope_t. In the
+            // additional frames meta-data, index "0" is technically "1".
+            msg_envelope_elem_body_t* obj =
+                msgbus_msg_envelope_elem_array_get_at(
+                    m_additional_frames_arr, index - 1);
+            if (obj == NULL) {
+                throw "Failed to get meta-data object";
             }
 
-            if (index == m_num_frames - 1) {
-                blob->body.blob->shared->ptr = frame;
-                blob->body.blob->shared->free = free_frame;
-            } else {
-                blob->body.blob->shared->ptr = frame;
-                blob->body.blob->shared->free = NULL;
-            }
+            // Remove old values
+            REMOVE_META_OBJ(obj, "img_handle");
+            REMOVE_META_OBJ(obj, "width");
+            REMOVE_META_OBJ(obj, "height");
+            REMOVE_META_OBJ(obj, "channels");
+            REMOVE_META_OBJ(obj, "encoding_type");
+            REMOVE_META_OBJ(obj, "encoding_level");
 
-            // Remove existing blob at index and re-add data to the end
-            ret = msgbus_msg_envelope_elem_array_remove_at(m_msg->blob, index);
-            if (ret != MSG_SUCCESS) {
-                throw "Failed to remove existing blob data from msg envelope";
-            }
-
-            ret = msgbus_msg_envelope_put(m_msg, NULL, blob);
-            if (ret != MSG_SUCCESS) {
-                throw "Failed to re-add new blob data to received msg envelope";
-            }
-        }
-    }
-
-    // Repoint all internal data structures
-    this->m_frame = frame;
-    this->m_data[index] = data;
-
-    // Add width
-    msg_envelope_elem_body_t* e_width = msgbus_msg_envelope_new_integer(
-            width);
-    if (e_width == NULL) {
-        msgbus_msg_envelope_elem_destroy(e_width);
-        throw "Failed to initialize width meta-data";
-    }
-
-    // Add height
-    msg_envelope_elem_body_t* e_height = msgbus_msg_envelope_new_integer(
-            height);
-    if (e_height == NULL) {
-        msgbus_msg_envelope_elem_destroy(e_width);
-        msgbus_msg_envelope_elem_destroy(e_height);
-        throw "Failed to initialize height meta-data";
-    }
-
-    // Add channels
-    msg_envelope_elem_body_t* e_channels = msgbus_msg_envelope_new_integer(
-            channels);
-    if (e_channels == NULL) {
-        msgbus_msg_envelope_elem_destroy(e_width);
-        msgbus_msg_envelope_elem_destroy(e_height);
-        msgbus_msg_envelope_elem_destroy(e_channels);
-        throw "Failed to initialize channels meta-data";
-    }
-
-    if (index == 0) {
-
-        this->m_width = width;
-        this->m_height = height;
-        this->m_channels = channels;
-
-        // Update meta-data for width, height, and channels
-        // Remove old meta-data
-        msgbus_msg_envelope_remove(m_meta_data, "width");
-        msgbus_msg_envelope_remove(m_meta_data, "height");
-        msgbus_msg_envelope_remove(m_meta_data, "channels");
-
-        ret = msgbus_msg_envelope_put(m_meta_data, "width", e_width);
-        if (ret != MSG_SUCCESS) {
-            msgbus_msg_envelope_elem_destroy(e_width);
-            msgbus_msg_envelope_elem_destroy(e_height);
-            msgbus_msg_envelope_elem_destroy(e_channels);
-            throw "Failed to put width meta-data";
+            // Add the new meta-data values
+            add_frame_meta_obj(obj, new_meta);
         }
 
-        ret = msgbus_msg_envelope_put(m_meta_data, "height", e_height);
-        if (ret != MSG_SUCCESS) {
-            msgbus_msg_envelope_elem_destroy(e_width);
-            msgbus_msg_envelope_elem_destroy(e_height);
-            msgbus_msg_envelope_elem_destroy(e_channels);
-            throw "Failed to put height meta-data";
-        }
-
-        ret = msgbus_msg_envelope_put(m_meta_data, "channels", e_channels);
-        if (ret != MSG_SUCCESS) {
-            msgbus_msg_envelope_elem_destroy(e_width);
-            msgbus_msg_envelope_elem_destroy(e_height);
-            msgbus_msg_envelope_elem_destroy(e_channels);
-            throw "Failed to put channels meta-data";
-        }
-    } else {
-        msg_envelope_elem_body_t* additional_frames_arr;
-        ret = msgbus_msg_envelope_get(m_meta_data, "additional_frames",
-                                      &additional_frames_arr);
-        if (ret != MSG_SUCCESS) {
-            msgbus_msg_envelope_elem_destroy(e_width);
-            msgbus_msg_envelope_elem_destroy(e_height);
-            msgbus_msg_envelope_elem_destroy(e_channels);
-            msgbus_msg_envelope_elem_destroy(additional_frames_arr);
-            throw "Failed to fetch additional_frames object";
-        }
-        if (additional_frames_arr->type != MSG_ENV_DT_ARRAY) {
-            throw "additional_frames type not an array";
-        }
-        // Remove existing blob at index and re-add data to the end
-        msg_envelope_elem_body_t* obj = \
-            msgbus_msg_envelope_elem_array_get_at(additional_frames_arr,
-                                                  (index - 1));
-        if (obj == NULL) {
-            msgbus_msg_envelope_elem_destroy(obj);
-            msgbus_msg_envelope_elem_destroy(e_width);
-            msgbus_msg_envelope_elem_destroy(e_height);
-            msgbus_msg_envelope_elem_destroy(e_channels);
-            msgbus_msg_envelope_elem_destroy(additional_frames_arr);
-            throw "Unable to fetch meta-data";
-        }
-        ret = msgbus_msg_envelope_elem_object_remove(obj, "width");
-        if (ret != MSG_SUCCESS) {
-            msgbus_msg_envelope_elem_destroy(obj);
-            msgbus_msg_envelope_elem_destroy(e_width);
-            msgbus_msg_envelope_elem_destroy(e_height);
-            msgbus_msg_envelope_elem_destroy(e_channels);
-            msgbus_msg_envelope_elem_destroy(additional_frames_arr);
-            throw "Failed to remove width object";
-        }
-        ret = msgbus_msg_envelope_elem_object_remove(obj, "height");
-        if (ret != MSG_SUCCESS) {
-            msgbus_msg_envelope_elem_destroy(obj);
-            msgbus_msg_envelope_elem_destroy(e_width);
-            msgbus_msg_envelope_elem_destroy(e_height);
-            msgbus_msg_envelope_elem_destroy(e_channels);
-            msgbus_msg_envelope_elem_destroy(additional_frames_arr);
-            throw "Failed to remove height object";
-        }
-        ret = msgbus_msg_envelope_elem_object_remove(obj, "channels");
-        if (ret != MSG_SUCCESS) {
-            msgbus_msg_envelope_elem_destroy(obj);
-            msgbus_msg_envelope_elem_destroy(e_width);
-            msgbus_msg_envelope_elem_destroy(e_height);
-            msgbus_msg_envelope_elem_destroy(e_channels);
-            msgbus_msg_envelope_elem_destroy(additional_frames_arr);
-            throw "Failed to remove channels object";
-        }
-
-        msg_envelope_elem_body_t* e_width = \
-            msgbus_msg_envelope_new_integer(width);
-        if (e_width == NULL) {
-            msgbus_msg_envelope_elem_destroy(obj);
-            msgbus_msg_envelope_elem_destroy(e_width);
-            msgbus_msg_envelope_elem_destroy(e_height);
-            msgbus_msg_envelope_elem_destroy(e_channels);
-            msgbus_msg_envelope_elem_destroy(additional_frames_arr);
-            throw "Unable to fetch meta-data";
-        }
-        ret = msgbus_msg_envelope_elem_object_put(obj, "width", e_width);
-        if (ret != MSG_SUCCESS) {
-            msgbus_msg_envelope_elem_destroy(obj);
-            msgbus_msg_envelope_elem_destroy(e_width);
-            msgbus_msg_envelope_elem_destroy(e_height);
-            msgbus_msg_envelope_elem_destroy(e_channels);
-            msgbus_msg_envelope_elem_destroy(additional_frames_arr);
-            throw "Unable to put width into meta-data";
-        }
-        msg_envelope_elem_body_t* e_height = \
-            msgbus_msg_envelope_new_integer(height);
-        if (e_height == NULL) {
-            msgbus_msg_envelope_elem_destroy(obj);
-            msgbus_msg_envelope_elem_destroy(e_width);
-            msgbus_msg_envelope_elem_destroy(e_height);
-            msgbus_msg_envelope_elem_destroy(e_channels);
-            msgbus_msg_envelope_elem_destroy(additional_frames_arr);
-            throw "Unable to fetch meta-data";
-        }
-        ret = msgbus_msg_envelope_elem_object_put(obj, "height", e_height);
-        if (ret != MSG_SUCCESS) {
-            msgbus_msg_envelope_elem_destroy(obj);
-            msgbus_msg_envelope_elem_destroy(e_width);
-            msgbus_msg_envelope_elem_destroy(e_height);
-            msgbus_msg_envelope_elem_destroy(e_channels);
-            msgbus_msg_envelope_elem_destroy(additional_frames_arr);
-            throw "Unable to put height into meta-data";
-        }
-        msg_envelope_elem_body_t* e_channels = \
-            msgbus_msg_envelope_new_integer(channels);
-        if (e_channels == NULL) {
-            msgbus_msg_envelope_elem_destroy(obj);
-            msgbus_msg_envelope_elem_destroy(e_width);
-            msgbus_msg_envelope_elem_destroy(e_height);
-            msgbus_msg_envelope_elem_destroy(e_channels);
-            msgbus_msg_envelope_elem_destroy(additional_frames_arr);
-            throw "Unable to fetch meta-data";
-        }
-        ret = msgbus_msg_envelope_elem_object_put(obj, "channels", e_channels);
-        if (ret != MSG_SUCCESS) {
-            msgbus_msg_envelope_elem_destroy(obj);
-            msgbus_msg_envelope_elem_destroy(e_width);
-            msgbus_msg_envelope_elem_destroy(e_height);
-            msgbus_msg_envelope_elem_destroy(e_channels);
-            msgbus_msg_envelope_elem_destroy(additional_frames_arr);
-            throw "Unable to put channels into meta-data";
-        }
+        // Release old data
+        delete old_fd;
+    } catch (const char* ex) {
+        delete old_fd;
+        throw ex;
     }
 }
 
-void Frame::set_encoding(EncodeType encode_type, int encode_level) {
+void Frame::set_encoding(EncodeType encode_type, int encode_level, int index) {
+    msgbus_ret_t ret = MSG_SUCCESS;
+    msg_envelope_elem_body_t* obj = NULL;
+
     if(!verify_encoding_level(encode_type, encode_level)) {
         throw "Invalid encoding level for the encoding type";
     }
-    this->m_encode_type = encode_type;
-    this->m_encode_level = encode_level;
-    msg_envelope_elem_body_t* encoding_type = NULL;
-    msg_envelope_elem_body_t* encoding_level = NULL;
-    msgbus_ret_t ret;
-    ret = msgbus_msg_envelope_get(
-            m_meta_data, "encoding_type", &encoding_type);
-    if(ret == MSG_SUCCESS) {
-        ret = msgbus_msg_envelope_remove(m_meta_data, "encoding_type");
-        if(ret != MSG_SUCCESS)
-            throw "Failed to remove \"encoding_type\" from the meta-data";
+
+    if (index > this->get_number_of_frames() - 1) {
+        throw "Index out-of-range";
     }
 
-    ret = msgbus_msg_envelope_get(
-            m_meta_data, "encoding_level", &encoding_level);
-    if(ret == MSG_SUCCESS) {
-        ret = msgbus_msg_envelope_remove(m_meta_data, "encoding_level");
-        if(ret != MSG_SUCCESS)
-            throw "Failed to remove \"encoding_level\" from the meta-data";
-    }
-
-    // Add encoding (if type is not NONE)
-    if(encode_type != EncodeType::NONE) {
-        msg_envelope_elem_body_t* e_enc_type = NULL;
-        if(encode_type == EncodeType::JPEG) {
-            e_enc_type = msgbus_msg_envelope_new_string("jpeg");
-        } else {
-            e_enc_type = msgbus_msg_envelope_new_string("png");
+    if (index != 0) {
+        obj = msgbus_msg_envelope_elem_array_get_at(
+                    m_additional_frames_arr, index);
+        if (obj == NULL) {
+            throw "Failed to get meta-data object for additional frame";
         }
-        if(e_enc_type == NULL) {
+    }
+
+    FrameMetaData* meta = this->m_frames[index]->get_meta_data();
+
+    if (meta->get_encode_type() != EncodeType::NONE) {
+        if (index == 0) {
+            REMOVE_META(m_meta_data, "encoding_type");
+            REMOVE_META(m_meta_data, "encoding_level");
+        } else {
+            REMOVE_META_OBJ(obj, "encoding_type");
+            REMOVE_META_OBJ(obj, "encoding_level");
+        }
+    }
+
+    // Set encoding on the meta data
+    meta->set_encoding(encode_type, encode_level);
+
+    if (encode_type != EncodeType::NONE) {
+        msg_envelope_elem_body_t* enc_type = NULL;
+        msg_envelope_elem_body_t* enc_level =
+            msgbus_msg_envelope_new_integer(encode_level);
+        if (enc_level == NULL) {
+            throw "Failed to intialize new envelope integer";
+        }
+
+        if(encode_type == EncodeType::JPEG) {
+            enc_type = msgbus_msg_envelope_new_string("jpeg");
+        } else {
+            enc_type = msgbus_msg_envelope_new_string("png");
+        }
+        if(enc_type == NULL) {
+            msgbus_msg_envelope_elem_destroy(enc_level);
             throw "Failed initialize encoding type meta-data";
         }
-        msg_envelope_elem_body_t* e_enc_lvl = msgbus_msg_envelope_new_integer(
-                encode_level);
-        if(e_enc_lvl == NULL) {
-            throw "Failed to initialize encoding level meta-data";
+
+        if (index == 0) {
+            ret = msgbus_msg_envelope_put(
+                    m_meta_data, "encoding_type", enc_type);
+            if (ret != MSG_SUCCESS) {
+                msgbus_msg_envelope_elem_destroy(enc_level);
+                msgbus_msg_envelope_elem_destroy(enc_type);
+                throw "Failed to put \"encoding_type\" in envelope";
+            }
+
+            ret = msgbus_msg_envelope_put(
+                    m_meta_data, "encoding_level", enc_level);
+            if (ret != MSG_SUCCESS) {
+                msgbus_msg_envelope_elem_destroy(enc_level);
+                throw "Failed to put \"encoding_type\" in envelope";
+            }
+        } else {
+            ret = msgbus_msg_envelope_elem_object_put(
+                    obj, "encoding_type", enc_type);
+            if (ret != MSG_SUCCESS) {
+                msgbus_msg_envelope_elem_destroy(enc_level);
+                msgbus_msg_envelope_elem_destroy(enc_type);
+                throw "Failed to put \"encoding_type\" in object";
+            }
+
+            ret = msgbus_msg_envelope_elem_object_put(
+                    obj, "encoding_level", enc_level);
+            if (ret != MSG_SUCCESS) {
+                msgbus_msg_envelope_elem_destroy(enc_level);
+                throw "Failed to put \"encoding_type\" in object";
+            }
         }
-        ret = msgbus_msg_envelope_put(m_meta_data, "encoding_type", e_enc_type);
-        if(ret != MSG_SUCCESS) {
-            throw "Failed to put encoding type in object";
-        }
-        ret = msgbus_msg_envelope_put(m_meta_data, "encoding_level", e_enc_lvl);
-        if(ret != MSG_SUCCESS) {
-            throw "Failed to put encoding level in object";
-        }
+    } else {
+        LOG_DEBUG("Removed encoding for frame: %d", index);
     }
 }
 
 msg_envelope_t* Frame::get_meta_data() {
-    if(m_serialized.load()) {
+    if (m_serialized.load()) {
         LOG_ERROR_0("Cannot get meta-data after frame serialization");
         return NULL;
     }
     return m_meta_data;
 }
 
-void Frame::encode_frame() {
-    LOG_DEBUG("Encoding the frame");
-    for (int i = 0; i < m_num_frames; i++) {
-        if (i == 0) {
-            std::vector<uchar>* encoded_bytes = new std::vector<uchar>();
-            std::vector<int> compression_params;
-            std::string ext;
-
-            // Build compression parameters
-            switch(m_encode_type) {
-                case EncodeType::JPEG:
-                    ext = ".jpeg";
-                    compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
-                    break;
-                case EncodeType::PNG:
-                    ext = ".png";
-                    compression_params.push_back(cv::IMWRITE_PNG_COMPRESSION);
-                    break;
-                case EncodeType::NONE:
-                default:
-                    delete encoded_bytes;
-                    return;
-            }
-
-            // Add encoding level (value depends on encoding type)
-            compression_params.push_back(m_encode_level);
-
-            // Construct cv::Mat from our frame
-            cv::Mat frame(m_height, m_width, CV_8UC(m_channels), m_data[0]);
-
-            // Execute the encode
-            bool success = cv::imencode(ext, frame, *encoded_bytes, compression_params);
-            if(!success) {
-                throw "Failed to encode the frame";
-            }
-
-            // Set the new data in the frame to correspond to the encoded buffer
-            if (m_num_frames > 1) {
-                // Setting free function to NULL since the entire frame and its
-                // contents will be destroyed by free called for last frame
-                this->set_data((void*) encoded_bytes, m_width, m_height, m_channels,
-                            encoded_bytes->data(), NULL, 0);
-            } else {
-                this->set_data((void*) encoded_bytes, m_width, m_height, m_channels,
-                            encoded_bytes->data(), free_encoded, 0);
-            }
-        } else {
-            std::vector<uchar>* encoded_bytes = new std::vector<uchar>();
-            std::vector<int> compression_params;
-            std::string ext;
-
-            // Build compression parameters
-            switch(this->get_encode_type(i)) {
-                case EncodeType::JPEG:
-                    ext = ".jpeg";
-                    compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
-                    break;
-                case EncodeType::PNG:
-                    ext = ".png";
-                    compression_params.push_back(cv::IMWRITE_PNG_COMPRESSION);
-                    break;
-                case EncodeType::NONE:
-                default:
-                    delete encoded_bytes;
-                    return;
-            }
-
-            // Add encoding level (value depends on encoding type)
-            compression_params.push_back(this->get_encode_level(i));
-
-            // Construct cv::Mat from our frame
-            cv::Mat frame(m_height, m_width, CV_8UC(m_channels), m_data[i]);
-
-            // Execute the encode
-            bool success = cv::imencode(ext, frame, *encoded_bytes, compression_params);
-            if(!success) {
-                throw "Failed to encode the frame";
-            }
-
-            // Set the new data in the frame to correspond to the encoded buffer
-            if (i == (m_num_frames - 1)) {
-                this->set_data((void*) encoded_bytes, m_width, m_height, m_channels,
-                               encoded_bytes->data(), free_encoded, i);
-            } else {
-                // Setting free function to NULL since the entire frame and its
-                // contents will be destroyed by free called for last frame
-                this->set_data((void*) encoded_bytes, m_width, m_height, m_channels,
-                               encoded_bytes->data(), NULL, i);
-            }
-        }
-    }
-}
-
 msg_envelope_t* Frame::serialize() {
+    msg_envelope_elem_body_t* blob = NULL;
+    msgbus_ret_t ret = MSG_SUCCESS;
+    FrameData* fd = NULL;
+
     if(m_serialized.load()) {
         LOG_ERROR_0("Frame has already been serialized");
         return NULL;
     }
 
-    if(m_encode_type != EncodeType::NONE) {
-        this->encode_frame();
-    }
+    // NOTE: Irrecoverable if an error occurs
+    m_serialized.store(true);
 
-    if(m_msg != NULL) {
-        // Message was deserialized
-        // Set the frame as serialized
-        m_serialized.store(true);
+    // Add all frames as blobs to the message envelope
+    for (int i = 0; i < this->get_number_of_frames(); i++) {
+        fd = this->m_frames[i];
+        fd->encode();
 
-        // Get the data blob for the frame data from the envelope to set the
-        // free function on the shared memory
-        msg_envelope_elem_body_t* blob = NULL;
-        msgbus_ret_t ret = msgbus_msg_envelope_get(m_msg, NULL, &blob);
-        if(ret != MSG_SUCCESS) {
-            throw "Failed to retrieve frame blob from  msg envelope";
-        } else if(blob->type == MSG_ENV_DT_BLOB) {
-
-            // Set the m_free_data member, because the next lines after m_free_data
-            // is set swap around the blob pointer and free functions so that the
-            // frame object is correctly destroyed along with the actual blob bytes
-            this->m_blob_ptr = (owned_blob_t**)malloc(sizeof(owned_blob_t*));
-            if (this->m_blob_ptr == NULL) {
-                throw "malloc failed for m_blob_ptr";
-            }
-            this->m_blob_ptr[0] = owned_blob_copy(blob->body.blob->shared);
-            if (this->m_blob_ptr[0] == NULL) {
-                free(this->m_blob_ptr);
-                throw "Failed to copy msg_envelope_t owned blob";
-            }
-
-            // Resetting blob shared memory free pointers
-            blob->body.blob->shared->ptr = this;
-            blob->body.blob->shared->free = Frame::msg_free_frame;
-            blob->body.blob->shared->owned = true;
-
-            // Set m_msg to NULL so that the Deserializable destructor does not
-            // call msgbus_msg_envelope_destroy() on the m_msg object. The reason
-            // we do not want that called is because the message bus itself will
-            // call the destroy method on the message envelope when the envelope
-            // has been transmitted over the message bus.
-            m_msg = NULL;
-
-            return m_meta_data;
-        } else if (blob->type == MSG_ENV_DT_ARRAY) {
-            int num_parts = blob->body.array->len;
-            for (int i = 0; i < num_parts; i++) {
-                msg_envelope_elem_body_t* arr_blob = \
-                    msgbus_msg_envelope_elem_array_get_at(blob, i);
-
-                // Set the m_free_data member, because the next lines after m_free_data
-                // is set swap around the blob pointer and free functions so that the
-                // frame object is correctly destroyed along with the actual blob bytes
-                this->m_blob_ptr = (owned_blob_t**)malloc(sizeof(owned_blob_t*));
-                if (this->m_blob_ptr == NULL) {
-                    throw "malloc failed for m_blob_ptr";
-                }
-                this->m_blob_ptr[i] = owned_blob_copy(arr_blob->body.blob->shared);
-                if (this->m_blob_ptr[i] == NULL) {
-                    free(this->m_blob_ptr);
-                    throw "Failed to copy msg_envelope_t owned blob";
-                }
-
-                // Resetting blob shared memory free pointers
-                arr_blob->body.blob->shared->ptr = this;
-                // Free this only for last blob and set to NULL for all other blobs
-                if (i == (num_parts - 1)) {
-                    arr_blob->body.blob->shared->free = Frame::msg_free_frame;
-                    arr_blob->body.blob->shared->owned = true;
-                } else {
-                    arr_blob->body.blob->shared->free = NULL;
-                    arr_blob->body.blob->shared->owned = false;
-                }
-            }
-            m_msg = NULL;
-
-            return m_meta_data;
-        }
-    } else {
-        for (int i = 0; i < m_num_frames; i++) {
-            msg_envelope_elem_body_t* frame = NULL;
-            msgbus_ret_t ret = MSG_SUCCESS;
-
-            int len = 0;
-            if (i == 0) {
-                len = m_width * m_height * m_channels;
-                if (m_encode_type != EncodeType::NONE) {
-                    len = ((std::vector<uchar>*) m_frame)->size();
-                }
-            } else {
-                msg_envelope_elem_body_t* additional_frames_arr;
-                ret = msgbus_msg_envelope_get(m_meta_data, "additional_frames",
-                                              &additional_frames_arr);
-                if (additional_frames_arr->type != MSG_ENV_DT_ARRAY) {
-                    throw "additional_frames type not an array";
-                }
-                msg_envelope_elem_body_t* af_arr_obj = \
-                    msgbus_msg_envelope_elem_array_get_at(additional_frames_arr, (i - 1));
-                if (af_arr_obj == NULL) {
-                    throw "af_arr_obj is NULL";
-                }
-                if (af_arr_obj->type != MSG_ENV_DT_OBJECT) {
-                    throw "af_arr_obj type should be MSG_ENV_DT_OBJECT";
-                }
-                msg_envelope_elem_body_t* frame_width = \
-                    msgbus_msg_envelope_elem_object_get(af_arr_obj, "width");
-                if (frame_width == NULL || frame_width->type != MSG_ENV_DT_INT) {
-                    throw "frame_width is NULL";
-                }
-                msg_envelope_elem_body_t* frame_height = \
-                    msgbus_msg_envelope_elem_object_get(af_arr_obj, "height");
-                if (frame_height == NULL || frame_height->type != MSG_ENV_DT_INT) {
-                    throw "frame_height is NULL";
-                }
-                msg_envelope_elem_body_t* frame_channels = \
-                    msgbus_msg_envelope_elem_object_get(af_arr_obj, "channels");
-                if (frame_channels == NULL || frame_channels->type != MSG_ENV_DT_INT) {
-                    throw "frame_channels is NULL";
-                }
-                len = frame_width->body.integer * frame_height->body.integer * frame_channels->body.integer;
-            }
-
-            frame = msgbus_msg_envelope_new_blob((char*) m_data[i], len);
-            if (frame == NULL) {
-                throw "Failed to initialize blob for frame data";
-            }
-
-            // Set the blob free methods
-            frame->body.blob->shared->ptr = (void*) this;
-            // Free this only for last blob and set to NULL for all other blobs
-            if (i == m_num_frames-1) {
-                frame->body.blob->shared->free = Frame::msg_free_frame;
-            } else {
-                frame->body.blob->shared->free = NULL;
-            }
-
-            ret = msgbus_msg_envelope_put(
-                    m_meta_data, NULL, frame);
-            if(ret != MSG_SUCCESS) {
-                LOG_ERROR_0("Failed to put frame data into envelope");
-
-                // Set owned flag to false, so that the frame's data is not
-                // freed yet...
-                frame->body.blob->shared->owned = false;
-                msgbus_msg_envelope_elem_destroy(frame);
-
-                return NULL;
-            }
+        blob = msgbus_msg_envelope_new_blob(
+                (char*) fd->get_data(), fd->get_size());
+        if (blob == NULL) {
+            // TODO(kmidkiff): Need to manage memory freeing for this error
+            LOG_ERROR_0("Failed to initialize new blob");
+            throw "Failed to initialize new blob";
         }
 
-        // Set the frame as serialized
-        m_serialized.store(true);
+        // Set the ownership principles
+        blob->body.blob->shared->ptr = (void*) fd;
+        blob->body.blob->shared->owned = true;
+        if (i == (this->get_number_of_frames() - 1)) {
+            // Last blob is responsible for making sure the Frame object
+            // itself also gets deleted
+            FinalFreeWrapper* ffw = new FinalFreeWrapper(this, fd);
+            blob->body.blob->shared->ptr = (void*) ffw;
+            blob->body.blob->shared->free = free_frame_data_final;
+        } else {
+            blob->body.blob->shared->free = free_frame_data;
+        }
 
-        return m_meta_data;
+        ret = msgbus_msg_envelope_put(m_meta_data, NULL, blob);
+        if (ret != MSG_SUCCESS) {
+            // TODO(kmidkiff): Need to manage freeing of memory for this error
+            LOG_ERROR("Failed to put blob: %d", ret);
+            throw "Failed to add blob to message envelope";
+        }
+        blob = NULL;
     }
+
+    msg_envelope_t* msg = m_meta_data;
+    m_meta_data = NULL;
+    m_frames.clear();
+
+    return msg;
 }
 
-void free_decoded(void* varg) {
+static void free_decoded(void* varg) {
     // Does nothing... Since the memory is managed by the cv::Mat itself
     cv::Mat* frame = (cv::Mat*) varg;
     delete frame;
 }
 
-void free_encoded(void* varg) {
+static void free_encoded(void* varg) {
     std::vector<uchar>* encoded_bytes = (std::vector<uchar>*) varg;
     delete encoded_bytes;
 }
 
-bool verify_encoding_level(EncodeType encode_type, int encode_level) {
+static void free_msg_env_blob(void* varg) {
+    msg_envelope_elem_body_t* elem = (msg_envelope_elem_body_t*) varg;
+    msgbus_msg_envelope_elem_destroy(elem);
+}
+
+static void free_frame_data(void* varg) {
+    FrameData* fd = (FrameData*) varg;
+    delete fd;
+}
+
+
+static void free_frame_data_final(void* varg) {
+    FinalFreeWrapper* ffw = (FinalFreeWrapper*) varg;
+    delete ffw;
+}
+
+static void add_frame_meta_env(msg_envelope_t* env, FrameMetaData* meta) {
+    msg_envelope_elem_body_t* e_width = NULL;
+    msg_envelope_elem_body_t* e_height = NULL;
+    msg_envelope_elem_body_t* e_channels = NULL;
+    msg_envelope_elem_body_t* e_enc_type = NULL;
+    msg_envelope_elem_body_t* e_enc_lvl = NULL;
+    msg_envelope_elem_body_t* e_img_handle = NULL;
+    msgbus_ret_t ret = MSG_SUCCESS;
+
+    try {
+        // Add frame details to meta data
+        e_img_handle = msgbus_msg_envelope_new_string(
+                meta->get_img_handle().c_str());
+        if (e_img_handle == NULL) {
+            throw "Failed to initialize img_handle meta-data";
+        }
+        ret = msgbus_msg_envelope_put(env, "img_handle", e_img_handle);
+        if (ret != MSG_SUCCESS) {
+            throw "Failed to put img_handle meta-data";
+        }
+        e_img_handle = NULL;
+
+        e_width = msgbus_msg_envelope_new_integer(meta->get_width());
+        if(e_width == NULL) {
+            throw "Failed to initialize width meta-data";
+        }
+        ret = msgbus_msg_envelope_put(env, "width", e_width);
+        if(ret != MSG_SUCCESS) {
+            LOG_ERROR("Failed to put width meta-data: %d", ret);
+            throw "Failed to put width meta-data";
+        }
+
+        // Setting to NULL because the envelope owns the memory now, if an
+        // error happens after this, then it does not need to be freed in the
+        // error case (because when the env is freed it will be freed).
+        e_width = NULL;
+
+        // Add height
+        e_height = msgbus_msg_envelope_new_integer(meta->get_height());
+        if(e_height == NULL) {
+            throw "Failed to initialize height meta-data";
+        }
+        ret = msgbus_msg_envelope_put(env, "height", e_height);
+        if(ret != MSG_SUCCESS) {
+            throw "Failed to put height meta-data";
+        }
+        e_height = NULL;
+
+        // Add channels
+        e_channels = msgbus_msg_envelope_new_integer(meta->get_channels());
+        if(e_channels == NULL) {
+            throw "Failed to initialize channels meta-data";
+        }
+        ret = msgbus_msg_envelope_put(env, "channels", e_channels);
+        if(ret != MSG_SUCCESS) {
+            throw "Failed to put channels meta-data";
+        }
+        e_channels = NULL;
+
+        // Add encoding (if type is not NONE)
+        if(meta->get_encode_type() != EncodeType::NONE) {
+            if(meta->get_encode_type() == EncodeType::JPEG) {
+                e_enc_type = msgbus_msg_envelope_new_string("jpeg");
+            } else {
+                e_enc_type = msgbus_msg_envelope_new_string("png");
+            }
+            if(e_enc_type == NULL) {
+                throw "Failed initialize encoding type meta-data";
+            }
+            ret = msgbus_msg_envelope_put(env, "encoding_type", e_enc_type);
+            if(ret != MSG_SUCCESS) {
+                throw "Failed to put encoding type in object";
+            }
+            e_enc_type = NULL;
+
+            e_enc_lvl = msgbus_msg_envelope_new_integer(
+                    meta->get_encode_level());
+            if(e_enc_lvl == NULL) {
+                throw "Failed to initialize encoding level meta-data";
+            }
+            ret = msgbus_msg_envelope_put(env, "encoding_level", e_enc_lvl);
+            if(ret != MSG_SUCCESS) {
+                throw "Failed to put encoding level in object";
+            }
+            e_enc_lvl = NULL;
+        }
+    } catch (const char* ex) {
+        // Free allocated memory
+        if (e_img_handle != NULL) {
+            msgbus_msg_envelope_elem_destroy(e_img_handle);
+        }
+        if (e_width != NULL) {
+            msgbus_msg_envelope_elem_destroy(e_width);
+        }
+        if (e_height != NULL) {
+            msgbus_msg_envelope_elem_destroy(e_height);
+        }
+        if (e_channels != NULL) {
+            msgbus_msg_envelope_elem_destroy(e_channels);
+        }
+        if (e_enc_type != NULL) {
+            msgbus_msg_envelope_elem_destroy(e_enc_type); }
+        if (e_enc_lvl != NULL) {
+            msgbus_msg_envelope_elem_destroy(e_enc_lvl);
+        }
+
+        // Re-throw the exception
+        throw ex;
+    }
+}
+
+static void add_frame_meta_obj(
+        msg_envelope_elem_body_t* obj, FrameMetaData* meta) {
+    msg_envelope_elem_body_t* e_width = NULL;
+    msg_envelope_elem_body_t* e_height = NULL;
+    msg_envelope_elem_body_t* e_channels = NULL;
+    msg_envelope_elem_body_t* e_enc_type = NULL;
+    msg_envelope_elem_body_t* e_enc_lvl = NULL;
+    msg_envelope_elem_body_t* e_img_handle = NULL;
+    msgbus_ret_t ret = MSG_SUCCESS;
+
+    try {
+        // Add frame details to meta data
+        e_img_handle = msgbus_msg_envelope_new_string(
+                meta->get_img_handle().c_str());
+        if (e_img_handle == NULL) {
+            throw "Failed to initialize img_handle meta-data";
+        }
+        ret = msgbus_msg_envelope_elem_object_put(
+                obj, "img_handle", e_img_handle);
+        if (ret != MSG_SUCCESS) {
+            throw "Failed to put img_handle meta-data";
+        }
+        e_img_handle = NULL;
+
+        e_width = msgbus_msg_envelope_new_integer(meta->get_width());
+        if(e_width == NULL) {
+            throw "Failed to initialize width meta-data";
+        }
+        ret = msgbus_msg_envelope_elem_object_put(obj, "width", e_width);
+        if(ret != MSG_SUCCESS) {
+            throw "Failed to put width meta-data";
+        }
+
+        // Setting to NULL because the envelope owns the memory now, if an
+        // error happens after this, then it does not need to be freed in the
+        // error case (because when the env is freed it will be freed).
+        e_width = NULL;
+
+        // Add height
+        e_height = msgbus_msg_envelope_new_integer(meta->get_height());
+        if(e_height == NULL) {
+            throw "Failed to initialize height meta-data";
+        }
+        ret = msgbus_msg_envelope_elem_object_put(obj, "height", e_height);
+        if(ret != MSG_SUCCESS) {
+            throw "Failed to put height meta-data";
+        }
+        e_height = NULL;
+
+        // Add channels
+        e_channels = msgbus_msg_envelope_new_integer(meta->get_channels());
+        if(e_channels == NULL) {
+            throw "Failed to initialize channels meta-data";
+        }
+        ret = msgbus_msg_envelope_elem_object_put(obj, "channels", e_channels);
+        if(ret != MSG_SUCCESS) {
+            throw "Failed to put channels meta-data";
+        }
+        e_channels = NULL;
+
+        if (meta->get_encode_type() != EncodeType::NONE) {
+            if(meta->get_encode_type() == EncodeType::JPEG) {
+                e_enc_type = msgbus_msg_envelope_new_string("jpeg");
+            } else {
+                e_enc_type = msgbus_msg_envelope_new_string("png");
+            }
+            if(e_enc_type == NULL) {
+                throw "Failed initialize encoding type meta-data";
+            }
+            ret = msgbus_msg_envelope_elem_object_put(
+                    obj, "encoding_type", e_enc_type);
+            if(ret != MSG_SUCCESS) {
+                throw "Failed to put encoding type in object";
+            }
+            e_enc_type = NULL;
+
+            e_enc_lvl = msgbus_msg_envelope_new_integer(
+                    meta->get_encode_level());
+            if(e_enc_lvl == NULL) {
+                throw "Failed to initialize encoding level meta-data";
+            }
+            ret = msgbus_msg_envelope_elem_object_put(
+                    obj, "encoding_level", e_enc_lvl);
+            if(ret != MSG_SUCCESS) {
+                throw "Failed to put encoding level in object";
+            }
+            e_enc_lvl = NULL;
+        }
+    } catch (const char* ex) {
+        // Free allocated memory
+        if (e_img_handle != NULL) {
+            msgbus_msg_envelope_elem_destroy(e_img_handle);
+        }
+        if (e_width != NULL) {
+            msgbus_msg_envelope_elem_destroy(e_width);
+        }
+        if (e_height != NULL) {
+            msgbus_msg_envelope_elem_destroy(e_height);
+        }
+        if (e_channels != NULL) {
+            msgbus_msg_envelope_elem_destroy(e_channels);
+        }
+        if (e_enc_type != NULL) {
+            msgbus_msg_envelope_elem_destroy(e_enc_type);
+        }
+        if (e_enc_lvl != NULL) {
+            msgbus_msg_envelope_elem_destroy(e_enc_lvl);
+        }
+
+        // Re-throw the exception
+        throw ex;
+    }
+}
+
+
+static bool verify_encoding_level(EncodeType encode_type, int encode_level) {
     switch(encode_type) {
         case EncodeType::JPEG: return encode_level >= 0 && encode_level <= 100;
         case EncodeType::PNG:  return encode_level >= 0 && encode_level <= 9;
@@ -1173,3 +989,149 @@ bool verify_encoding_level(EncodeType encode_type, int encode_level) {
     }
 }
 
+static cv::Mat* decode_frame(
+        EncodeType encode_type, uchar* encoded_data, size_t len) {
+    // Construct vector of bytes to pass to cv::imdecode
+    std::vector<uchar> data;
+    data.assign(encoded_data, encoded_data + len);
+
+    // Decode the frame
+    // TODO: Should we always decode as color?
+    cv::Mat* decoded = new cv::Mat();
+    *decoded = cv::imdecode(data, cv::IMREAD_COLOR);
+    if(decoded->empty()) {
+        delete decoded;
+        throw "Failed to decode the encoded frame";
+    }
+    data.clear();
+
+    return decoded;
+}
+
+FrameMetaData::FrameMetaData(
+        std::string img_handle, int width, int height, int channels,
+        EncodeType encode_type, int encode_level) :
+    m_img_handle(img_handle), m_width(width), m_height(height),
+    m_channels(channels), m_encode_type(encode_type),
+    m_encode_level(encode_level)
+{
+    if (!verify_encoding_level(encode_type, encode_level)) {
+        throw "Invalid encode type/level combination";
+    }
+}
+
+FrameMetaData::~FrameMetaData() {}
+
+void FrameMetaData::set_width(int width) { m_width = width; }
+void FrameMetaData::set_height(int height) { m_height = height; }
+void FrameMetaData::set_channels(int channels) { m_channels = channels; }
+void FrameMetaData::set_encoding(EncodeType encode_type, int encode_level) {
+    if (!verify_encoding_level(encode_type, encode_level)) {
+        throw "Invalid encoding type/level";
+    }
+    m_encode_type = encode_type;
+    m_encode_level = encode_level;
+}
+
+std::string FrameMetaData::get_img_handle() { return m_img_handle; }
+int FrameMetaData::get_width() { return m_width; }
+int FrameMetaData::get_height() { return m_height; }
+int FrameMetaData::get_channels() { return m_channels; }
+EncodeType FrameMetaData::get_encode_type() { return m_encode_type; }
+int FrameMetaData::get_encode_level() { return m_encode_level; }
+
+FrameData::FrameData(
+        void* frame, void (*free_frame)(void*), void* data,
+        FrameMetaData* meta) :
+    m_meta(meta), m_frame(frame), m_data(data), m_free_frame(free_frame)
+{
+    m_size = meta->get_width() * meta->get_height() * meta->get_channels();
+}
+
+FrameData::~FrameData() {
+    delete m_meta;
+    if (this->m_free_frame != NULL) {
+        this->m_free_frame(this->m_frame);
+    }
+}
+
+FrameMetaData* FrameData::get_meta_data() { return m_meta; }
+void* FrameData::get_data() { return m_data; }
+size_t FrameData::get_size() { return m_size; }
+
+void FrameData::encode() {
+    std::vector<uchar>* encoded_bytes = new std::vector<uchar>();
+    std::vector<int> compression_params;
+    std::string ext;
+
+    // Build compression parameters
+    switch(m_meta->get_encode_type()) {
+        case EncodeType::JPEG:
+            ext = ".jpeg";
+            compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
+            break;
+        case EncodeType::PNG:
+            ext = ".png";
+            compression_params.push_back(cv::IMWRITE_PNG_COMPRESSION);
+            break;
+        case EncodeType::NONE:
+        default:
+            delete encoded_bytes;
+            return;
+    }
+
+    // Add encoding level (value depends on encoding type)
+    compression_params.push_back(m_meta->get_encode_level());
+
+    // Construct cv::Mat from our frame
+    cv::Mat frame(
+            m_meta->get_height(), m_meta->get_width(),
+            CV_8UC(m_meta->get_channels()), m_data);
+
+    // Execute the encode
+    bool ret = cv::imencode(ext, frame, *encoded_bytes, compression_params);
+    if(!ret) {
+        delete encoded_bytes;
+        throw "Failed to encode the frame";
+    }
+
+    // Free old data
+    if (this->m_free_frame != NULL) {
+        this->m_free_frame(this->m_frame);
+    }
+
+    // Setup new internal state
+    this->m_frame = (void*) encoded_bytes;
+    this->m_data = (void*) encoded_bytes->data();
+    this->m_free_frame = free_encoded;
+    this->m_size = encoded_bytes->size();
+}
+
+static EncodeType str_to_encode_type(const char* val) {
+    int ind_jpeg = 0;
+    int ind_png = 0;
+    size_t len = strlen(val);
+
+    strcmp_s(val, len, "jpeg", &ind_jpeg);
+    strcmp_s(val, len, "png", &ind_png);
+
+    if (ind_jpeg == 0) { return EncodeType::JPEG; }
+    if (ind_png == 0) { return EncodeType::PNG; }
+
+    throw "Unknown encode type";
+}
+
+static std::string generate_image_handle(int len) {
+    std::stringstream ss;
+    for (auto i = 0; i < len; i++) {
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_int_distribution<> dis(0, 255);
+        const auto rc = dis(gen);
+        std::stringstream hexstream;
+        hexstream << std::hex << rc;
+        auto hex = hexstream.str();
+        ss << (hex.length() < 2 ? '0' + hex : hex);
+    }
+    return ss.str();
+}

@@ -64,6 +64,14 @@ file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/py_tests/"
     DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/py_tests")
 file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/test_udf_mgr_same_frame.json"
      DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
+file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/test_udf_load_native_same_frame.json"
+     DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
+file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/test_udf_load_native_resize.json"
+     DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
+file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/test_udf_load_raw_native_same_frame.json"
+     DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
+file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/test_udf_load_raw_native_resize.json"
+     DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
 add_executable(udfloader-tests "udfloader_tests.cpp")
 target_link_libraries(udfloader-tests eiiudfloader gtest_main)
 add_test(NAME udfloader-tests COMMAND udfloader-tests)
@@ -75,8 +83,19 @@ target_link_libraries(frame-tests eiiudfloader gtest_main)
 add_test(NAME frame-tests COMMAND frame-tests)
 
 # Compile native UDF for testing the "same frame" issue
-add_library(same_frame SHARED "native_tests/same_frame.cpp")
-target_link_libraries(same_frame
+add_library(native_udf SHARED "native_tests/native_udf.cpp")
+target_link_libraries(native_udf
+    PUBLIC
+        ${UDFLoader_LIBRARIES}
+        ${EIIMsgEnv_LIBRARIES}
+        ${EIIUtils_LIBRARIES}
+    PRIVATE
+        ${IntelSafeString_LIBRARIES}
+        ${OpenCV_LIBRARIES})
+
+# Compile native UDF for testing the "same frame" issue
+add_library(raw_native_udf SHARED "native_tests/raw_native_udf.cpp")
+target_link_libraries(raw_native_udf
     PUBLIC
         ${UDFLoader_LIBRARIES}
         ${EIIMsgEnv_LIBRARIES}

@@ -1,27 +1,27 @@
-    // Copyright (c) 2021 Intel Corporation.
-    //
-    // Permission is hereby granted, free of charge, to any person obtaining a copy
-    // of this software and associated documentation files (the "Software"), to
-    // deal in the Software without restriction, including without limitation the
-    // rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
-    // sell copies of the Software, and to permit persons to whom the Software is
-    // furnished to do so, subject to the following conditions:
-    //
-    // The above copyright notice and this permission notice shall be included in
-    // all copies or substantial portions of the Software.
-    //
-    // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-    // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-    // FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-    // AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-    // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-    // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
-    // IN THE SOFTWARE.
+// Copyright (c) 2021 Intel Corporation.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to
+// deal in the Software without restriction, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+// sell copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+// IN THE SOFTWARE.
 
-    /**
-     * @file
-     * @brief RealSense UDF Implementation
-     */
+/**
+* @file
+* @brief RealSense UDF Implementation
+*/
 
 #include <eii/udf/raw_base_udf.h>
 #include <eii/utils/logger.h>
@@ -33,147 +33,141 @@
 #define COLOR_BYTES_PER_PIXEL 3
 #define DEPTH_BYTES_PER_PIXEL 2
 #define COLOR_FRAME_CHANNELS 3
-    // This is the order in which EII ingestion pushes frame.
+// This is the order in which EII ingestion pushes frame.
 #define RGB_FRAME_INDEX 0
 #define DEPTH_FRAME_INDEX 1
 
-    using namespace eii::udf;
-    using namespace cv;
+using namespace eii::udf;
+using namespace cv;
 
-    // Software_device can be used to generate frames from synthetic or
-    // external sources and pass them into SDK processing functionality.
-    // Create software-only device
-    rs2::software_device dev;
+// Software_device can be used to generate frames from synthetic or
+// external sources and pass them into SDK processing functionality.
+// Create software-only device
+rs2::software_device dev;
 
-    // Define sensor for respective stream
-    auto depth_sensor = dev.add_sensor("Depth");
-    auto color_sensor = dev.add_sensor("Color");
+// Define sensor for respective stream
+auto depth_sensor = dev.add_sensor("Depth");
+auto color_sensor = dev.add_sensor("Color");
 
-    namespace eii {
-        namespace udfsamples {
+namespace eii {
+    namespace udfsamples {
 
         /**
-         * The RealSense UDF
-         */
-            class RealSenseUdf : public RawBaseUdf {
-                private:
-                    // Depth intrinsics width
-                    int m_depth_width;
+        * The RealSense UDF
+        */
+        class RealSenseUdf : public RawBaseUdf {
+            private:
+                // Depth intrinsics width
+                int m_depth_width;
 
-                    // Depth intrinsics height
-                    int m_depth_height;
+                // Depth intrinsics height
+                int m_depth_height;
 
-                    // Depth intrinsics x-principal-point
-                    float m_depth_ppx;
+                // Depth intrinsics x-principal-point
+                float m_depth_ppx;
 
-                    // Depth intrinsics y-principal-point
-                    float m_depth_ppy;
+                // Depth intrinsics y-principal-point
+                float m_depth_ppy;
 
-                    // Depth intrinsics x-focal-point
-                    float m_depth_fx;
+                // Depth intrinsics x-focal-point
+                float m_depth_fx;
 
-                    // Depth intrinsics y-focal-point
-                    float m_depth_fy;
+                // Depth intrinsics y-focal-point
+                float m_depth_fy;
 
-                    // Depth intrinsics model
-                    int m_depth_model;
+                // Depth intrinsics model
+                int m_depth_model;
 
-                    // Color intrinsics width
-                    int m_color_width;
+                // Color intrinsics width
+                int m_color_width;
 
-                    // Color instrinsics height
-                    int m_color_height;
+                // Color instrinsics height
+                int m_color_height;
 
-                    // Color intrinsics x-principal-point
-                    float m_color_ppx;
+                // Color intrinsics x-principal-point
+                float m_color_ppx;
 
-                    // Color intrinsics y-prinpical-point
-                    float m_color_ppy;
+                // Color intrinsics y-prinpical-point
+                float m_color_ppy;
 
-                    // Color intrinsics x-focal-point
-                    float m_color_fx;
+                // Color intrinsics x-focal-point
+                float m_color_fx;
 
-                    // Color intrinsics y-focal-point
-                    float m_color_fy;
+                // Color intrinsics y-focal-point
+                float m_color_fy;
 
-                    // Color intrinsics model
-                    int m_color_model;
+                // Color intrinsics model
+                int m_color_model;
 
-                    // Frame number for synchronization
-                    int m_frame_number;
+                // Frame number for synchronization
+                int m_frame_number;
 
-                    // Frame struct
-                    struct software_device_frame
-                    {
-                        int x, y, bpp;
-                        std::vector<uint8_t> frame;
-                    };
+                // Frame struct
+                struct software_device_frame
+                {
+                    int x, y, bpp;
+                    std::vector<uint8_t> frame;
+                };
 
-                    software_device_frame m_sw_depth_frame;
-                    software_device_frame m_sw_color_frame;
+                software_device_frame m_sw_depth_frame;
+                software_device_frame m_sw_color_frame;
 
-                    // For storing the profile of stream
-                    rs2::stream_profile m_depth_stream;
-                    rs2::stream_profile m_color_stream;
+                // For storing the profile of stream
+                rs2::stream_profile m_depth_stream;
+                rs2::stream_profile m_color_stream;
 
-                    // For Synchronizing frames using the syncer class
-                    rs2::syncer m_sync;
+                // For Synchronizing frames using the syncer class
+                rs2::syncer m_sync;
 
-                    // Colorizing the depth frame.
-                    rs2::colorizer color_map;
+                // Colorizing the depth frame.
+                rs2::colorizer color_map;
 
-                public:
-                    RealSenseUdf(config_t* config): RawBaseUdf(config) {
+            public:
+                RealSenseUdf(config_t* config): RawBaseUdf(config) {
 
-                        m_frame_number = 0;
+                    m_frame_number = 0;
 
-                    };
+                };
 
-                    ~RealSenseUdf() {};
+                ~RealSenseUdf() {};
 
-                    void free_cv_frame(void* obj) {
-                        cv::Mat* frame = (cv::Mat*) obj;
-                        frame->release();
-                        delete frame;
+                UdfRetCode process(Frame* frame) override {
+
+                    LOG_DEBUG_0("Inside RealSense UDF process function");
+
+                    set_rs2_intrinsics_and_extrinsics(frame->get_meta_data());
+
+                    void* color_frame = frame->get_data(RGB_FRAME_INDEX);
+                    if (color_frame == NULL) {
+                        LOG_ERROR_0("color_frame is NULL");
+                    }
+                    void* depth_frame = frame->get_data(DEPTH_FRAME_INDEX);
+                    if (depth_frame == NULL) {
+                        LOG_ERROR_0("depth_frame is NULL");
                     }
 
-                    UdfRetCode process(Frame* frame) override {
+                    rs2::frameset fset = construct_rs2_frameset(color_frame, depth_frame);
 
-                        LOG_DEBUG_0("Inside RealSense UDF process function");
+                    ++m_frame_number;
 
-                        set_rs2_intrinsics_and_extrinsics(frame->get_meta_data());
+                    // Return first found frame for the stream specified
+                    rs2::depth_frame rs2_depth = fset.first_or_default(RS2_STREAM_DEPTH);
+                    rs2::video_frame rs2_color = fset.first_or_default(RS2_STREAM_COLOR);
+                    if ((rs2_depth == NULL) || (rs2_color == NULL)) {
+                        LOG_ERROR_0("The color or depth frame returned NULL");
+                    }
 
-                        void* color_frame = frame->get_data(RGB_FRAME_INDEX);
-                        if (color_frame == NULL) {
-                            LOG_ERROR_0("color_frame is NULL");
-                        }
-                        void* depth_frame = frame->get_data(DEPTH_FRAME_INDEX);
-                        if (depth_frame == NULL) {
-                            LOG_ERROR_0("depth_frame is NULL");
-                        }
+                    // Do processing on depth frame
+                    const int width = rs2_depth.as<rs2::video_frame>().get_width();
+                    const int height = rs2_depth.as<rs2::video_frame>().get_height();
+                    cv::Mat* image = new cv::Mat(Size(width, height), CV_8UC3, (void*)rs2_depth.apply_filter(color_map).get_data(), Mat::AUTO_STEP);
 
-                        rs2::frameset fset = construct_rs2_frameset(color_frame, depth_frame);
-
-                        ++m_frame_number;
-
-                        // Return first found frame for the stream specified
-                        rs2::depth_frame rs2_depth = fset.first_or_default(RS2_STREAM_DEPTH);
-                        rs2::video_frame rs2_color = fset.first_or_default(RS2_STREAM_COLOR);
-                        if ((rs2_depth == NULL) || (rs2_color == NULL)) {
-                            LOG_ERROR_0("The color or depth frame returned NULL");
-                        }
-
-                        // Do processing on depth frame
-                        const int width = rs2_depth.as<rs2::video_frame>().get_width();
-                        const int height = rs2_depth.as<rs2::video_frame>().get_height();
-                        cv::Mat* image = new cv::Mat(Size(width, height), CV_8UC3, (void*)rs2_depth.apply_filter(color_map).get_data(), Mat::AUTO_STEP);
-
-                        /*
-                         * We are overwritting the RGB frame with colorized depth frame
-                         * to avoid the visualizer changes and showcase the sanity of depth
-                         * data.
-                         */
-                        frame->set_data(RGB_FRAME_INDEX, (void*)image, free_cv_frame, (void*)image->data, width, height, COLOR_FRAME_CHANNELS);
+                    /*
+                    * We are overwritting the RGB frame with colorized depth frame
+                    * to avoid the visualizer changes and showcase the sanity of depth
+                    * data.
+                    */
+                    frame->set_data(RGB_FRAME_INDEX, (void*)image, free_cv_frame, (void*)image->data, width, height, COLOR_FRAME_CHANNELS);
 
                     return UdfRetCode::UDF_OK;
                 };

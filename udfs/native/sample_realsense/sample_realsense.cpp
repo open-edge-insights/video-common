@@ -49,6 +49,10 @@ rs2::software_device dev;
 auto depth_sensor = dev.add_sensor("Depth");
 auto color_sensor = dev.add_sensor("Color");
 
+// Frame queues for color and depth frames
+rs2::frame_queue depth_queue;
+rs2::frame_queue color_queue;
+
 namespace eii {
     namespace udfsamples {
 
@@ -116,8 +120,6 @@ namespace eii {
                 rs2::stream_profile m_depth_stream;
                 rs2::stream_profile m_color_stream;
 
-                // For Synchronizing frames using the syncer class
-                rs2::syncer m_sync;
 
                 // Colorizing the depth frame.
                 rs2::colorizer color_map;
@@ -146,13 +148,14 @@ namespace eii {
                         LOG_ERROR_0("depth_frame is NULL");
                     }
 
-                    rs2::frameset fset = construct_rs2_frameset(color_frame, depth_frame);
+                    construct_rs2_frameset(color_frame, depth_frame);
 
                     ++m_frame_number;
 
-                    // Return first found frame for the stream specified
-                    rs2::depth_frame rs2_depth = fset.first_or_default(RS2_STREAM_DEPTH);
-                    rs2::video_frame rs2_color = fset.first_or_default(RS2_STREAM_COLOR);
+                    // Wait until new frame becomes available in the queue and dequeue it
+                    rs2::video_frame rs2_color = color_queue.wait_for_frame();
+                    rs2::depth_frame rs2_depth = depth_queue.wait_for_frame();
+
                     if ((rs2_depth == NULL) || (rs2_color == NULL)) {
                         LOG_ERROR_0("The color or depth frame returned NULL");
                     }
@@ -494,18 +497,23 @@ namespace eii {
                     dev.create_matcher(RS2_MATCHER_DLR_C);
 
                     // Open the sensor for respective stream
+                    LOG_INFO_0("Opening sensor for depth stream");
                     depth_sensor.open(m_depth_stream);
+
+                    LOG_INFO_0("Opening sensor for color stream");
                     color_sensor.open(m_color_stream);
 
-                    // Start the sensor for passing frame to the syncer callback
-                    depth_sensor.start(m_sync);
-                    color_sensor.start(m_sync);
+                    // Start the sensor for respective stream
+                    LOG_INFO_0("Starting sensor for depth stream");
+                    depth_sensor.start(depth_queue);
+
+                    LOG_INFO_0("Starting sensor for color stream");
+                    color_sensor.start(color_queue);
                 }
 
             }
 
-            rs2::frameset construct_rs2_frameset(void* color, void* depth_frame) {
-
+            void construct_rs2_frameset(void* color, void* depth_frame) {
 
                 if (depth_frame != NULL) {
                     depth_sensor.on_video_frame({(void *)depth_frame, // Frame pixels from capture API
@@ -514,7 +522,7 @@ namespace eii {
                     m_sw_depth_frame.bpp, // Stride and Bytes-per-pixel
                     (rs2_time_t)m_frame_number * 16,
                     RS2_TIMESTAMP_DOMAIN_HARDWARE_CLOCK, // Timestamp
-                    m_frame_number, // Frame# for potential m_sync services
+                    m_frame_number, // Frame# for potential sync services
                     m_depth_stream});
                 }
 
@@ -524,13 +532,8 @@ namespace eii {
                     m_sw_color_frame.bpp, // Stride and Bytes-per-pixel
                     (rs2_time_t)m_frame_number * 16,
                     RS2_TIMESTAMP_DOMAIN_HARDWARE_CLOCK, // Timestamp
-                    m_frame_number, // Frame# for potential m_sync services
+                    m_frame_number, // Frame# for potential sync services
                     m_color_stream});
-
-                    // Wait for frameset from syncer class
-                    rs2::frameset fset = m_sync.wait_for_frames();
-
-                    return fset;
 
             }
 

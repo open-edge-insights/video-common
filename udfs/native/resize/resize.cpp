@@ -48,7 +48,7 @@ namespace eii {
                         throw "Failed to get width";
                     }
                     if(width->type != CVT_INTEGER) {
-                        throw "width must be a string";
+                        throw "width must be an integer";
                     }
 
                     config_value_t* height = m_config->get_config_value(m_config->cfg,"height");
@@ -57,7 +57,7 @@ namespace eii {
                     throw "Failed to get height";
                     }
                     if(height->type != CVT_INTEGER) {
-                        throw "height must be a string";
+                        throw "height must be an integer";
                     }
 
                     m_width = width->body.integer;

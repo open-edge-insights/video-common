@@ -192,6 +192,9 @@ Frame::Frame(msg_envelope_t* msg) :
 
     for (int i = 0; i < num_frames; i++) {
         msg_envelope_elem_body_t* frame = NULL;
+        // Manually create a new blob
+        msg_envelope_elem_body_t* elem = NULL;
+        msg_envelope_blob_t* b = NULL;
         if (blob->type == MSG_ENV_DT_ARRAY) {
             LOG_DEBUG("GETTING FRAME BLOB: %d", i);
             frame = msgbus_msg_envelope_elem_array_get_at(blob, i);
@@ -205,10 +208,6 @@ Frame::Frame(msg_envelope_t* msg) :
             owned_blob_t* shared = owned_blob_copy(frame->body.blob->shared);
             shared->owned = true;
 
-            // Manually create a new blob
-            msg_envelope_elem_body_t* elem = NULL;
-            msg_envelope_blob_t* b = NULL;
-
             b = (msg_envelope_blob_t*) malloc(sizeof(msg_envelope_blob_t));
             if(b == NULL) {
                 throw "Failed to initialize new blob";
@@ -220,6 +219,7 @@ Frame::Frame(msg_envelope_t* msg) :
             elem = (msg_envelope_elem_body_t*) malloc(
                     sizeof(msg_envelope_elem_body_t));
             if(elem == NULL) {
+                free(b);
                 throw "Failed to initailize new element";
             }
 
@@ -244,8 +244,12 @@ Frame::Frame(msg_envelope_t* msg) :
             obj = msgbus_msg_envelope_elem_array_get_at(
                     m_additional_frames_arr, i - 1);
             if (obj == NULL) {
+                free(b);
+                msgbus_msg_envelope_elem_destroy(elem);
                 throw "Failed to get additional array element";
             } else if (obj->type != MSG_ENV_DT_OBJECT) {
+                free(b);
+                msgbus_msg_envelope_elem_destroy(elem);
                 throw "Additional array element must be objects";
             }
 
@@ -265,6 +269,8 @@ Frame::Frame(msg_envelope_t* msg) :
         std::string img_handle_str = "";
         if (img_handle != NULL) {
             if (img_handle->type != MSG_ENV_DT_STRING) {
+                free(b);
+                msgbus_msg_envelope_elem_destroy(elem);
                 throw "Image handle must be a string";
             }
             img_handle_str = std::string(img_handle->body.string);
@@ -272,10 +278,16 @@ Frame::Frame(msg_envelope_t* msg) :
 
         if (enc_type != NULL) {
             if(enc_type->type != MSG_ENV_DT_STRING) {
+                free(b);
+                msgbus_msg_envelope_elem_destroy(elem);
                 throw "Encoding type must be a string";
             } else if (enc_lvl == NULL) {
+                free(b);
+                msgbus_msg_envelope_elem_destroy(elem);
                 throw "Missing encoding level";
             } else if (enc_lvl->type != MSG_ENV_DT_INT) {
+                free(b);
+                msgbus_msg_envelope_elem_destroy(elem);
                 throw "Encoding level must be an integer";
             }
 
@@ -423,6 +435,7 @@ void Frame::add_frame(
         } else {
             msg_envelope_elem_body_t* obj = msgbus_msg_envelope_new_object();
             if (obj == NULL) {
+                delete meta;
                 throw "Failed to initialize message envelope object";
             }
             add_frame_meta_obj(obj, meta);
@@ -431,6 +444,7 @@ void Frame::add_frame(
                 // Need to create the additional array
                 m_additional_frames_arr = msgbus_msg_envelope_new_array();
                 if (m_additional_frames_arr == NULL) {
+                    delete meta;
                     throw "Failed to initialize additional_frames array";
                 }
 
@@ -441,6 +455,7 @@ void Frame::add_frame(
                 if (ret != MSG_SUCCESS) {
                     msgbus_msg_envelope_elem_destroy(m_additional_frames_arr);
                     m_additional_frames_arr = NULL;
+                    delete meta;
                     throw "Failed to add meta object to array";
                 }
 
@@ -450,6 +465,7 @@ void Frame::add_frame(
                 if (ret != MSG_SUCCESS) {
                     msgbus_msg_envelope_elem_destroy(m_additional_frames_arr);
                     m_additional_frames_arr = NULL;
+                    delete meta;
                     throw "Failed to add additional frames array to meta-data";
                 }
             } else {
@@ -459,6 +475,7 @@ void Frame::add_frame(
                 ret = msgbus_msg_envelope_elem_array_add(
                         m_additional_frames_arr, obj);
                 if (ret != MSG_SUCCESS) {
+                    delete meta;
                     throw "Failed to add meta object to array";
                 }
             }

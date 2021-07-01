@@ -128,6 +128,27 @@ namespace eii {
                 RealSenseUdf(config_t* config): RawBaseUdf(config) {
 
                     m_frame_number = 0;
+                    m_color_ppy = 0.0;
+                    m_depth_ppx = 0.0;
+                    m_depth_ppy = 0.0;
+                    m_depth_fx = 0.0;
+                    m_depth_fy = 0.0;
+                    m_depth_model = 0;
+                    m_color_width = 0;
+                    m_color_height = 0;
+                    m_color_ppx = 0.0;
+                    m_color_ppy = 0.0;
+                    m_color_fx = 0.0;
+                    m_color_fy = 0.0;
+                    m_depth_width = 0;
+                    m_depth_height = 0;
+                    m_sw_color_frame.x = 0;
+                    m_sw_color_frame.y = 0;
+                    m_sw_color_frame.bpp = 0;
+                    m_sw_depth_frame.x = 0;
+                    m_sw_depth_frame.y = 0;
+                    m_sw_depth_frame.bpp = 0;
+                    m_color_model = 0;
 
                 };
 

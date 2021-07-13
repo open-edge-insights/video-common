@@ -46,8 +46,11 @@ NativeUdfHandle::NativeUdfHandle(std::string name, int max_workers) :
 NativeUdfHandle::NativeUdfHandle(const NativeUdfHandle& src) :
     UdfHandle(NULL, 0)
 {
-    // This method does nothing, because the object is not supposed to be
-    // copied
+    throw "This object should not be copied";
+}
+
+NativeUdfHandle& NativeUdfHandle::operator=(const NativeUdfHandle& src) {
+    return *this;
 }
 
 NativeUdfHandle::~NativeUdfHandle() {
@@ -105,14 +108,20 @@ bool NativeUdfHandle::initialize(config_t* config) {
         m_lib_handle = dlopen(lib.c_str(), RTLD_LAZY);
 
         if(!m_lib_handle) {
-            LOG_ERROR("Failed to load UDF library: %s", dlerror());
+            char* err = dlerror();
+            if (err != NULL) {
+                LOG_ERROR("Failed to load UDF library: %s", err);
+            }
             return false;
         } else {
             LOG_DEBUG_0("Successfully loaded UDF library");
             *(void**)(&m_func_initialize_udf) = dlsym(m_lib_handle, "initialize_udf");
 
             if(!m_func_initialize_udf) {
-                LOG_ERROR("Failed to find initialize_udf symbol: %s", dlerror());
+                char* err = dlerror();
+                if (err != NULL) {
+                    LOG_ERROR("Failed to find initialize_udf symbol: %s", err);
+                }
                 dlclose(m_lib_handle);
                 return false;
             }

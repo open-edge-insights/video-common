@@ -58,6 +58,16 @@ private:
     // Reference to the final piece of frame data which needs to be deleted.
     FrameData* m_frame_data;
 
+    /**
+     * Private @c FinalFreeWrapper copy constructor.
+     */
+    FinalFreeWrapper(const FinalFreeWrapper& src);
+
+    /**
+     * Private @c FinalFreeWrapper assignment operator.
+     */
+    FinalFreeWrapper& operator=(const FinalFreeWrapper& src);
+
 public:
     FinalFreeWrapper(Frame* frame, FrameData* fd) :
         m_frame(frame), m_frame_data(fd)
@@ -68,6 +78,14 @@ public:
         delete m_frame;
     };
 };
+
+FinalFreeWrapper::FinalFreeWrapper(const FinalFreeWrapper& src) {
+    throw "This object should not be copied";
+}
+
+FinalFreeWrapper& FinalFreeWrapper::operator=(const FinalFreeWrapper& src) {
+    return *this;
+}
 
 /**
  * Helper method to verify the correct encoding level is set for the given
@@ -344,8 +362,11 @@ Frame::Frame(msg_envelope_t* msg) :
 }
 
 Frame::Frame(const Frame& src) {
-    // This method does nothing, because the object is not supposed to be
-    // copied
+    throw "This object should not be copied";
+}
+
+Frame& Frame::operator=(const Frame& src) {
+    return *this;
 }
 
 Frame::~Frame() {
@@ -1037,6 +1058,14 @@ FrameMetaData::FrameMetaData(
     }
 }
 
+FrameMetaData::FrameMetaData(const FrameMetaData& src) {
+    throw "This object should not be copied";
+}
+
+FrameMetaData& FrameMetaData::operator=(const FrameMetaData& src) {
+    return *this;
+}
+
 FrameMetaData::~FrameMetaData() {}
 
 void FrameMetaData::set_width(int width) { m_width = width; }
@@ -1063,6 +1092,14 @@ FrameData::FrameData(
     m_meta(meta), m_frame(frame), m_data(data), m_free_frame(free_frame)
 {
     m_size = meta->get_width() * meta->get_height() * meta->get_channels();
+}
+
+FrameData::FrameData(const FrameData& src) {
+    throw "This object should not be copied";
+}
+
+FrameData& FrameData::operator=(const FrameData& src) {
+    return *this;
 }
 
 FrameData::~FrameData() {

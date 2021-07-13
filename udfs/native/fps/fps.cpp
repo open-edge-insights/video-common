@@ -57,6 +57,16 @@ FpsUdf::FpsUdf(config_t* config): BaseUdf(config) {
     }
 }
 
+FpsUdf::FpsUdf(const FpsUdf& src) :
+    BaseUdf(NULL)
+{
+    throw "This object should not be copied";
+}
+
+FpsUdf& FpsUdf::operator=(const FpsUdf& src) {
+    return *this;
+}
+
 FpsUdf::~FpsUdf() {
     delete m_fps_key;
 }

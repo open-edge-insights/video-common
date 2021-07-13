@@ -59,6 +59,16 @@ private:
     EncodeType m_encode_type;
     int m_encode_level;
 
+    /**
+     * Private @c FrameMetaData copy constructor.
+     */
+    FrameMetaData(const FrameMetaData& src);
+
+    /**
+     * Private @c FrameMetaData assignment operator.
+     */
+    FrameMetaData& operator=(const FrameMetaData& src);
+
 public:
     /**
      * Constructor
@@ -101,6 +111,16 @@ private:
     void* m_data;
     void (*m_free_frame)(void*);
     size_t m_size;
+
+    /**
+     * Private @c FrameData copy constructor.
+     */
+    FrameData(const FrameData& src);
+
+    /**
+     * Private @c FrameData assignment operator.
+     */
+    FrameData& operator=(const FrameData& src);
 
 public:
     // TODO(kmidkiff): Document this more
@@ -195,12 +215,13 @@ private:
 
     /**
      * Private @c Frame copy constructor.
-     *
-     * \note The constructor is copied, because this object is not supposed to
-     *      be copied. It is important to note that this only blocks callers
-     *      from passing the @c Frame by reference rather than as a pointer.
      */
     Frame(const Frame& src);
+
+    /**
+     * Private @c Frame assignment operator.
+     */
+    Frame& operator=(const Frame& src);
 
 public:
     /**

@@ -57,6 +57,16 @@ class FpsUdf : public BaseUdf {
         // Mutex lock
         std::mutex m_mtx;
 
+        /**
+         * Private @c FpsUdf copy constructor.
+         */
+        FpsUdf(const FpsUdf& src);
+
+        /**
+         * Private @c FpsUdf assignment operator.
+         */
+        FpsUdf& operator=(const FpsUdf& src);
+
     public:
 	/**
          * Constructor

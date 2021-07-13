@@ -42,13 +42,14 @@ private:
 
     /**
      * Private @c RawUdfHandle copy constructor.
-     *
-     * \note The constructor is copied, because this object is not supposed to
-     *      be copied. It is important to note that this only blocks callers
-     *      from passing the @c RawUdfHandle by reference rather than as a
-     *      pointer.
      */
     RawUdfHandle(const RawUdfHandle& src);
+
+    /**
+     * Private @c NativeUdfHandle assignment operator.
+     *
+     */
+    RawUdfHandle& operator=(const RawUdfHandle& src);
 
 public:
     /**

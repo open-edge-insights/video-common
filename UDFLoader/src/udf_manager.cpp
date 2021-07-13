@@ -180,8 +180,11 @@ UdfManager::UdfManager(
 }
 
 UdfManager::UdfManager(const UdfManager& src) {
-    // This method does nothing, because the object is not supposed to be
-    // copied
+    throw "This object should not be copied";
+}
+
+UdfManager& UdfManager::operator=(const UdfManager& src) {
+    return *this;
 }
 
 UdfManager::~UdfManager() {

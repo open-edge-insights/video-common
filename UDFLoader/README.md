@@ -14,9 +14,8 @@ UDFLoader is a library providing APIs for loading and executing native and pytho
 
 UDFLoader depends on the below libraries. Follow their documentation to install them.
 * OpenCV - Run `source /opt/intel/openvino/bin/setupvars.sh` command
-* [EIIMsgEnv](../EIIMsgEnv/README.md)
-* [EIIUtils](../../util/c/README.md)
-* [IntelSafeString](../IntelSafeString/README.md)
+* [EIIUtils](https://github.com/open-edge-insights/eii-c-utils/blob/master/README.md)
+* [IntelSafeString](https://github.com/open-edge-insights/eii-c-utils/blob/master/IntelSafeString/README.md)
 * Python3 Numpy package
 
 ## Compilation

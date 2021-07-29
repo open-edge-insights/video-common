@@ -267,15 +267,15 @@ User can refer to [UDF Writing HOW-TO GUIDE](./HOWTO_GUIDE_FOR_WRITING_UDF.md) f
   This UDF mainly demonstrates the model deployment on edge devices via AzureBridge service only.
 
   Please follow the below steps:
-  * Configure the sample ONNX UDF by following [Sample ONNX UDF configuration guide](../../../AzureBridge/README.md#sample-eii-onnx-udf)
-  * Follow [Single-Node Azure IOT Edge Deployment](../../../AzureBridge/README.md#single-node-azure-iot-edge-deployment) to deploy the required modules
+  * Configure the sample ONNX UDF by following [Sample ONNX UDF configuration guide](https://github.com/open-edge-insights/eii-azure-bridge/blob/master/README.md#sample-eii-onnx-8)
+  * Follow [Single-Node Azure IOT Edge Deployment](https://github.com/open-edge-insights/eii-azure-bridge/blob/master/README.md#single-node-azure-iot-edge-deployment) to deploy the required modules
 
-  For more details on AzureBridge setup, please refer [AzureBridge README.md](../../../AzureBridge/README.md)
+  For more details on AzureBridge setup, please refer [AzureBridge README.md](https://github.com/open-edge-insights/eii-azure-bridge/blob/master/README.md)
 ----
 
 ## `Construction of Metadata in UDF`
 
-If EII Visualizer/WebVisualizer clients are used for visualizing the classified frames, then please follow the metadata guidelines mentioned in **`Metadata Structure`** in [Visualizer](../../Visualizer/README.md) / [WebVisualizer](../../WebVisualizer/README.md) README respectively.
+If EII Visualizer/WebVisualizer clients are used for visualizing the classified frames, then please follow the metadata guidelines mentioned in **`Metadata Structure`** in [Visualizer](https://github.com/open-edge-insights/video-native-visualizer/blob/master/README.md) / [WebVisualizer](https://github.com/open-edge-insights/video-web-visualizer/blob/master/README.md) README respectively.
 
 **Note**: User has to make sure that the data with in meta data should be of type list, tuple, dict or primitive data types (int, float, string or bool). Also, data with in list, tuple, dict
 must contain only primitive data types.

@@ -20,7 +20,8 @@
 
 /**
 * @file
-* @brief RealSense UDF Implementation
+* @brief RealSense UDF Implementation for simulating and working with color and
+* depth frames
 */
 
 #include <eii/udf/raw_base_udf.h>
@@ -57,7 +58,9 @@ namespace eii {
     namespace udfsamples {
 
         /**
-        * The RealSense UDF
+        * Realsense sample UDF for depth camera
+        * Simulates color and depth frames using rs2 software device
+        * Applies color filter onto the depth frame to visualize it
         */
         class RealSenseUdf : public RawBaseUdf {
             private:

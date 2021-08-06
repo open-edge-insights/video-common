@@ -22,6 +22,7 @@
 
 import logging
 
+
 class Udf:
     """Example UDF
     """

@@ -1,3 +1,16 @@
+**Contents**
+
+- [**How-To GUIDE for writing UDF for EII**](#how-to-guide-for-writing-udf-for-eii)
+  - [**Introduction**](#introduction)
+  - [**Steps for writing native(c++) UDFs**](#steps-for-writing-nativec-udfs)
+    - [**EII APIs for Writing Native UDFs(c++)**](#eii-apis-for-writing-native-udfsc)
+    - [**EII APIs for Writing Raw Native UDFs(c++) for Multi Frame Support**](#eii-apis-for-writing-raw-native-udfsc-for-multi-frame-support)
+    - [**EII INFRASTRUCTURE RELATED CHANGES**](#eii-infrastructure-related-changes)
+  - [**Steps for writing Python UDFs**](#steps-for-writing-python-udfs)
+    - [**Python APIs for writing UDF for EII**](#python-apis-for-writing-udf-for-eii)
+    - [**EII Infrastructure changes**](#eii-infrastructure-changes)
+    - [CONCLUSION](#conclusion)
+
 # **How-To GUIDE for writing UDF for EII**
 
 This document describes stepwise instruction for writing a User defined Function(UDF) in C++/Python in order to make it deployable in EII environment. It  explains APIs and configurational changes required in order to write an UDF for EII.
@@ -86,6 +99,71 @@ There are three APIs defined semantically to add the pre/post processing logic. 
     ```
 
     The **"DummyUdf"** is the class name of the user defined custom UDF.
+
+---
+
+### **EII APIs for Writing Raw Native UDFs(c++) for Multi Frame Support**
+
+There are three APIs defined semantically to add the pre/post processing logic. These APIs must be implemented as method of a user defined class inherited from the Udf class named ***RawUdf***.
+
+* #### **INITIALIZATION & DE-INITIALIZATION**
+
+    ``` C++
+        class RealSenseUdf : public RawBaseUdf {
+                public:
+                    RealSenseUdf(config_t* config) : RawBaseUdf(config) {
+                        //initialization Code can be added here
+                    };
+
+                    ~RealSenseUdf() {
+                        // Any de-initialization logic to be added here
+                    };
+        };
+
+    ```
+
+    The **RealSenseUdf** in the above code snippet is the user defined class and the constructor of the class initialize the UDF's specific data-structure. The only argument passed to this function is **config** which depicts configuration details mentioned in the `config.json` file of apps liks VideoIngestion and VideoAnalytics which process UDFs. The API to consume **config** is defined in [Util README](../common/util/c/README.md)
+
+
+* #### **PROCESSING THE ACTUAL DATA**
+
+    The API to utilize the ingested input looks as below:
+
+    ``` C++
+    UdfRetCode
+    process(Frame* frame) override {
+        // Logic for processing the frame & returning the inference result.
+    }
+    ```
+
+    This function is a override method which user need to define in its UDF file.
+
+    The *argument* details are described as below:
+
+    * **Argument 1(Frame* frame)**: It represents the frame object.
+
+    The *return* code details are  described as below:
+
+    * **UdfRetCode**: User need to return appropriate macro as mentioned below:
+        * **UDF_OK** - UDF has processed the frame gracefully.
+        * **UDF_DROP_FRAME** - The frame passed to process function need to be dropped.
+        * **UDF_ERROR** - it should be returned for any kind of error in UDF.
+
+* #### **LINKING UdfLoader AND CUSTOM-UDF**
+
+    The **initialize_udf()** function need to defined as follows to create a link between UdfLoader module and respective UDF. This function ensure UdfLoader to call proper constructor and process() function of respective UDF.
+
+    ```C++
+    extern "C" {
+        void *initialize_udf(config_t *config) {
+            RealSenseUdf *udf = new RealSenseUdf(config);
+            return (void *)udf;
+        }
+    }
+    ```
+
+    The **"RealSenseUdf"** is the class name of the user defined custom UDF.
+
 
 ### **EII INFRASTRUCTURE RELATED CHANGES**
 

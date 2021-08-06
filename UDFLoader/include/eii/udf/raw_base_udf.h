@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Intel Corporation.
+// Copyright (c) 2021 Intel Corporation.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to
@@ -20,46 +20,53 @@
 
 /**
  * @file
- * @brief Dummy UDF Implementation
+ * @brief Base UDF class for native UDF implementations.
  */
 
-#include <eii/udf/base_udf.h>
-#include <eii/utils/logger.h>
-#include <iostream>
+#ifndef _EII_UDF_RAW_BASE_UDF_H
+#define _EII_UDF_RAW_BASE_UDF_H
 
-using namespace eii::udf;
+#include <atomic>
+#include <opencv2/opencv.hpp>
+#include <eii/msgbus/msg_envelope.h>
+#include <eii/utils/config.h>
+#include "eii/udf/udfretcodes.h"
+#include "eii/udf/frame.h"
 
 namespace eii {
-    namespace udfsamples {
+namespace udf {
+
+class RawBaseUdf {
+protected:
+    // UDF configuration
+    //
+    // NOTE: The memory for this configuration is managed by the
+    // @c UdfHandle class and does not need to be freed in the UDF object.
+    config_t* m_config;
+
+public:
+    /**
+     * Constructor
+     */
+    RawBaseUdf(config_t* config);
 
     /**
-     * The Dummy UDF - does no processing
+     * Destructor
      */
-        class DummyUdf : public BaseUdf {
-            public:
-                explicit DummyUdf(config_t* config) : BaseUdf(config) {};
+    virtual ~RawBaseUdf();
 
-                ~DummyUdf() {};
+    /**
+     * Process the given frame.
+     *
+     * @param frame - @c void* frame object
+     * @param meta  - @c msg_envelope_t for the meta data to add to the frame
+     *                after the UDF executes over it.
+     * @return @c UdfRetCode
+     */
+    virtual UdfRetCode process(Frame* frame) = 0;
+};
 
-                UdfRetCode process(cv::Mat& frame, cv::Mat& output, msg_envelope_t* meta) override {
-                    LOG_DEBUG("In %s method...", __PRETTY_FUNCTION__);
-                    return UdfRetCode::UDF_OK;
-                };
-        };
-    } // udf
+} // udf
 } // eii
 
-extern "C" {
-
-/**
- * Create the UDF.
- *
- * @return void*
- */
-void* initialize_udf(config_t* config) {
-    eii::udfsamples::DummyUdf* udf = new eii::udfsamples::DummyUdf(config);
-    return (void*) udf;
-}
-
-} // extern "C"
-
+#endif // _EII_UDF_RAW_BASE_UDF_H

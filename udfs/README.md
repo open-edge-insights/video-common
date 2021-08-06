@@ -1,3 +1,14 @@
+**Contents**
+
+- [`UDF Configuration`](#udf-configuration)
+- [`UDF Writing Guide`](#udf-writing-guide)
+- [`Sample UDFs`](#sample-udfs)
+  - [`Native UDFs`](#native-udfs)
+  - [`Python UDFs`](#python-udfs)
+- [`Construction of Metadata in UDF`](#construction-of-metadata-in-udf)
+- [`Chaining of UDFs`](#chaining-of-udfs)
+  - [`Combination of UDFs with ingestors`](#combination-of-udfs-with-ingestors)
+
 `EII Sample UDFs`
 
 EII supports loading and executing of native(c++) and python UDFs. In here,
@@ -36,7 +47,8 @@ Below is the JSON schema for UDF json object configuration:
               "type": "string",
               "enum": [
                 "native",
-                "python"
+                "python",
+                "raw_native"
               ]
             },
             "name": {
@@ -156,6 +168,19 @@ User can refer to [UDF Writing HOW-TO GUIDE](./HOWTO_GUIDE_FOR_WRITING_UDF.md) f
   > **Note** The fps results will be logged in `DEBUG` LOG_LEVEL, added to the metadata with the AppName as the key and will be
   > displayed in the visualizer.
 
+* **Sample Realsense UDF**
+
+  Accepts the color and depth frame, converts to rs2::frame type by using rs2::software_device simulation, enables a color filter on the depth frame using rs2::colorizer.
+
+  `UDF config`:
+
+  ```javascript
+  {
+      "name": "sample_realsense",
+      "type": "raw_native",
+  }
+  ```
+
   ----
 ### `Python UDFs`
 
@@ -172,6 +197,19 @@ User can refer to [UDF Writing HOW-TO GUIDE](./HOWTO_GUIDE_FOR_WRITING_UDF.md) f
   ```javascript
   {
       "name": "dummy",
+      "type": "python"
+  }
+  ```
+
+* **Jupyter Connector UDF**
+
+  Accepts the frame and publishes it to the EII JupyterNotebook service which processes the frame and publishes it back to the jupyter_connector UDF.
+
+  `UDF config`:
+
+  ```javascript
+  {
+      "name": "jupyter_connector",
       "type": "python"
   }
   ```
@@ -226,22 +264,18 @@ User can refer to [UDF Writing HOW-TO GUIDE](./HOWTO_GUIDE_FOR_WRITING_UDF.md) f
 
 * **Sample ONNX UDF**
 
-  This UDF mainly demonstrates the model deployment on edge devices via AzureBridge service only. As the Sample ONNX UDF depends on below python dependencies, please have these included in the [vi_requirements.txt](../../../VideoIngestion/vi_requirements.txt) or [va_requirements.txt](../../../VideoAnalytics/va_requirements.txt) based on where the sample onnx udf goes into:
-  ```python
-  onnxruntime==1.2.0
-  azureml-core==1.18.0
-  ```
-  Additionally, please follow the below steps:
-  * Rebuild VideoIngestion and VideoAnalytics docker images by referring [Build and push EII containers](../../../AzureBridge/README.md#build-and-push-eii-containers)
-  * Configure the sample ONNX UDF by following [Sample ONNX UDF configuration guide](../../../AzureBridge/README.md#sample-eii-onnx-udf)
-  * Follow [Single-Node Azure IOT Edge Deployment](../../../AzureBridge/README.md#single-node-azure-iot-edge-deployment) to deploy the required modules
+  This UDF mainly demonstrates the model deployment on edge devices via AzureBridge service only.
 
-  For more details on EISAzureBridge setup, please refer [AzureBridge README.md](../../../AzureBridge/README.md)
+  Please follow the below steps:
+  * Configure the sample ONNX UDF by following [Sample ONNX UDF configuration guide](https://github.com/open-edge-insights/eii-azure-bridge/blob/master/README.md#sample-eii-onnx-8)
+  * Follow [Single-Node Azure IOT Edge Deployment](https://github.com/open-edge-insights/eii-azure-bridge/blob/master/README.md#single-node-azure-iot-edge-deployment) to deploy the required modules
+
+  For more details on AzureBridge setup, please refer [AzureBridge README.md](https://github.com/open-edge-insights/eii-azure-bridge/blob/master/README.md)
 ----
 
 ## `Construction of Metadata in UDF`
 
-If EII Visualizer/WebVisualizer clients are used for visualizing the classified frames, then please follow the metadata guidelines mentioned in **`Metadata Structure`** in [Visualizer](../../Visualizer/README.md) / [WebVisualizer](../../WebVisualizer/README.md) README respectively.
+If EII Visualizer/WebVisualizer clients are used for visualizing the classified frames, then please follow the metadata guidelines mentioned in **`Metadata Structure`** in [Visualizer](https://github.com/open-edge-insights/video-native-visualizer/blob/master/README.md) / [WebVisualizer](https://github.com/open-edge-insights/video-web-visualizer/blob/master/README.md) README respectively.
 
 **Note**: User has to make sure that the data with in meta data should be of type list, tuple, dict or primitive data types (int, float, string or bool). Also, data with in list, tuple, dict
 must contain only primitive data types.

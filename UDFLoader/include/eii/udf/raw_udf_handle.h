@@ -20,62 +20,68 @@
 
 /**
  * @file
- * @brief Same File UDF Implementation
+ * @brief C++ UDF to process raw UDF Manager @c Frame objects
  */
 
-#include <eii/udf/base_udf.h>
-#include <eii/utils/logger.h>
-#include <iostream>
+#ifndef _EII_UDF_RAW_UDF_H
+#define _EII_UDF_RAW_UDF_H
 
-using namespace eii::udf;
+
+#include "eii/udf/udf_handle.h"
+#include "eii/udf/raw_base_udf.h"
 
 namespace eii {
-namespace udftests {
+namespace udf {
 
-/**
-* The Same Frame UDF - Does not do any processing on the given frames, but
-* returns as the "outputted frame" the same frame it receieved to process.
-*/
-class SameFrameUdf : public BaseUdf {
+class RawUdfHandle : public UdfHandle {
+private:
+	//References needed after init
+	void* m_lib_handle;
+	void* (*m_func_initialize_udf)(config_t*);
+	RawBaseUdf* m_udf;
+
+    /**
+     * Private @c RawUdfHandle copy constructor.
+     */
+    RawUdfHandle(const RawUdfHandle& src);
+
+    /**
+     * Private @c NativeUdfHandle assignment operator.
+     *
+     */
+    RawUdfHandle& operator=(const RawUdfHandle& src);
+
 public:
     /**
      * Constructor
      *
-     * @param config - UDF configuration
+     * @param name - Name of the Native UDF
      */
-    SameFrameUdf(config_t* config) : BaseUdf(config) {};
+    RawUdfHandle(std::string name, int max_workers);
 
     /**
      * Destructor
      */
-    ~SameFrameUdf() {};
+    ~RawUdfHandle();
 
-    UdfRetCode process(
-            cv::Mat& frame, cv::Mat& output, msg_envelope_t* meta) override {
-        LOG_DEBUG("In %s method...", __PRETTY_FUNCTION__);
+    /**
+     * Overridden initialization method
+     *
+     * @param config - UDF configuration
+     * @return bool
+     */
+    bool initialize(config_t* config) override;
 
-        // Assign the output to the same memory as the input frame, this is
-        // to make sure that the UDF Loader/Manager does not accidentally
-        // free the "output" memory thinking it is a new frame
-        output = frame;
-
-        return UdfRetCode::UDF_OK;
-    };
+    /**
+     * Overridden frame processing method.
+     *
+     * @param frame - Frame to process
+     * @return UdfRetCode
+     */
+    UdfRetCode process(Frame* frame) override;
 };
-}  // namespace udftests
-}  // namespace eii
 
-extern "C" {
+} // eii
+} // udf
 
-/**
- * Create the UDF.
- *
- * @return void*
- */
-void* initialize_udf(config_t* config) {
-    eii::udftests::SameFrameUdf* udf = new eii::udftests::SameFrameUdf(config);
-    return (void*) udf;
-}
-
-}  // extern "C"
-
+#endif // _EII_UDF_RAW_UDF_H

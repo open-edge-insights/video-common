@@ -1,4 +1,4 @@
-# Copyright (c) 2020 Intel Corporation.
+# Copyright (c) 2021 Intel Corporation.
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -18,7 +18,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-ARG OPENVINO_IMAGE
+import os
+import subprocess
+import sys
 
-FROM ${OPENVINO_IMAGE} AS openvino
-USER root
+rootdir = os.getcwd()
+
+for subdir, dirs, files in os.walk(rootdir):
+    for file in files:
+        filepath = subdir + os.sep + file
+
+        if filepath.endswith("requirements.txt"):
+            subprocess.run(["pip3", "install", "--user", "-r", filepath])

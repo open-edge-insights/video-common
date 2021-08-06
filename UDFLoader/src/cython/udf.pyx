@@ -376,15 +376,15 @@ cdef public object load_udf(const char* name, config_t* config) with gil:
         return lib.Udf(*args)
     except AttributeError:
         err = f'{py_name} module is missing the Udf class'
-        log.error(err)
+        log.exception(err)
         raise AttributeError()
     except ImportError:
         err = f'Failed to load UDF: {py_name}'
-        log.error(err)
+        log.exception(err)
         raise ImportError()
     except Exception as ex:
         err = f'Unexpected error while loading UDF {py_name}: {ex}'
-        log.error(err, exc_info=True)
+        log.exception(err)
         raise
 
 
@@ -464,9 +464,6 @@ cdef object msg_envelope_to_python(msg_envelope_t* msg):
     if num_parts <= 0:
         raise RuntimeError('Error serializing to Python representation')
 
-    if num_parts > 2:
-        warnings.warn('The Python library only supports 2 parts!')
-
     try:
         if num_parts == 2:
             parts[1].shared.owned = False
@@ -512,10 +509,14 @@ cdef public UdfRetCode call_udf(
         return UDF_DROP_FRAME
 
     if updated_frame is not None:
-        assert isinstance(updated_frame, np.ndarray), 'Frame must be NumPy'
-        Py_INCREF(updated_frame)
-        (&output)[0] = <PyObject*> updated_frame
-        ret_code = UDF_FRAME_MODIFIED
+        if isinstance(updated_frame, np.ndarray):
+            Py_INCREF(updated_frame)
+            (&output)[0] = <PyObject*> updated_frame
+            ret_code = UDF_FRAME_MODIFIED
+        elif isinstance(updated_frame, list):
+            Py_INCREF(updated_frame)
+            (&output)[0] = <PyObject*> updated_frame
+            ret_code = UDF_FRAME_MODIFIED
 
     if new_meta is not None:
         for k,v in new_meta.items():

@@ -1,0 +1,7 @@
+{
+    "name": "native_udf",
+    "type": "native",
+
+    "same_frame": true,
+    "resize": false
+}

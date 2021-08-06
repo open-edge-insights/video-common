@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Intel Corporation.
+// Copyright (c) 2021 Intel Corporation.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to
@@ -23,30 +23,31 @@
  * @brief Dummy UDF Implementation
  */
 
-#include <eii/udf/base_udf.h>
+#include <eii/udf/raw_base_udf.h>
 #include <eii/utils/logger.h>
 #include <iostream>
 
 using namespace eii::udf;
 
 namespace eii {
-    namespace udfsamples {
+namespace udfsamples {
 
-    /**
-     * The Dummy UDF - does no processing
-     */
-        class DummyUdf : public BaseUdf {
-            public:
-                explicit DummyUdf(config_t* config) : BaseUdf(config) {};
+/**
+ * The Raw Dummy UDF - does no processing
+ */
+class RawDummyUdf : public RawBaseUdf {
+public:
+    explicit RawDummyUdf(config_t* config) : RawBaseUdf(config) {};
 
-                ~DummyUdf() {};
+    ~RawDummyUdf() {};
 
-                UdfRetCode process(cv::Mat& frame, cv::Mat& output, msg_envelope_t* meta) override {
-                    LOG_DEBUG("In %s method...", __PRETTY_FUNCTION__);
-                    return UdfRetCode::UDF_OK;
-                };
-        };
-    } // udf
+    UdfRetCode process(Frame* frame) override {
+        LOG_INFO("Received frame with %d frames",
+                frame->get_number_of_frames());
+        return UdfRetCode::UDF_OK;
+    };
+};
+} // udf
 } // eii
 
 extern "C" {
@@ -57,7 +58,7 @@ extern "C" {
  * @return void*
  */
 void* initialize_udf(config_t* config) {
-    eii::udfsamples::DummyUdf* udf = new eii::udfsamples::DummyUdf(config);
+    eii::udfsamples::RawDummyUdf* udf = new eii::udfsamples::RawDummyUdf(config);
     return (void*) udf;
 }
 

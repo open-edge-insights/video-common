@@ -1,4 +1,4 @@
-# Copyright (c) 2019 Intel Corporation.
+# Copyright (c) 2021 Intel Corporation.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -24,8 +24,8 @@ project(eii-udf-samples VERSION 1.0.0 LANGUAGES C CXX)
 find_package(UDFLoader REQUIRED)
 link_directories(${CMAKE_INSTALL_PREFIX}/lib)
 
-add_library(dummy SHARED "dummy.cpp")
-target_link_libraries(dummy
+add_library(raw_dummy SHARED "raw_dummy.cpp")
+target_link_libraries(raw_dummy
     PUBLIC
         ${UDFLoader_LIBRARIES}
         ${EIIMsgEnv_LIBRARIES}
@@ -36,6 +36,6 @@ target_link_libraries(dummy
     )
 
 install(
-    TARGETS dummy
+    TARGETS raw_dummy
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})

@@ -25,6 +25,7 @@
 #include "eii/udf/loader.h"
 #include "eii/udf/python_udf_handle.h"
 #include "eii/udf/native_udf_handle.h"
+#include "eii/udf/raw_udf_handle.h"
 #include <eii/utils/logger.h>
 #include "cython/udf.h"
 
@@ -86,6 +87,13 @@ UdfHandle* UdfLoader::load(
     } else if (strcmp(type->body.string, "native") == 0) {
 		//Attempt to load native UDF
 		udf = new NativeUdfHandle(name, max_workers);
+		if(!udf->initialize(config)) {
+			delete udf;
+			udf = NULL;
+		}
+	} else if (strcmp(type->body.string, "raw_native") == 0) {
+		//Attempt to load native UDF
+		udf = new RawUdfHandle(name, max_workers);
 		if(!udf->initialize(config)) {
 			delete udf;
 			udf = NULL;

@@ -83,13 +83,20 @@ int main(int argc, char** argv) {
 
         // Load OpenCV frame
         cv::Mat* cv_frame = new cv::Mat();
-        *cv_frame = cv::imread("load_example_frame.png");
+        cv::Mat* cv_frame2 = new cv::Mat();
 
-        // Create udf::Frame object from the cv::Mat and push into publisher
+        *cv_frame = cv::imread("load_example_frame.png");
+        *cv_frame2 = cv_frame->clone();
+
         Frame* frame = new Frame(
-                (void*) cv_frame, cv_frame->cols, cv_frame->rows,
-                cv_frame->channels(), cv_frame->data, free_cv_frame,
+                (void*) cv_frame,  free_cv_frame, cv_frame->data,
+                cv_frame->cols, cv_frame->rows, cv_frame->channels(),
                 EncodeType::JPEG, 50);
+
+        frame->add_frame((void*) cv_frame2,  free_cv_frame, cv_frame2->data,
+                cv_frame2->cols, cv_frame2->rows, cv_frame2->channels(),
+                EncodeType::JPEG, 50);
+
         input_queue->push(frame);
 
         LOG_INFO_0("Waiting for processed frame...");

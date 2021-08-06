@@ -139,7 +139,7 @@ UdfManager::UdfManager(
             free_ptr = cfg_obj->body.object->free;
         }
         config_t* cfg = config_new(
-                (void*) cfg_obj, free_ptr, get_config_value);
+                (void*) cfg_obj, free_ptr, get_config_value, NULL);
         if(cfg == NULL) {
             throw "Failed to initialize configuration for UDF";
         }
@@ -180,8 +180,11 @@ UdfManager::UdfManager(
 }
 
 UdfManager::UdfManager(const UdfManager& src) {
-    // This method does nothing, because the object is not supposed to be
-    // copied
+    throw "This object should not be copied";
+}
+
+UdfManager& UdfManager::operator=(const UdfManager& src) {
+    return *this;
 }
 
 UdfManager::~UdfManager() {

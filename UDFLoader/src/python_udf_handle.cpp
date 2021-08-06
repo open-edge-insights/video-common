@@ -144,27 +144,51 @@ void free_np_frame(void* varg) {
 }
 
 UdfRetCode PythonUdfHandle::process(Frame* frame) {
+    // Get number of frames in Frame object
+    int num_frames = frame->get_number_of_frames();
+    PyObject* py_frame = Py_None;
+    PyObject* output = Py_None;
+
     LOG_DEBUG_0("Aquiring the GIL");
     PyGILState_STATE gstate;
     gstate = PyGILState_Ensure();
     LOG_DEBUG_0("Acquired GIL");
 
-    // Create NumPy array shape
-    std::vector<npy_intp> sizes;
-    sizes.push_back(frame->get_height());
-    sizes.push_back(frame->get_width());
-    sizes.push_back(frame->get_channels());
-    npy_intp* dims = sizes.data();
+    if (num_frames == 1) {
+        std::vector<npy_intp> sizes;
+        sizes.push_back(frame->get_height());
+        sizes.push_back(frame->get_width());
+        sizes.push_back(frame->get_channels());
+        npy_intp* dims = sizes.data();
 
-    // Create new NumPy Array
-    PyObject* py_frame = PyArray_SimpleNewFromData(
-            3, dims, NPY_UINT8, (void*) frame->get_data());
+        // Create new NumPy Array
+        py_frame = PyArray_SimpleNewFromData(
+                3, dims, NPY_UINT8, (void*) frame->get_data(0));
+    } else {
+        PyObject* py_temp_frame = Py_None;
+        py_frame = PyList_New(num_frames);
+        for (int i = 0; i < num_frames; i++) {
+            std::vector<npy_intp> sizes;
+            sizes.push_back(frame->get_height(i));
+            sizes.push_back(frame->get_width(i));
+            sizes.push_back(frame->get_channels(i));
+            npy_intp* dims = sizes.data();
 
-    PyObject* output = Py_None;
+            // Create new NumPy Array
+            py_temp_frame = PyArray_SimpleNewFromData(
+                    3, dims, NPY_UINT8, (void*) frame->get_data(i));
 
-    // Call the UDF process method
+            // Append py_frame to py_list
+            int result = PyList_SetItem(py_frame, i, py_temp_frame);
+            if (result != 0) {
+                throw "Failed to set py_frame in py_list";
+            }
+        }
+    }
+
     LOG_DEBUG_0("Before process call");
-    UdfRetCode ret = call_udf(m_udf_obj, py_frame, output, frame->get_meta_data());
+    UdfRetCode ret = call_udf(
+            m_udf_obj, py_frame, output, frame->get_meta_data());
     LOG_DEBUG_0("process call done");
 
     if(PyErr_Occurred() != NULL) {
@@ -183,27 +207,62 @@ UdfRetCode PythonUdfHandle::process(Frame* frame) {
     // changed or updated frame.
     if(ret == UDF_FRAME_MODIFIED && output != py_frame) {
         LOG_DEBUG_0("Python modified frame");
-        PyArrayObject* py_array = (PyArrayObject*) output;
 
-        int dims = PyArray_NDIM(py_array);
-        if(dims < 3 || dims > 3) {
-            LOG_ERROR("NumPy array has too many dimensions must be 3 not %d",
-                      dims);
-            Py_DECREF(output);
-            Py_DECREF(py_frame);
+        // If output is a list of numpy frames, call set_data for all
+        // available numpy frames. Else set only for first frame
+        if (!PyList_Check(output)) {
+            PyArrayObject* py_array = (PyArrayObject*) output;
 
-            LOG_DEBUG_0("Releasing the GIL");
-            PyGILState_Release(gstate);
-            LOG_DEBUG_0("Released");
+            int dims = PyArray_NDIM(py_array);
+            if(dims < 3 || dims > 3) {
+                LOG_ERROR(
+                    "NumPy array has too many dimensions must be 3 not %d",
+                    dims);
+                Py_DECREF(output);
+                Py_DECREF(py_frame);
 
-            return UdfRetCode::UDF_ERROR;
+                LOG_DEBUG_0("Releasing the GIL");
+                PyGILState_Release(gstate);
+                LOG_DEBUG_0("Released");
+
+                return UdfRetCode::UDF_ERROR;
+            }
+
+            npy_intp* shape = PyArray_SHAPE(py_array);
+            frame->set_data(
+                    0, (void*) output, free_np_frame, PyArray_DATA(py_array),
+                    shape[1], shape[0], shape[2]);
+
+            ret = UDF_OK;
+        } else {
+            Py_ssize_t n = PyList_Size(output);
+            for (int i = 0; i < n; i++) {
+                PyObject* item = PyList_GetItem(output, i);
+
+                PyArrayObject* py_array = (PyArrayObject*) item;
+                int dims = PyArray_NDIM(py_array);
+                if(dims < 3 || dims > 3) {
+                    LOG_ERROR(
+                        "NumPy array has too many dimensions must be 3 not %d",
+                        dims);
+                    Py_DECREF(output);
+                    Py_DECREF(py_frame);
+
+                    LOG_DEBUG_0("Releasing the GIL");
+                    PyGILState_Release(gstate);
+                    LOG_DEBUG_0("Released");
+
+                    return UdfRetCode::UDF_ERROR;
+                }
+
+                npy_intp* shape = PyArray_SHAPE(py_array);
+
+                frame->set_data(
+                        i, (void*) item, free_np_frame, PyArray_DATA(py_array),
+                        shape[1], shape[0], shape[2]);
+            }
+            ret = UDF_OK;
         }
-
-        npy_intp* shape = PyArray_SHAPE(py_array);
-        frame->set_data((void*) output, shape[1], shape[0], shape[2],
-                        PyArray_DATA(py_array), free_np_frame);
-
-        ret = UDF_OK;
     } else if (output == py_frame) {
         // If output == py_frame, then an extra DECREF is required to make sure
         // the Python NumPy array is released (this will not free the

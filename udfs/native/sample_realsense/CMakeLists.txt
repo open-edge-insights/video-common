@@ -1,4 +1,4 @@
-# Copyright (c) 2019 Intel Corporation.
+# Copyright (c) 2021 Intel Corporation.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -22,20 +22,22 @@ cmake_minimum_required(VERSION 3.12)
 project(eii-udf-samples VERSION 1.0.0 LANGUAGES C CXX)
 
 find_package(UDFLoader REQUIRED)
-link_directories(${CMAKE_INSTALL_PREFIX}/lib)
+find_package(realsense2 REQUIRED)
 
-add_library(dummy SHARED "dummy.cpp")
-target_link_libraries(dummy
+add_library(sample_realsense SHARED "sample_realsense.cpp")
+target_link_libraries(sample_realsense
     PUBLIC
         ${UDFLoader_LIBRARIES}
         ${EIIMsgEnv_LIBRARIES}
         ${EIIUtils_LIBRARIES}
+        ${realsense2_LIBRARY}
     PRIVATE
         ${IntelSafeString_LIBRARIES}
         ${OpenCV_LIBRARIES}
     )
 
 install(
-    TARGETS dummy
+    TARGETS sample_realsense
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+

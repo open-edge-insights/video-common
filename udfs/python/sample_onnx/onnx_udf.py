@@ -65,9 +65,9 @@ class Udf:
 
             self.log.debug('Initializing service principal auth with Azure')
             sp = ServicePrincipalAuthentication(
-                    tenant_id=os.environ['AML_TENANT_ID'],
-                    service_principal_id=os.environ['AML_PRINCIPAL_ID'],
-                    service_principal_password=os.environ['AML_PRINCIPAL_PASS'])
+                tenant_id=os.environ['AML_TENANT_ID'],
+                service_principal_id=os.environ['AML_PRINCIPAL_ID'],
+                service_principal_password=os.environ['AML_PRINCIPAL_PASS'])
 
             self.log.debug('Initializing AzureML Workspace connection')
             azure_ws = Workspace.get(
@@ -114,6 +114,5 @@ class Udf:
         metadata['class_idx'] = int(idx)
         self.log.debug(
                 f'metadata: {metadata} added to classifier output queue')
-
 
         return False, None, metadata

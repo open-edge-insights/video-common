@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Intel Corporation.
+// Copyright (c) 2021 Intel Corporation.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to
@@ -19,7 +19,7 @@
 // IN THE SOFTWARE.
 
 /**
- * @brief @c C++ UdfHandle implementation
+ * @brief @c C++ Raw UdfHandle implementation
  */
 
 #include <dlfcn.h>
@@ -29,13 +29,13 @@
 #include <iostream>
 #include <sstream>
 #include <eii/utils/logger.h>
-#include "eii/udf/native_udf_handle.h"
+#include "eii/udf/raw_udf_handle.h"
 
 #define DELIM ':'
 
 using namespace eii::udf;
 
-NativeUdfHandle::NativeUdfHandle(std::string name, int max_workers) :
+RawUdfHandle::RawUdfHandle(std::string name, int max_workers) :
     UdfHandle(name, max_workers)
 {
     m_lib_handle = NULL;
@@ -43,17 +43,17 @@ NativeUdfHandle::NativeUdfHandle(std::string name, int max_workers) :
     m_udf = NULL;
 }
 
-NativeUdfHandle::NativeUdfHandle(const NativeUdfHandle& src) :
+RawUdfHandle::RawUdfHandle(const RawUdfHandle& src) :
     UdfHandle(NULL, 0)
 {
     throw "This object should not be copied";
 }
 
-NativeUdfHandle& NativeUdfHandle::operator=(const NativeUdfHandle& src) {
+RawUdfHandle& RawUdfHandle::operator=(const RawUdfHandle& src) {
     return *this;
 }
 
-NativeUdfHandle::~NativeUdfHandle() {
+RawUdfHandle::~RawUdfHandle() {
     LOG_DEBUG_0("Destroying Native UDF");
 
     m_func_initialize_udf = NULL;
@@ -65,7 +65,7 @@ NativeUdfHandle::~NativeUdfHandle() {
         dlclose(m_lib_handle);
 }
 
-bool NativeUdfHandle::initialize(config_t* config) {
+bool RawUdfHandle::initialize(config_t* config) {
     bool res = this->UdfHandle::initialize(config);
     if(!res)
         return false;
@@ -130,7 +130,7 @@ bool NativeUdfHandle::initialize(config_t* config) {
 
         try {
             void* udf = m_func_initialize_udf(config);
-            m_udf = (BaseUdf*) udf;
+            m_udf = (RawBaseUdf*) udf;
         } catch(const std::exception& exc) {
             LOG_ERROR("Failed to initialize UDF: %s", exc.what());
             return false;
@@ -142,58 +142,26 @@ bool NativeUdfHandle::initialize(config_t* config) {
     return false;
 }
 
-void free_native_cv_frame(void* varg) {
+void free_native_frame(void* varg) {
     LOG_DEBUG("Freeing frame modified by native UDF");
-    cv::Mat* frame = (cv::Mat*) varg;
-    delete frame;
+    if (varg != NULL) {
+        Frame* frame = static_cast<Frame*>(varg);
+        delete frame;
+    }
 }
 
-UdfRetCode NativeUdfHandle::process(Frame* frame) {
+UdfRetCode RawUdfHandle::process(Frame* frame) {
     UdfRetCode ret = UdfRetCode::UDF_OK;
-    int w = frame->get_width();
-    int h = frame->get_height();
-    int c = frame->get_channels();
-
-    //TODO: Do we want to default to 8bit?
-
-    cv::Mat* mat_frame = new cv::Mat(h, w, CV_8UC(c), frame->get_data(0));
-
-    // Output frame must be initialized to an empty frame
-    cv::Mat* output = new cv::Mat();
-
-    msg_envelope_t* meta_data = frame->get_meta_data();
 
     try {
-        ret = m_udf->process(*mat_frame, *output, meta_data);
-
-        // Check if the UDF has changed / modified the frame it was given. In
-        // this case, output will no longer be empty (like it was after its
-        // initialization above).
-        //
-        // NOTE: output->data and mat_frame->data (i.e. the underlying void* of
-        // the frame's data) must not be pointing to the same address. In this
-        // case, the UDF pointed output to an unchanged vesion of the frame
-        // it was given. In this case, the frame was not actually modified.
-        // To avoid potential memory issues, do not tell the Frame object to
-        // change the underlying data.
-        if(!output->empty() && output->data != mat_frame->data) {
-            LOG_DEBUG("Setting frame with new UDF frame");
-            frame->set_data(
-                    0, (void*) output, free_native_cv_frame, (void*) output->data,
-                    output->cols, output->rows, output->channels());
-        } else {
-            delete output;
-        }
+        ret = m_udf->process(frame);
 
         if (ret == UdfRetCode::UDF_ERROR)
             LOG_ERROR_0("Error in UDF process() method");
     } catch(const std::exception& exc) {
         LOG_ERROR("Error in UDF process() method: %s", exc.what());
         ret = UdfRetCode::UDF_ERROR;
-        delete output;
     }
-
-    delete mat_frame;
 
     return ret;
 }

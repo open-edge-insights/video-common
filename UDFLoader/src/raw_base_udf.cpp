@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Intel Corporation.
+// Copyright (c) 2021 Intel Corporation.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to
@@ -19,47 +19,20 @@
 // IN THE SOFTWARE.
 
 /**
- * @file
- * @brief Dummy UDF Implementation
+ * @brief Implementation of @c RawBaseUdf class
  */
 
-#include <eii/udf/base_udf.h>
 #include <eii/utils/logger.h>
-#include <iostream>
+#include "eii/udf/raw_base_udf.h"
 
 using namespace eii::udf;
 
-namespace eii {
-    namespace udfsamples {
+RawBaseUdf::RawBaseUdf(config_t* config) :
+    m_config(config)
+{}
 
-    /**
-     * The Dummy UDF - does no processing
-     */
-        class DummyUdf : public BaseUdf {
-            public:
-                explicit DummyUdf(config_t* config) : BaseUdf(config) {};
-
-                ~DummyUdf() {};
-
-                UdfRetCode process(cv::Mat& frame, cv::Mat& output, msg_envelope_t* meta) override {
-                    LOG_DEBUG("In %s method...", __PRETTY_FUNCTION__);
-                    return UdfRetCode::UDF_OK;
-                };
-        };
-    } // udf
-} // eii
-
-extern "C" {
-
-/**
- * Create the UDF.
- *
- * @return void*
- */
-void* initialize_udf(config_t* config) {
-    eii::udfsamples::DummyUdf* udf = new eii::udfsamples::DummyUdf(config);
-    return (void*) udf;
+RawBaseUdf::~RawBaseUdf() {
+    // NOTE: The m_config value is not freed here because this should always
+    // be internally wrapped by a @c UdfHandle which manages the memory for
+    // the configuration object.
 }
-
-} // extern "C"
-

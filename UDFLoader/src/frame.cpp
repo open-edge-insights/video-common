@@ -40,7 +40,6 @@ static void free_decoded(void* varg);
 static void free_encoded(void* varg);
 static void free_msg_env_blob(void* varg);
 static void free_frame_data(void* varg);
-static void free_frame_data_final(void* varg);
 static cv::Mat* decode_frame(
         EncodeType encode_type, uchar* encoded_data, size_t len);
 static void add_frame_meta_env(msg_envelope_t* env, FrameMetaData* meta);
@@ -48,44 +47,6 @@ static void add_frame_meta_obj(
         msg_envelope_elem_body_t* obj, FrameMetaData* meta);
 static EncodeType str_to_encode_type(const char* value);
 static std::string generate_image_handle(int len);
-
-// Simple struct for use with free_frame_data_final()
-class FinalFreeWrapper {
-private:
-    // Reference to the frame object to delete
-    Frame* m_frame;
-
-    // Reference to the final piece of frame data which needs to be deleted.
-    FrameData* m_frame_data;
-
-    /**
-     * Private @c FinalFreeWrapper copy constructor.
-     */
-    FinalFreeWrapper(const FinalFreeWrapper& src);
-
-    /**
-     * Private @c FinalFreeWrapper assignment operator.
-     */
-    FinalFreeWrapper& operator=(const FinalFreeWrapper& src);
-
-public:
-    FinalFreeWrapper(Frame* frame, FrameData* fd) :
-        m_frame(frame), m_frame_data(fd)
-    {};
-
-    ~FinalFreeWrapper() {
-        delete m_frame_data;
-        delete m_frame;
-    };
-};
-
-FinalFreeWrapper::FinalFreeWrapper(const FinalFreeWrapper& src) {
-    throw "This object should not be copied";
-}
-
-FinalFreeWrapper& FinalFreeWrapper::operator=(const FinalFreeWrapper& src) {
-    return *this;
-}
 
 /**
  * Helper method to verify the correct encoding level is set for the given
@@ -739,15 +700,7 @@ msg_envelope_t* Frame::serialize() {
         // Set the ownership principles
         blob->body.blob->shared->ptr = (void*) fd;
         blob->body.blob->shared->owned = true;
-        if (i == (this->get_number_of_frames() - 1)) {
-            // Last blob is responsible for making sure the Frame object
-            // itself also gets deleted
-            FinalFreeWrapper* ffw = new FinalFreeWrapper(this, fd);
-            blob->body.blob->shared->ptr = (void*) ffw;
-            blob->body.blob->shared->free = free_frame_data_final;
-        } else {
-            blob->body.blob->shared->free = free_frame_data;
-        }
+        blob->body.blob->shared->free = free_frame_data;
 
         ret = msgbus_msg_envelope_put(m_meta_data, NULL, blob);
         if (ret != MSG_SUCCESS) {
@@ -784,12 +737,6 @@ static void free_msg_env_blob(void* varg) {
 static void free_frame_data(void* varg) {
     FrameData* fd = (FrameData*) varg;
     delete fd;
-}
-
-
-static void free_frame_data_final(void* varg) {
-    FinalFreeWrapper* ffw = (FinalFreeWrapper*) varg;
-    delete ffw;
 }
 
 static void add_frame_meta_env(msg_envelope_t* env, FrameMetaData* meta) {

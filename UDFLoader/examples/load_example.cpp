@@ -28,7 +28,7 @@
 #include <condition_variable>
 #include <eii/utils/logger.h>
 #include <eii/utils/json_config.h>
-#include <eii/msgbus/msgbus.h>
+#include <eii/msgbus/msgbus.hpp>
 #include <opencv2/opencv.hpp>
 #include "eii/udf/udf_manager.h"
 #include "eii/udf/frame.h"
@@ -67,14 +67,14 @@ int main(int argc, char** argv) {
 
         LOG_INFO_0("Initializing Publisher thread");
         std::condition_variable err_cv;
-        Publisher* publisher = new Publisher(
+        PublisherThread* publisher = new PublisherThread(
                 msgbus_config, err_cv, "example", (MessageQueue*) input_queue,
                 SERVICE_NAME);
         publisher->start();
 
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
-        Subscriber<Frame>* subscriber = new Subscriber<Frame>(
+        SubscriberThread<Frame>* subscriber = new SubscriberThread<Frame>(
                 sub_config, err_cv, "example", (MessageQueue*) sub_queue,
                 SERVICE_NAME);
         subscriber->start();

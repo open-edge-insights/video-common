@@ -123,6 +123,23 @@ User can refer to [UDF Writing HOW-TO GUIDE](./HOWTO_GUIDE_FOR_WRITING_UDF.md) f
   }
   ```
 
+
+* **Raw Dummy UDF**
+
+  Accepts the Frame object and forwards the same without doing any processing. It's a
+  do-nothing UDF for working with multi-frame support.
+
+  `UDF config`:
+
+  ```javascript
+  {
+      "name": "raw_dummy",
+      "type": "raw_native"
+  }
+  ```
+
+**Note**: `raw_native` udf type has been added to support multi-frame ingestion support.RealSense usecase requires multi-frame ingestion for color and depth frames.
+
 * **Resize UDF**
 
   Accepts the frame, resizes it based on the `width` and `height` params.
@@ -200,6 +217,22 @@ User can refer to [UDF Writing HOW-TO GUIDE](./HOWTO_GUIDE_FOR_WRITING_UDF.md) f
       "type": "python"
   }
   ```
+
+* **Multi Frame Dummy UDF**
+
+  Accepts the Frame object which is a list of frames and forwards the same without doing any processing. It's a
+  do-nothing UDF for working with multi-frame support.
+
+  `UDF config`:
+
+  ```javascript
+  {
+      "name": "multi_frame_dummy",
+      "type": "python"
+  }
+  ```
+
+**Note**: When multi frame ingestion is used then the Frame object is a list of numpy frames else it is a single numpy frame. The udf type remains `python` for multi frame ingestion and single frame ingestion.
 
 * **Jupyter Connector UDF**
 

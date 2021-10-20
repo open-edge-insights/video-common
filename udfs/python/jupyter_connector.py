@@ -25,6 +25,8 @@ import logging
 import eii.msgbus as mb
 import cfgmgr.config_manager as cfg
 import threading
+import cv2
+import numpy as np
 import time
 
 
@@ -68,6 +70,42 @@ class Udf:
             self.config_publisher.publish(self.udf_config)
             time.sleep(3)
 
+    def decode_frame(self, results, blob):
+        """Identify the defects on the frames
+
+        :param results: Metadata of frame received from message bus.
+        :type: dict
+        :param blob: Actual frame received from message bus.
+        :type: bytes
+        :return: Return decoded frame
+        :rtype: numpy array
+        """
+        height = int(results['height'])
+        width = int(results['width'])
+        channels = int(results['channels'])
+        encoding = None
+
+        if 'encoding_type' and 'encoding_level' in results:
+            encoding = {"type": results['encoding_type'],
+                        "level": results['encoding_level']}
+        # Convert to Numpy array and reshape to frame
+        if isinstance(blob, list):
+            # If multiple frames, select first frame for
+            # visualization
+            blob = blob[0]
+        frame = np.frombuffer(blob, dtype=np.uint8)
+        if encoding is not None:
+            frame = np.reshape(frame, (frame.shape))
+            try:
+                frame = cv2.imdecode(frame, 1)
+            except cv2.error as ex:
+                self.log.error("frame: {}, exception: {}".format(frame, ex))
+        else:
+            self.log.debug("Encoding not enabled...")
+            frame = np.reshape(frame, (height, width, channels))
+
+        return frame
+
     def process(self, frame, metadata):
         """Publishes every frame received to Jupyter Notebook service
            and returns the respective processed & subscribed frame
@@ -85,6 +123,7 @@ class Udf:
         # Publishing metadata & frames
         self.publisher.publish((metadata, frame.tobytes(),))
         metadata, frame = self.subscriber.recv()
+
         if "jpnb_frame_drop" in metadata:
             del metadata["jpnb_frame_drop"]
             return True, None, None
@@ -94,6 +133,8 @@ class Udf:
             return False, frame, metadata
         elif "jpnb_frame_updated" in metadata or "jpnb_metadata_updated" in metadata:
             if "jpnb_frame_updated" in metadata:
+                # Decode frame to retain text
+                frame = self.decode_frame(metadata, frame)
                 del metadata["jpnb_frame_updated"]
                 return False, frame, None
             if "jpnb_metadata_updated" in metadata:

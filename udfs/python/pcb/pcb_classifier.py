@@ -59,6 +59,7 @@ class Udf:
         self.model_xml = model_xml
         self.model_bin = model_bin
         self.device = device
+        self.lock = threading.Lock()
 
         # Assert all input parameters exist
         assert os.path.exists(self.ref_img), \
@@ -157,7 +158,9 @@ class Udf:
             test_crop = test[y:y1, x:x1]
             test_img = cv2.resize(test_crop, (w, h))
             test_img = test_img.transpose((2, 0, 1))
+            self.lock.acquire()
             res = self.exec_net.infer(inputs={self.input_blob: test_img})
+            self.lock.release()
             res = res[self.output_blob]
             probs = np.squeeze(res)
             if d_type == D_MISSING:

@@ -36,8 +36,8 @@ class Udf:
     def process(self, frame, metadata):
         """[summary]
 
-        :param frame: frame blob
-        :type frame: numpy.ndarray
+        :param frame: list of frame blob
+        :type frame: list of numpy.ndarray
         :param metadata: frame's metadata
         :type metadata: str
         :return:  (should the frame be dropped, has the frame been updated,

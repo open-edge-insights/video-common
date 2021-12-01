@@ -1,14 +1,14 @@
 **Contents**
 
-- [**How-To GUIDE for writing UDF for EII**](#how-to-guide-for-writing-udf-for-eii)
-  - [**Introduction**](#introduction)
-  - [**Steps for writing native(c++) UDFs**](#steps-for-writing-nativec-udfs)
-    - [**EII APIs for Writing Native UDFs(c++)**](#eii-apis-for-writing-native-udfsc)
-    - [**EII APIs for Writing Raw Native UDFs(c++) for Multi Frame Support**](#eii-apis-for-writing-raw-native-udfsc-for-multi-frame-support)
-    - [**EII INFRASTRUCTURE RELATED CHANGES**](#eii-infrastructure-related-changes)
-  - [**Steps for writing Python UDFs**](#steps-for-writing-python-udfs)
-    - [**Python APIs for writing UDF for EII**](#python-apis-for-writing-udf-for-eii)
-    - [**EII Infrastructure changes**](#eii-infrastructure-changes)
+- [How-To GUIDE for writing UDF for EII](#how-to-guide-for-writing-udf-for-eii)
+  - [Introduction](#introduction)
+  - [Steps for writing native(c++) UDFs](#steps-for-writing-nativec-udfs)
+    - [EII APIs for Writing Native UDFs(c++)](#eii-apis-for-writing-native-udfsc)
+    - [EII APIs for Writing Raw Native UDFs(c++) for Multi Frame Support](#eii-apis-for-writing-raw-native-udfsc-for-multi-frame-support)
+    - [EII INFRASTRUCTURE RELATED CHANGES](#eii-infrastructure-related-changes)
+  - [Steps for writing Python UDFs](#steps-for-writing-python-udfs)
+    - [Python APIs for writing UDF for EII](#python-apis-for-writing-udf-for-eii)
+    - [EII Infrastructure changes](#eii-infrastructure-changes)
     - [CONCLUSION](#conclusion)
 
 # **How-To GUIDE for writing UDF for EII**
@@ -19,8 +19,8 @@ This document describes stepwise instruction for writing a User defined Function
 
 UDFs(User Defined Function) are one of the cardinal feature of EII framework. It enables users to adjoin any pre-processing or post-processing logic in data pipeline defined by EII configuration. As of EII 2.1 release, it supports UDFs to be implemented using following languages.
 
-* C++  (It is also called **Native** UDF as EII core components are implemented in C++)
-* Python
+- C++  (It is also called **Native** UDF as EII core components are implemented in C++)
+- Python
 
 The order in which the UDFs are defined in EII configuration file is the order in which data will flow across them. Currently there is no support for demux/mux the data flow to/fro the UDFs.
 
@@ -30,15 +30,15 @@ All configs related to UDFs are to be in `config.json` of apps like VideoIngesti
 
 Every UDF writing has two major part to it.
 
-* Writing actual pre/post processing logic using EII exposed APIs.
+- Writing actual pre/post processing logic using EII exposed APIs.
 
-* Adding EII infra specific configuration component for deploying it
+- Adding EII infra specific configuration component for deploying it
 
 ### **EII APIs for Writing Native UDFs(c++)**
 
 There are three APIs defined semantically to add the pre/post processing logic. These APIs must be implemented as method of a user defined class inherited from the Udf class named ***BaseUdf***.
 
-* #### **INITIALIZATION & DE-INITIALIZATION**
+- #### **INITIALIZATION & DE-INITIALIZATION**
 
     ``` C++
         class DummyUdf : public BaseUdf {
@@ -54,12 +54,11 @@ There are three APIs defined semantically to add the pre/post processing logic. 
 
     ```
 
-    The **DummyUdf** in the above code snippet is the user defined class and the constructor of the class initialize the UDF's specific data-structure. The only argument passed to this function is **config** which depicts configuration details mentioned in the `config.json` file of apps liks VideoIngestion and VideoAnalytics which process UDFs. The API to consume **config** is defined in [Util README](../common/util/c/README.md)
+  The **DummyUdf** in the above code snippet is the user defined class and the constructor of the class initialize the UDF's specific data-structure. The only argument passed to this function is **config** which depicts configuration details mentioned in the `config.json` file of apps liks VideoIngestion and VideoAnalytics which process UDFs. The API to consume **config** is defined in [Util README](https://github.com/open-edge-insights/eii-c-utils/blob/master/README.md)
 
+- #### **PROCESSING THE ACTUAL DATA**
 
-* #### **PROCESSING THE ACTUAL DATA**
-
-    The API to utilize the ingested input looks as below:
+  The API to utilize the ingested input looks as below:
 
     ``` C++
     UdfRetCode
@@ -68,26 +67,26 @@ There are three APIs defined semantically to add the pre/post processing logic. 
     }
     ```
 
-    This function is a override method which user need to define in its UDF file.
+  This function is a override method which user need to define in its UDF file.
 
-    The *argument* details are described as below:
+  The *argument* details are described as below:
 
-    * **Argument 1(cv::Mat &frame)**: It represents the input frame for inference.
+  - **Argument 1(cv::Mat &frame)**: It represents the input frame for inference.
 
-    * **Argument 2(cv::Mat &outputFrame)**: It represents the modified frame by the user. This can be used if user need to pass a modified frame forward.
+  - **Argument 2(cv::Mat &outputFrame)**: It represents the modified frame by the user. This can be used if user need to pass a modified frame forward.
 
-    * **Argument 3(msg_envelope_t\* meta)**: It represents the inference result returned by UDF. The user need to fill the **msg_envelope_t** structure as described in following [**EIIMsgEnv README**](common/libs/EIIMsgEnv/README.md). There are sample code suggested in the README which explains the API usage in detail.
+  - **Argument 3(msg_envelope_t\* meta)**: It represents the inference result returned by UDF. The user need to fill the **msg_envelope_t** structure as described in following [**EIIMsgEnv README**](https://github.com/open-edge-insights/eii-messagebus/blob/master/README.md). There are sample code suggested in the README which explains the API usage in detail.
 
-    The *return* code details are  described as below:
+  The *return* code details are  described as below:
 
-    * **UdfRetCode**: User need to return appropriate macro as mentioned below:
-        * **UDF_OK** - UDF has processed the frame gracefully.
-        * **UDF_DROP_FRAME** - The frame passed to process function need to be dropped.
-        * **UDF_ERROR** - it should be returned for any kind of error in UDF.
+  - **UdfRetCode**: User need to return appropriate macro as mentioned below:
+  - **UDF_OK** - UDF has processed the frame gracefully.
+  - **UDF_DROP_FRAME** - The frame passed to process function need to be dropped.
+  - **UDF_ERROR** - it should be returned for any kind of error in UDF.
 
-* #### **LINKING UdfLoader AND CUSTOM-UDF**
+- #### **LINKING UdfLoader AND CUSTOM-UDF**
 
-    The **initialize_udf()** function need to defined as follows to create a link between UdfLoader module and respective UDF. This function ensure UdfLoader to call proper constructor and process() function of respective UDF.
+  The **initialize_udf()** function need to defined as follows to create a link between UdfLoader module and respective UDF. This function ensure UdfLoader to call proper constructor and process() function of respective UDF.
 
     ```C++
     extern "C" {
@@ -98,7 +97,7 @@ There are three APIs defined semantically to add the pre/post processing logic. 
     }
     ```
 
-    The **"DummyUdf"** is the class name of the user defined custom UDF.
+  The **"DummyUdf"** is the class name of the user defined custom UDF.
 
 ---
 
@@ -106,7 +105,7 @@ There are three APIs defined semantically to add the pre/post processing logic. 
 
 There are three APIs defined semantically to add the pre/post processing logic. These APIs must be implemented as method of a user defined class inherited from the Udf class named ***RawUdf***.
 
-* #### **INITIALIZATION & DE-INITIALIZATION**
+- #### **INITIALIZATION & DE-INITIALIZATION**
 
     ``` C++
         class RealSenseUdf : public RawBaseUdf {
@@ -122,12 +121,11 @@ There are three APIs defined semantically to add the pre/post processing logic. 
 
     ```
 
-    The **RealSenseUdf** in the above code snippet is the user defined class and the constructor of the class initialize the UDF's specific data-structure. The only argument passed to this function is **config** which depicts configuration details mentioned in the `config.json` file of apps liks VideoIngestion and VideoAnalytics which process UDFs. The API to consume **config** is defined in [Util README](../common/util/c/README.md)
+  The **RealSenseUdf** in the above code snippet is the user defined class and the constructor of the class initialize the UDF's specific data-structure. The only argument passed to this function is **config** which depicts configuration details mentioned in the `config.json` file of apps liks VideoIngestion and VideoAnalytics which process UDFs. The API to consume **config** is defined in [Util README](../common/util/c/README.md)
 
+- #### **PROCESSING THE ACTUAL DATA**
 
-* #### **PROCESSING THE ACTUAL DATA**
-
-    The API to utilize the ingested input looks as below:
+  The API to utilize the ingested input looks as below:
 
     ``` C++
     UdfRetCode
@@ -136,22 +134,22 @@ There are three APIs defined semantically to add the pre/post processing logic. 
     }
     ```
 
-    This function is a override method which user need to define in its UDF file.
+  This function is a override method which user need to define in its UDF file.
 
-    The *argument* details are described as below:
+  The *argument* details are described as below:
 
-    * **Argument 1(Frame* frame)**: It represents the frame object.
+- **Argument 1(Frame* frame)**: It represents the frame object.
 
-    The *return* code details are  described as below:
+  The *return* code details are  described as below:
 
-    * **UdfRetCode**: User need to return appropriate macro as mentioned below:
-        * **UDF_OK** - UDF has processed the frame gracefully.
-        * **UDF_DROP_FRAME** - The frame passed to process function need to be dropped.
-        * **UDF_ERROR** - it should be returned for any kind of error in UDF.
+  - **UdfRetCode**: User need to return appropriate macro as mentioned below:
+  - **UDF_OK** - UDF has processed the frame gracefully.
+  - **UDF_DROP_FRAME** - The frame passed to process function need to be dropped.
+  - **UDF_ERROR** - it should be returned for any kind of error in UDF.
 
-* #### **LINKING UdfLoader AND CUSTOM-UDF**
+- #### **LINKING UdfLoader AND CUSTOM-UDF**
 
-    The **initialize_udf()** function need to defined as follows to create a link between UdfLoader module and respective UDF. This function ensure UdfLoader to call proper constructor and process() function of respective UDF.
+  The **initialize_udf()** function need to defined as follows to create a link between UdfLoader module and respective UDF. This function ensure UdfLoader to call proper constructor and process() function of respective UDF.
 
     ```C++
     extern "C" {
@@ -162,8 +160,7 @@ There are three APIs defined semantically to add the pre/post processing logic. 
     }
     ```
 
-    The **"RealSenseUdf"** is the class name of the user defined custom UDF.
-
+  The **"RealSenseUdf"** is the class name of the user defined custom UDF.
 
 ### **EII INFRASTRUCTURE RELATED CHANGES**
 
@@ -172,8 +169,8 @@ This section describes the check-list one has to ensure to be completed before e
 1. All the code specific to UDF should be kept under one directory which should be placed under **.../common/video/udfs/native** directory.
 
 2. Write appropriate ***CMakeLists.txt*** file and link appropriate external library based on the code. Currently two sample CMAKE files are defined for two different use-case.
-    * [ Dummy UDF's CMakeLists.txt file] (./native/dummy/CMakeLists.txt)
-    * [Safety Gear Demo CMakeLists.txt file](./native/safety_gear_demo/CMakeLists.txt)
+    - [ Dummy UDF's CMakeLists.txt file] (./native/dummy/CMakeLists.txt)
+    - [Safety Gear Demo CMakeLists.txt file](./native/safety_gear_demo/CMakeLists.txt)
 
 3. If the OpenVINO is used kindly follow the [safety_gear_demo](common/video/udfs/native/safety_gear_demo) example for proper linking of  **cpu_extension.so** shared object.
 
@@ -183,15 +180,15 @@ This section describes the check-list one has to ensure to be completed before e
 
 This section describes the process of writing a Python UDF. As discussed in the aforementioned scenario, it also has two aspects to it.
 
-* Writing the actual UDF. It needs knowledge EII exposed python APIs
+- Writing the actual UDF. It needs knowledge EII exposed python APIs
 
-* Adding the UDF to EII framework by altering different configs.
+- Adding the UDF to EII framework by altering different configs.
 
 ### **Python APIs for writing UDF for EII**
 
-* **INITIALIZATION**
+- **INITIALIZATION**
 
-    In case of Python the initialization callback is also same as the native case. User must create a ***Udf class*** and the ***\_\_init\_\_()*** function defined in class act as a initialization routine for custom UDF. A dummy constructor code is pasted below:
+   In case of Python the initialization callback is also same as the native case. User must create a ***Udf class*** and the ***\_\_init\_\_()*** function defined in class act as a initialization routine for custom UDF. A dummy constructor code is pasted below:
 
     ```Python
     class Udf:
@@ -203,9 +200,9 @@ This section describes the process of writing a Python UDF. As discussed in the 
         # Add the initialization code in this method.
     ```
 
-* **PROCESS ACTUAL DATA**
+- **PROCESS ACTUAL DATA**
 
-    The API used to process the actual frame looks as below.
+  The API used to process the actual frame looks as below.
 
     ```Python
     process(self, frame, metadata):
@@ -213,38 +210,38 @@ This section describes the process of writing a Python UDF. As discussed in the 
         # metadata can be used to return inference result
     ```
 
-    **Argument:**
+  **Argument:**
 
-    *frame*: Image frame in numpy's ndarray format
+  *frame*: Image frame in numpy's ndarray format
 
-    *metadata*: An empty dictionary. Inference results can be inserted in this data structure.
+  *metadata*: An empty dictionary. Inference results can be inserted in this data structure.
 
-    **Return value:**
+  **Return value:**
 
-    This function returns three values.
+  This function returns three values.
 
-    *1st Value* : Represents if the frame Need to be dropped or Not. It is boolean in nature. In case of failure user can return *True* in this positional return value.
+  *1st Value* : Represents if the frame Need to be dropped or Not. It is boolean in nature. In case of failure user can return *True* in this positional return value.
 
-    *2nd Value* : It represents the actual modified frame if at all it has been modified. Hence the type is **numpy's ndarray**. If the frame is not modified user can return a *None* in this place.
+  *2nd Value* : It represents the actual modified frame if at all it has been modified. Hence the type is **numpy's ndarray**. If the frame is not modified user can return a *None* in this place.
 
-    *3rd Value* : Metadata is returned in this place. Hence the type is **dict**. In general user can return the passed argument as part of this function.
+  *3rd Value* : Metadata is returned in this place. Hence the type is **dict**. In general user can return the passed argument as part of this function.
 
 For reference user can find example UDFs code in below mentioned links
 
-* [PCB_FILTER](./pcb/pcb_filter.py)
+- [PCB_FILTER](./python/pcb/pcb_filter.py)
 
-* [PCB_CLASSIFIER](./pcb/pcb_classifier.py)
+- [PCB_CLASSIFIER](./python/pcb/pcb_classifier.py)
 
-* [Dummy UDF](./dummy.py)
+- [Dummy UDF](./python/dummy.py)
 
 ### **EII Infrastructure changes**
 
 For any UDF to be utilized by the EII infrastructure, user must follow the below steps.
 
-* Corresponding UDF entry must be added to the `config.json` file of apps like VideoIngestion and VideoAnalytics.
+- Corresponding UDF entry must be added to the `config.json` file of apps like VideoIngestion and VideoAnalytics.
   The UDF entry syntax is explained in detail in the following document [UDF README](./README.md)
 
-* All the python UDFs must be kept under [python udf directory](./python). Additionally the entry *name* key must have the file hierarchy till the file name as the name of the udf. For example:
+- All the python UDFs must be kept under [python udf directory](./python). Additionally the entry *name* key must have the file hierarchy till the file name as the name of the udf. For example:
 A file present in this path *./python/pcb/pcb_filter.py* must have the *name* field as *pcb.pcb_filter*.
 
     >This syntax is described in detail in the [UDF README](./README.md).

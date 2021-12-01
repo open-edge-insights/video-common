@@ -1,13 +1,13 @@
 **Contents**
 
-- [`UDF Configuration`](#udf-configuration)
-- [`UDF Writing Guide`](#udf-writing-guide)
-- [`Sample UDFs`](#sample-udfs)
-  - [`Native UDFs`](#native-udfs)
-  - [`Python UDFs`](#python-udfs)
-- [`Construction of Metadata in UDF`](#construction-of-metadata-in-udf)
-- [`Chaining of UDFs`](#chaining-of-udfs)
-  - [`Combination of UDFs with ingestors`](#combination-of-udfs-with-ingestors)
+- [UDF Configuration](#udf-configuration)
+- [UDF Writing Guide](#udf-writing-guide)
+- [Sample UDFs](#sample-udfs)
+  - [Native UDFs](#native-udfs)
+  - [Python UDFs](#python-udfs)
+- [Construction of Metadata in UDF](#construction-of-metadata-in-udf)
+- [Chaining of UDFs](#chaining-of-udfs)
+  - [Combination of UDFs with ingestors](#combination-of-udfs-with-ingestors)
 
 `EII Sample UDFs`
 
@@ -104,12 +104,12 @@ User can refer to [UDF Writing HOW-TO GUIDE](./HOWTO_GUIDE_FOR_WRITING_UDF.md) f
 
 ## `Sample UDFs`
 
-> **NOTE**: The UDF config of these go as json objects in the `udfs` key in
+> **NOTE:** The UDF config of these go as json objects in the `udfs` key in
 > the overall UDF configuration object
 
 ### `Native UDFs`
 
-* **Dummy UDF**
+- **Dummy UDF**
 
   Accepts the frame and forwards the same without doing any processing. It's a
   do-nothing UDF.
@@ -123,8 +123,7 @@ User can refer to [UDF Writing HOW-TO GUIDE](./HOWTO_GUIDE_FOR_WRITING_UDF.md) f
   }
   ```
 
-
-* **Raw Dummy UDF**
+- **Raw Dummy UDF**
 
   Accepts the Frame object and forwards the same without doing any processing. It's a
   do-nothing UDF for working with multi-frame support.
@@ -138,9 +137,9 @@ User can refer to [UDF Writing HOW-TO GUIDE](./HOWTO_GUIDE_FOR_WRITING_UDF.md) f
   }
   ```
 
-**Note**: `raw_native` udf type has been added to support multi-frame ingestion support.RealSense usecase requires multi-frame ingestion for color and depth frames.
+**Note:** `raw_native` udf type has been added to support multi-frame ingestion support.RealSense usecase requires multi-frame ingestion for color and depth frames.
 
-* **Resize UDF**
+- **Resize UDF**
 
   Accepts the frame, resizes it based on the `width` and `height` params.
 
@@ -155,7 +154,7 @@ User can refer to [UDF Writing HOW-TO GUIDE](./HOWTO_GUIDE_FOR_WRITING_UDF.md) f
   }
   ```
 
-* **FPS UDF**
+- **FPS UDF**
 
   FPS udf can be used to measure the total number of frames received every second. It can be used in VideoIngestion and VideoAnalytics
   application by adding the below configuration in the udf configuration. It can also be chained with other udfs in which case the FPS result will be affected depending on the other udfs used.
@@ -173,19 +172,19 @@ User can refer to [UDF Writing HOW-TO GUIDE](./HOWTO_GUIDE_FOR_WRITING_UDF.md) f
 
   ```javascript
   "udfs": [{
-	      "name": "dummy",
-	      "type": "native"
-	  },
-	  {
-	      "name": "fps",
-	      "type": "native"
-	  }]
+       "name": "dummy",
+       "type": "native"
+   },
+   {
+       "name": "fps",
+       "type": "native"
+   }]
   ```
 
   > **Note** The fps results will be logged in `DEBUG` LOG_LEVEL, added to the metadata with the AppName as the key and will be
   > displayed in the visualizer.
 
-* **Sample Realsense UDF**
+- **Sample Realsense UDF**
 
   Accepts the color and depth frame, converts to rs2::frame type by using rs2::software_device simulation, enables a color filter on the depth frame using rs2::colorizer.
 
@@ -199,12 +198,13 @@ User can refer to [UDF Writing HOW-TO GUIDE](./HOWTO_GUIDE_FOR_WRITING_UDF.md) f
   ```
 
   ----
+
 ### `Python UDFs`
 
-> **NOTE**: Additional properties/keys other than `name` and `type` in the UDF
+> **NOTE:** Additional properties/keys other than `name` and `type` in the UDF
 > config are the parameters of the python UDF constructor
 
-* **Dummy UDF**
+- **Dummy UDF**
 
   Accepts the frame and forwards the same without doing any processing. It's a
   do-nothing UDF.
@@ -218,7 +218,7 @@ User can refer to [UDF Writing HOW-TO GUIDE](./HOWTO_GUIDE_FOR_WRITING_UDF.md) f
   }
   ```
 
-* **Multi Frame Dummy UDF**
+- **Multi Frame Dummy UDF**
 
   Accepts the Frame object which is a list of frames and forwards the same without doing any processing. It's a
   do-nothing UDF for working with multi-frame support.
@@ -232,9 +232,9 @@ User can refer to [UDF Writing HOW-TO GUIDE](./HOWTO_GUIDE_FOR_WRITING_UDF.md) f
   }
   ```
 
-**Note**: When multi frame ingestion is used then the Frame object is a list of numpy frames else it is a single numpy frame. The udf type remains `python` for multi frame ingestion and single frame ingestion.
+**Note:** When multi frame ingestion is used then the Frame object is a list of numpy frames else it is a single numpy frame. The udf type remains `python` for multi frame ingestion and single frame ingestion.
 
-* **Jupyter Connector UDF**
+- **Jupyter Connector UDF**
 
   Accepts the frame and publishes it to the EII JupyterNotebook service which processes the frame and publishes it back to the jupyter_connector UDF.
 
@@ -247,12 +247,11 @@ User can refer to [UDF Writing HOW-TO GUIDE](./HOWTO_GUIDE_FOR_WRITING_UDF.md) f
   }
   ```
 
-* **PCB Filter UDF**
+- **PCB Filter UDF**
 
   Accepts the frame and based on if `pcb` board is at the center in the frame or not,
   it forwards or drops the frame. It basically sends out only the key frames forward
   for further processing and not all frames it receives.
-
 
   `UDF config`:
 
@@ -267,9 +266,10 @@ User can refer to [UDF Writing HOW-TO GUIDE](./HOWTO_GUIDE_FOR_WRITING_UDF.md) f
       "n_right_px": 1000
   }
   ```
+
   Refer [python/pcb/README.md](./python/pcb/README.md) for more information.
 
-* **PCB Classifier UDF**
+- **PCB Classifier UDF**
 
   Accepts the frame, uses openvino inference engine APIs to determine whether it's
   a `good` pcb with no defects or `bad` pcb with defects. Metadata associated with
@@ -291,19 +291,20 @@ User can refer to [UDF Writing HOW-TO GUIDE](./HOWTO_GUIDE_FOR_WRITING_UDF.md) f
 
   Refer [python/pcb/README.md](./python/pcb/README.md) for more information.
 
-  **NOTE**:
+  **NOTE:**
   The above config works for both "CPU" and "GPU" devices after setting appropriate `device` value.
   Please set the "device" value appropriately based on the device used for inferencing.
 
-* **Sample ONNX UDF**
+- **Sample ONNX UDF**
 
   This UDF mainly demonstrates the model deployment on edge devices via AzureBridge service only.
 
   Please follow the below steps:
-  * Configure the sample ONNX UDF by following [Sample ONNX UDF configuration guide](https://github.com/open-edge-insights/eii-azure-bridge/blob/master/README.md#sample-eii-onnx-8)
-  * Follow [Single-Node Azure IOT Edge Deployment](https://github.com/open-edge-insights/eii-azure-bridge/blob/master/README.md#single-node-azure-iot-edge-deployment) to deploy the required modules
+  - Configure the sample ONNX UDF by following [Sample ONNX UDF configuration guide](https://github.com/open-edge-insights/eii-azure-bridge/blob/master/README.md#sample-eii-onnx-8)
+  - Follow [Single-Node Azure IOT Edge Deployment](https://github.com/open-edge-insights/eii-azure-bridge/blob/master/README.md#single-node-azure-iot-edge-deployment) to deploy the required modules
 
   For more details on AzureBridge setup, please refer [AzureBridge README.md](https://github.com/open-edge-insights/eii-azure-bridge/blob/master/README.md)
+
 ----
 
 ## `Construction of Metadata in UDF`
@@ -330,7 +331,7 @@ VideoAnalytics service.
 | opencv/gstreamer | <br><br>Combination of resize (native), pcb filter (python) and<br>pcb classifier (python) can be used as <br>per the need.  | <br><br><br>Combination of resize (native) and worker safety gear classifier (native/python) <br> can be used as per the need.  |
 | gstreamer with GVA(Gstreamer Video Analytics) elements | Not Applicable | <br>Any post-processing UDFs can be used as all<br>the pre-processing and classification is <br>happening in the gstreamer pipeline itself |
 
-> **NOTE**:
+> **NOTE:**
 > Dummy UDF can also be used for above use cases for testing chaining UDFs
 > feature but as such there is no value add as it's a do-nothing UDF.
 > In DEV Mode python udfs changes can be tested by restarting containers, no need to rebuild.

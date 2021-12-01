@@ -13,10 +13,10 @@ UDFLoader is a library providing APIs for loading and executing native and pytho
 ## Dependency Installation
 
 UDFLoader depends on the below libraries. Follow their documentation to install them.
-* OpenCV - Run `source /opt/intel/openvino/bin/setupvars.sh` command
-* [EIIUtils](https://github.com/open-edge-insights/eii-c-utils/blob/master/README.md)
-* [IntelSafeString](https://github.com/open-edge-insights/eii-c-utils/blob/master/IntelSafeString/README.md)
-* Python3 Numpy package
+- OpenCV - Run `source /opt/intel/openvino/bin/setupvars.sh` command
+- [EIIUtils](https://github.com/open-edge-insights/eii-c-utils/blob/master/README.md)
+- [IntelSafeString](https://github.com/open-edge-insights/eii-c-utils/blob/master/IntelSafeString/README.md)
+- Python3 Numpy package
 
 ## Compilation
 
@@ -24,10 +24,10 @@ Utilizes CMake as the build tool for compiling the library. The simplest sequenc
 shown below.
 
 ```sh
-$ mkdir build
-$ cd build
-$ cmake ..
-$ make
+mkdir build
+cd build
+cmake ..
+make
 ```
 
 If you wish to compile in debug mode, then you can set
@@ -35,7 +35,7 @@ the `CMAKE_BUILD_TYPE` to `Debug` when executing the `cmake` command (as shown
 below).
 
 ```sh
-$ cmake -DCMAKE_BUILD_TYPE=Debug ..
+cmake -DCMAKE_BUILD_TYPE=Debug ..
 ```
 
 ## Installation
@@ -47,7 +47,7 @@ If you wish to install this library on your system, execute the
 following command after building the library:
 
 ```sh
-$ sudo make install
+sudo make install
 ```
 
 By default, this command will install the `udfloader` library into
@@ -56,8 +56,9 @@ by default. As a result, you must add this directory to you `LD_LIBRARY_PATH`. T
 be accomplished with the following `export`:
 
 ```sh
-$ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib/
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib/
 ```
+
 > **NOTE:** You can also specify a different library prefix to CMake through
 > the `CMAKE_INSTALL_PREFIX` flag.
 
@@ -71,11 +72,11 @@ tests.
 
 ```sh
 # First, source the source.sh file to setup the PYTHONPATH environment
-$ source ./source.sh
+source ./source.sh
 
 # Execute frame abstraction unit tests
-$ ./frame-tests
+./frame-tests
 
 # Execute UDF loader unit tests
-$ ./udfloader-tests
+./udfloader-tests
 ```

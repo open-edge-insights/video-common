@@ -1,5 +1,6 @@
 **Contents**
 
+- [User Defined Function (UDF)](#user-defined-function-udf)
 - [UDF Configuration](#udf-configuration)
 - [UDF Writing Guide](#udf-writing-guide)
 - [Sample UDFs](#sample-udfs)
@@ -15,7 +16,19 @@ EII supports loading and executing of native(c++) and python UDFs. In here,
 one can find the sample native and python UDFs(User Defined Functions) to be used with EII components
 like VideoIngestion and VideoAnalytics. The UDFs can modify the frame, drop the frame and generate meta-data from the frame.
 
-## `UDF Configuration`
+# User Defined Function (UDF)
+
+An UDF is a chunk of user code that acts as a filter, preprocessor, or classifier for a given data input coming from the EII. The User Defined Function (UDF) Loader Library provides a common API for loading C++ and Python UDFs.
+
+The library itself is written in C++ and provides an abstraction layer for loading and calling UDFs. Additionally, the library defines a common interface inheritable by all UDFs (whether written in C++ or Python).
+
+The overall block diagram for the library is shown in the following figure.
+
+![User-Defined Function Loader Library Block Design](https://raw.githubusercontent.com/open-edge-insights/open-edge-insights.github.io/main/docs/_images/fig_9_4.png)
+
+In this case, the VideoIngestion component is also able to execute the video data classifier algorithm by including the classifier UDF into the VideoIngestion configuration. By defining the Classifier UDF in the VideoIngestion component, the VideoAnalytics component become optional
+
+## UDF Configuration
 
 Below is the JSON schema for UDF json object configuration:
 
@@ -98,16 +111,16 @@ Example UDF configuration:
 }
 ```
 
-## `UDF Writing Guide`
+## UDF Writing Guide
 
 User can refer to [UDF Writing HOW-TO GUIDE](./HOWTO_GUIDE_FOR_WRITING_UDF.md) for an detailed explanation of process to write an custom UDF.
 
-## `Sample UDFs`
+## Sample UDFs
 
 > **NOTE:** The UDF config of these go as json objects in the `udfs` key in
 > the overall UDF configuration object
 
-### `Native UDFs`
+### Native UDFs
 
 - **Dummy UDF**
 
@@ -199,7 +212,7 @@ User can refer to [UDF Writing HOW-TO GUIDE](./HOWTO_GUIDE_FOR_WRITING_UDF.md) f
 
   ----
 
-### `Python UDFs`
+### Python UDFs
 
 > **NOTE:** Additional properties/keys other than `name` and `type` in the UDF
 > config are the parameters of the python UDF constructor
@@ -307,7 +320,7 @@ User can refer to [UDF Writing HOW-TO GUIDE](./HOWTO_GUIDE_FOR_WRITING_UDF.md) f
 
 ----
 
-## `Construction of Metadata in UDF`
+## Construction of Metadata in UDF
 
 If EII Visualizer/WebVisualizer clients are used for visualizing the classified frames, then please follow the metadata guidelines mentioned in **`Metadata Structure`** in [Visualizer](https://github.com/open-edge-insights/video-native-visualizer/blob/master/README.md) / [WebVisualizer](https://github.com/open-edge-insights/video-web-visualizer/blob/master/README.md) README respectively.
 
@@ -315,7 +328,7 @@ If EII Visualizer/WebVisualizer clients are used for visualizing the classified 
 must contain only primitive data types.
 Eg: Any data is of type "numpy.float" or "numpy.int" should be type-casted to float and int respectively.
 
-## `Chaining of UDFs`
+## Chaining of UDFs
 
 One can chain multiple native/python UDFs in the `udfs` key. The way chaining
 works here is the output of the UDF listed first would send the modified frame
@@ -324,7 +337,7 @@ and metadata to the subsequent UDF and so on. One such classic example is having
 do both the pre-processing and the classification logic without the need of
 VideoAnalytics service.
 
-### `Combination of UDFs with ingestors`
+### Combination of UDFs with ingestors
 
 | Ingestor | Chaining UDFs for pcb demo usecase | Chaining UDFs for worker safety gear usecase |
 |:--------:|:----------------------------------:|:--------------------------------------------:|

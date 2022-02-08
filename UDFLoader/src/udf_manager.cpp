@@ -22,12 +22,12 @@
  * @brief @c UdfManager class implementation.
  */
 
+#include <eii/utils/logger.h>
+#include <safe_lib.h>
 #include <functional>
 #include <chrono>
-#include <eii/utils/logger.h>
 #include <sstream>
 #include <random>
-#include <safe_lib.h>
 #include <cstring>
 #include <iostream>
 #include <cstdlib>
@@ -76,16 +76,15 @@ UdfManager::UdfManager(
         std::string service_name, EncodeType enc_type, int enc_lvl) :
     m_th(NULL), m_stop(false), m_config(udf_cfg),
     m_udf_input_queue(input_queue), m_udf_output_queue(output_queue),
-    m_service_name(service_name), m_enc_type(enc_type), m_enc_lvl(enc_lvl)
-{
+    m_service_name(service_name), m_enc_type(enc_type), m_enc_lvl(enc_lvl) {
     config_value_t* udfs = NULL;
 
     LOG_DEBUG_0("Loading UDFs");
     udfs = config_get(m_config, CFG_UDFS);
-    if(udfs == NULL) {
+    if (udfs == NULL) {
         throw "Failed to get UDFs";
     }
-    if(udfs->type != CVT_ARRAY) {
+    if (udfs->type != CVT_ARRAY) {
         config_value_destroy(udfs);
         throw "\"udfs\" must be an array";
     }
@@ -93,8 +92,8 @@ UdfManager::UdfManager(
     // Get the maximum number of workers
     int max_workers = DEFAULT_MAX_WORKERS;
     config_value_t* cfg_max_workers = config_get(m_config, CFG_MAX_WORKERS);
-    if(cfg_max_workers != NULL) {
-        if(cfg_max_workers->type != CVT_INTEGER) {
+    if (cfg_max_workers != NULL) {
+        if (cfg_max_workers->type != CVT_INTEGER) {
             config_value_destroy(cfg_max_workers);
             config_value_destroy(udfs);
             throw "\"max_jobs\" must be an integer";
@@ -116,41 +115,41 @@ UdfManager::UdfManager(
 
     int len = (int) config_value_array_len(udfs);
 
-    for(int i = 0; i < len; i++) {
+    for (int i = 0; i < len; i++) {
         config_value_t* cfg_obj = config_value_array_get(udfs, i);
-        if(cfg_obj == NULL) {
+        if (cfg_obj == NULL) {
             throw "Failed to get configuration array element";
         }
-        if(cfg_obj->type != CVT_OBJECT) {
+        if (cfg_obj->type != CVT_OBJECT) {
             throw "UDF configuration must be objects";
         }
         config_value_t* name = config_value_object_get(cfg_obj, "name");
-        if(name == NULL) {
+        if (name == NULL) {
             throw "Failed to get UDF name";
         }
-        if(name->type != CVT_STRING) {
+        if (name->type != CVT_STRING) {
             throw "UDF name must be a string";
         }
         // TODO: Add max workers
         void (*free_ptr)(void*) = NULL;
-        if(cfg_obj->body.object->free == NULL) {
+        if (cfg_obj->body.object->free == NULL) {
             free_ptr = free_fn;
         } else {
             free_ptr = cfg_obj->body.object->free;
         }
         config_t* cfg = config_new(
                 (void*) cfg_obj, free_ptr, get_config_value, NULL);
-        if(cfg == NULL) {
+        if (cfg == NULL) {
             throw "Failed to initialize configuration for UDF";
         }
 
         LOG_DEBUG("Loading UDF...");
         UdfHandle* handle = g_loader.load(name->body.string, cfg, 1);
-        if(handle == NULL) {
+        if (handle == NULL) {
             throw "Failed to load UDF";
         }
 
-        if(m_profile->is_profiling_enabled()) {
+        if (m_profile->is_profiling_enabled()) {
 
             std::string udf_name_str(name->body.string);
             std::string rand_str = generate_rand_string(RANDOM_STR_LENGTH);
@@ -167,7 +166,6 @@ UdfManager::UdfManager(
 
                 handle->set_prof_entry_key(udf_entry_str);
                 handle->set_prof_exit_key(udf_exit_str);
-
             }
         }
         config_value_destroy(name);
@@ -189,7 +187,7 @@ UdfManager& UdfManager::operator=(const UdfManager& src) {
 
 UdfManager::~UdfManager() {
     this->stop();
-    if(m_th != NULL) {
+    if (m_th != NULL) {
         delete m_th;
     }
 
@@ -197,18 +195,18 @@ UdfManager::~UdfManager() {
     delete m_executor;
 
     LOG_DEBUG_0("Deleting all handles");
-    for(auto handle : m_udfs) {
+    for (auto handle : m_udfs) {
         delete handle;
     }
 
     LOG_DEBUG_0("Deleting UDF timestamp related variables");
-    if(m_profile) {
+    if (m_profile) {
         delete m_profile;
     }
 
     LOG_DEBUG_0("Clearing udf input queue");
     // Clear queues and delete them
-    while(!m_udf_input_queue->empty()) {
+    while (!m_udf_input_queue->empty()) {
         Frame* frame = m_udf_input_queue->pop();
         if (frame != NULL) delete frame;
     }
@@ -216,7 +214,7 @@ UdfManager::~UdfManager() {
     delete m_udf_input_queue;
 
     LOG_DEBUG_0("Clearing udf output queue");
-    while(!m_udf_output_queue->empty()) {
+    while (!m_udf_output_queue->empty()) {
         Frame* frame = m_udf_output_queue->pop();
         if (frame != NULL)  delete frame;
     }
@@ -234,8 +232,8 @@ void UdfManager::run(int tid, std::atomic<bool>& stop, void* varg) {
     auto duration = std::chrono::milliseconds(250);
     UdfRetCode ret = UDF_OK;
 
-    while(!stop.load()) {
-        if(m_udf_input_queue->wait_for(duration)) {
+    while (!stop.load()) {
+        if (m_udf_input_queue->wait_for(duration)) {
             LOG_DEBUG_0("Popping frame from input queue");
             Frame* frame = m_udf_input_queue->pop();
             if (frame == NULL) continue;
@@ -243,7 +241,7 @@ void UdfManager::run(int tid, std::atomic<bool>& stop, void* varg) {
             EncodeType enc_type = frame->get_encode_type();
             int enc_lvl = frame->get_encode_level();
 
-            if((enc_type != m_enc_type) || (enc_lvl != m_enc_lvl)) {
+            if ((enc_type != m_enc_type) || (enc_lvl != m_enc_lvl)) {
                 try {
                     frame->set_encoding(m_enc_type, m_enc_lvl);
                 } catch(const char *err) {
@@ -254,7 +252,7 @@ void UdfManager::run(int tid, std::atomic<bool>& stop, void* varg) {
             }
 
             // Loop over all UDFs and execute them on the queued frame
-            for(auto handle : m_udfs) {
+            for (auto handle : m_udfs) {
                 if (frame != NULL) {
 
                     LOG_DEBUG_0("Running UdfHandle::process()");
@@ -262,7 +260,7 @@ void UdfManager::run(int tid, std::atomic<bool>& stop, void* varg) {
                     // If the application using the UDF Manager is in profiling
                     // mode, then add timestamps for UDF entry/exit, else just
                     // run the UDF
-                    if(m_profile->is_profiling_enabled()) {
+                    if (m_profile->is_profiling_enabled()) {
                         msg_envelope_t* meta_data = frame->get_meta_data();
 
                         // Add entry timestamp
@@ -316,9 +314,9 @@ void UdfManager::run(int tid, std::atomic<bool>& stop, void* varg) {
                         m_udf_push_entry_key.c_str());
 
                 QueueRetCode ret_queue = m_udf_output_queue->push(frame);
-                if(ret_queue == QueueRetCode::QUEUE_FULL) {
+                if (ret_queue == QueueRetCode::QUEUE_FULL) {
                     ret_queue = m_udf_output_queue->push_wait(frame);
-                    if(ret_queue != QueueRetCode::SUCCESS) {
+                    if (ret_queue != QueueRetCode::SUCCESS) {
                         LOG_ERROR_0("Failed to enqueue received message, "
                                     "message dropped");
                         delete frame;

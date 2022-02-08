@@ -44,7 +44,7 @@ FpsUdf::FpsUdf(config_t* config): BaseUdf(config) {
         throw "Failed to allocate memory for fps key";
     }
 
-    ret = strncpy_s(m_fps_key,(appname_len + 1), appname, appname_len);
+    ret = strncpy_s(m_fps_key, (appname_len + 1), appname, appname_len);
     if (ret != 0) {
         LOG_ERROR_0("Failed to read appname");
         throw "Failed to read appname";
@@ -58,8 +58,7 @@ FpsUdf::FpsUdf(config_t* config): BaseUdf(config) {
 }
 
 FpsUdf::FpsUdf(const FpsUdf& src) :
-    BaseUdf(NULL)
-{
+    BaseUdf(NULL) {
     throw "This object should not be copied";
 }
 
@@ -71,11 +70,12 @@ FpsUdf::~FpsUdf() {
     delete m_fps_key;
 }
 
-UdfRetCode FpsUdf::process(cv::Mat& frame, cv::Mat& output, msg_envelope_t* meta) {
+UdfRetCode FpsUdf::process(cv::Mat& frame, cv::Mat& output,
+                           msg_envelope_t* meta) {
     m_mtx.lock();
     if (m_first_frame) {
         m_start = std::chrono::system_clock::now();
-        m_first_frame = false; // First frame has been received
+        m_first_frame = false;  // First frame has been received
     }
     m_frame_count += 1;
     m_end = std::chrono::system_clock::now();
@@ -95,7 +95,7 @@ UdfRetCode FpsUdf::process(cv::Mat& frame, cv::Mat& output, msg_envelope_t* meta
     }
 
     m_ret = msgbus_msg_envelope_put(meta, m_fps_key, fps_int);
-    if(m_ret != MSG_SUCCESS) {
+    if (m_ret != MSG_SUCCESS) {
         LOG_ERROR_0("Failed to add fps results in metadata");
         msgbus_msg_envelope_elem_destroy(fps_int);
         return UdfRetCode::UDF_ERROR;
@@ -115,5 +115,5 @@ void* initialize_udf(config_t* config) {
     return (void*) udf;
 }
 
-} // extern "C"
+}  // extern "C"
 

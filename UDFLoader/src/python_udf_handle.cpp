@@ -25,12 +25,12 @@
 // Defining NumPy version
 #define NPY_NO_DEPRECATED_API NPY_1_14_API_VERSION
 
+#include <numpy/ndarrayobject.h>
+#include <eii/utils/logger.h>
 #include <vector>
 #include <atomic>
 #include <cstdlib>
-#include <numpy/ndarrayobject.h>
 
-#include <eii/utils/logger.h>
 #include "eii/udf/python_udf_handle.h"
 #include "cython/udf.h"
 
@@ -39,8 +39,7 @@ using namespace eii::udf;
 #define EII_UDF_PROCESS "process"
 
 PythonUdfHandle::PythonUdfHandle(std::string name, int max_workers) :
-    UdfHandle(name, max_workers)
-{
+    UdfHandle(name, max_workers) {
     m_udf_obj = NULL;
     m_udf_func = NULL;
 }
@@ -54,11 +53,11 @@ PythonUdfHandle::~PythonUdfHandle() {
     LOG_DEBUG_0("Acquired GIL");
 
     LOG_DEBUG_0("Releasing process the function");
-    if(m_udf_func != NULL && m_udf_func != Py_None)
+    if (m_udf_func != NULL && m_udf_func != Py_None)
         Py_DECREF(m_udf_func);
 
     LOG_DEBUG_0("Releasing process the Python object");
-    if(m_udf_obj != NULL && m_udf_obj != Py_None)
+    if (m_udf_obj != NULL && m_udf_obj != Py_None)
         Py_DECREF(m_udf_obj);
 
     PyGILState_Release(gstate);
@@ -67,7 +66,7 @@ PythonUdfHandle::~PythonUdfHandle() {
 
 bool PythonUdfHandle::initialize(config_t* config) {
     bool res = this->UdfHandle::initialize(config);
-    if(!res)
+    if (!res)
         return false;
 
     LOG_DEBUG("Has GIL: %d", PyGILState_Check());
@@ -77,14 +76,14 @@ bool PythonUdfHandle::initialize(config_t* config) {
     LOG_DEBUG_0("GIL acquired");
 
     LOG_DEBUG("Loading Python UDF: %s", get_name().c_str());
-    if(PyArray_API == NULL) {
+    if (PyArray_API == NULL) {
         import_array();
     }
 
     // Import Cython module
     LOG_DEBUG_0("Importing UDF library");
     PyObject* module = PyImport_ImportModule("udf");
-    if(module == NULL) {
+    if (module == NULL) {
         LOG_ERROR_0("Failed to import udf Python module");
         PyErr_Print();
         PyGILState_Release(gstate);
@@ -101,9 +100,9 @@ bool PythonUdfHandle::initialize(config_t* config) {
     LOG_DEBUG_0("UDF Loaded");
 
     // Module no longer needed
-    if(m_udf_obj == Py_None || PyErr_Occurred() != NULL) {
+    if (m_udf_obj == Py_None || PyErr_Occurred() != NULL) {
         LOG_ERROR_0("Failed to load UDF");
-        if(PyErr_Occurred() != NULL) {
+        if (PyErr_Occurred() != NULL) {
             PyErr_Print();
         }
         PyGILState_Release(gstate);
@@ -112,9 +111,9 @@ bool PythonUdfHandle::initialize(config_t* config) {
 
     // Get the process() function from the Python object
     m_udf_func = PyObject_GetAttrString(m_udf_obj, EII_UDF_PROCESS);
-    if(m_udf_func == NULL) {
+    if (m_udf_func == NULL) {
         LOG_ERROR_0("Failed to get process() method from UDF");
-        if(PyErr_Occurred() != NULL) {
+        if (PyErr_Occurred() != NULL) {
             PyErr_Print();
         }
         PyGILState_Release(gstate);
@@ -191,7 +190,7 @@ UdfRetCode PythonUdfHandle::process(Frame* frame) {
             m_udf_obj, py_frame, output, frame->get_meta_data());
     LOG_DEBUG_0("process call done");
 
-    if(PyErr_Occurred() != NULL) {
+    if (PyErr_Occurred() != NULL) {
         Py_DECREF(py_frame);
         LOG_ERROR_0("Error in UDF process() method");
         PyErr_Print();
@@ -205,7 +204,7 @@ UdfRetCode PythonUdfHandle::process(Frame* frame) {
     // NOTE: If output == py_frame, then the UDF returned the same Python
     // object for the frame as was passed to it, this does not count as a
     // changed or updated frame.
-    if(ret == UDF_FRAME_MODIFIED && output != py_frame) {
+    if (ret == UDF_FRAME_MODIFIED && output != py_frame) {
         LOG_DEBUG_0("Python modified frame");
 
         // If output is a list of numpy frames, call set_data for all
@@ -214,7 +213,7 @@ UdfRetCode PythonUdfHandle::process(Frame* frame) {
             PyArrayObject* py_array = (PyArrayObject*) output;
 
             int dims = PyArray_NDIM(py_array);
-            if(dims < 3 || dims > 3) {
+            if (dims < 3 || dims > 3) {
                 LOG_ERROR(
                     "NumPy array has too many dimensions must be 3 not %d",
                     dims);
@@ -241,7 +240,7 @@ UdfRetCode PythonUdfHandle::process(Frame* frame) {
 
                 PyArrayObject* py_array = (PyArrayObject*) item;
                 int dims = PyArray_NDIM(py_array);
-                if(dims < 3 || dims > 3) {
+                if (dims < 3 || dims > 3) {
                     LOG_ERROR(
                         "NumPy array has too many dimensions must be 3 not %d",
                         dims);

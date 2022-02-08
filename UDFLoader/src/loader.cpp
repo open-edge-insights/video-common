@@ -23,10 +23,11 @@
  */
 
 #include "eii/udf/loader.h"
+#include <eii/utils/logger.h>
 #include "eii/udf/python_udf_handle.h"
 #include "eii/udf/native_udf_handle.h"
 #include "eii/udf/raw_udf_handle.h"
-#include <eii/utils/logger.h>
+
 #include "cython/udf.h"
 
 using namespace eii::udf;
@@ -39,7 +40,7 @@ UdfLoader::UdfLoader() {}
 
 UdfLoader::~UdfLoader() {
     LOG_DEBUG_0("Destroying UDF Loader");
-    if(g_th_state != NULL) {
+    if (g_th_state != NULL) {
         PyEval_RestoreThread(g_th_state);
         Py_FinalizeEx();
         g_th_state = NULL;
@@ -47,25 +48,24 @@ UdfLoader::~UdfLoader() {
 }
 
 UdfHandle* UdfLoader::load(
-        std::string name, config_t* config, int max_workers)
-{
-	//TODO remove strcompare and convert to an enum?
-	config_value_t* type = config_get(config, "type");
+        std::string name, config_t* config, int max_workers) {
+    // TODO remove strcompare and convert to an enum?
+    config_value_t* type = config_get(config, "type");
 
-	if(type == NULL) {
-		LOG_ERROR_0("Error retreiving UDF type");
-		return NULL;
-	}
+    if (type == NULL) {
+        LOG_ERROR_0("Error retreiving UDF type");
+        return NULL;
+    }
 
-	if(type->type != CVT_STRING) {
-		LOG_ERROR_0("UDF type should be a string!");
-		return NULL;
-	}
+    if (type->type != CVT_STRING) {
+        LOG_ERROR_0("UDF type should be a string!");
+        return NULL;
+    }
 
     UdfHandle* udf = NULL;
 
-	if(strcmp(type->body.string, "python") == 0) {
-        if(!Py_IsInitialized()) {
+    if (strcmp(type->body.string, "python") == 0) {
+        if (!Py_IsInitialized()) {
             LOG_DEBUG_0("Initializing python");
             PyImport_AppendInittab("udf", PyInit_udf);
             Py_Initialize();
@@ -76,31 +76,31 @@ UdfHandle* UdfLoader::load(
             PyEval_RestoreThread(g_th_state);
         }
 
-    	udf = new PythonUdfHandle(name, max_workers);
-    	if(!udf->initialize(config)) {
-        	delete udf;
-        	udf = NULL;
-    	}
+        udf = new PythonUdfHandle(name, max_workers);
+        if (!udf->initialize(config)) {
+            delete udf;
+            udf = NULL;
+        }
 
         PyEval_SaveThread();
         LOG_DEBUG("Has GIL: %d", PyGILState_Check());
     } else if (strcmp(type->body.string, "native") == 0) {
-		//Attempt to load native UDF
-		udf = new NativeUdfHandle(name, max_workers);
-		if(!udf->initialize(config)) {
-			delete udf;
-			udf = NULL;
-		}
-	} else if (strcmp(type->body.string, "raw_native") == 0) {
-		//Attempt to load native UDF
-		udf = new RawUdfHandle(name, max_workers);
-		if(!udf->initialize(config)) {
-			delete udf;
-			udf = NULL;
-		}
-	}
+        // Attempt to load native UDF
+        udf = new NativeUdfHandle(name, max_workers);
+        if (!udf->initialize(config)) {
+            delete udf;
+            udf = NULL;
+        }
+    } else if (strcmp(type->body.string, "raw_native") == 0) {
+        // Attempt to load native UDF
+        udf = new RawUdfHandle(name, max_workers);
+        if (!udf->initialize(config)) {
+            delete udf;
+            udf = NULL;
+        }
+    }
 
-	config_value_destroy(type);
+    config_value_destroy(type);
 
     return udf;
 }

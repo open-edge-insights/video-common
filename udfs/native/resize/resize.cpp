@@ -43,20 +43,20 @@ namespace eii {
 
             public:
                 explicit ResizeUdf(config_t* config): BaseUdf(config) {
-                    config_value_t* width = m_config->get_config_value(m_config->cfg,"width");
-                    if(width == NULL) {
+                    config_value_t* width = m_config->get_config_value(m_config->cfg, "width");
+                    if (width == NULL) {
                         throw "Failed to get width";
                     }
-                    if(width->type != CVT_INTEGER) {
+                    if (width->type != CVT_INTEGER) {
                         throw "width must be an integer";
                     }
 
-                    config_value_t* height = m_config->get_config_value(m_config->cfg,"height");
+                    config_value_t* height = m_config->get_config_value(m_config->cfg, "height");
 
-                    if(height == NULL) {
+                    if (height == NULL) {
                     throw "Failed to get height";
                     }
-                    if(height->type != CVT_INTEGER) {
+                    if (height->type != CVT_INTEGER) {
                         throw "height must be an integer";
                     }
 
@@ -67,16 +67,16 @@ namespace eii {
 
                 ~ResizeUdf() {};
 
-                UdfRetCode process(cv::Mat& frame, cv::Mat& output, msg_envelope_t* meta) override {
-                    cv::resize(frame,output, cv::Size(m_width,m_height));
+                UdfRetCode process(cv::Mat& frame, cv::Mat& output,
+                                   msg_envelope_t* meta) override {
+                    cv::resize(frame, output, cv::Size(m_width, m_height));
                     return UdfRetCode::UDF_OK;
             };
         };
-    } // udf
-} // eii
+    }  // namespace udfsamples
+}  // namespace eii
 
 extern "C" {
-
 /**
  * Create the UDF.
  *
@@ -86,6 +86,5 @@ void* initialize_udf(config_t* config) {
     eii::udfsamples::ResizeUdf* udf = new eii::udfsamples::ResizeUdf(config);
     return (void*) udf;
 }
-
-} // extern "C"
+}  // extern "C"
 

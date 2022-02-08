@@ -30,6 +30,7 @@ from azureml.core import Workspace
 from azureml.core.authentication import ServicePrincipalAuthentication
 import tempfile
 
+
 def softmax(x):
     """Calculate softmax value
     """

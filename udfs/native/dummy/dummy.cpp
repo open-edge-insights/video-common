@@ -46,8 +46,8 @@ namespace eii {
                     return UdfRetCode::UDF_OK;
                 };
         };
-    } // udf
-} // eii
+    }  // namespace udfsamples
+}  // namespace eii
 
 extern "C" {
 
@@ -60,6 +60,5 @@ void* initialize_udf(config_t* config) {
     eii::udfsamples::DummyUdf* udf = new eii::udfsamples::DummyUdf(config);
     return (void*) udf;
 }
-
-} // extern "C"
+}  // extern "C"
 

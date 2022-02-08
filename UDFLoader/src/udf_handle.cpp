@@ -35,7 +35,7 @@ UdfHandle::UdfHandle(std::string name, int max_workers) :
 UdfHandle::~UdfHandle() {
     LOG_DEBUG_0("Base UdfHandle destructor");
 
-    if(m_initialized.load()) {
+    if (m_initialized.load()) {
         config_destroy(m_config);
     }
 
@@ -44,7 +44,7 @@ UdfHandle::~UdfHandle() {
 
 bool UdfHandle::initialize(config_t* config) {
     // Verify the UDF handle has not already been initialized
-    if(m_initialized.load()) {
+    if (m_initialized.load()) {
         LOG_WARN_0("Initialize called twice for a given UDF handle");
         return true;
     }

@@ -47,8 +47,8 @@ public:
         return UdfRetCode::UDF_OK;
     };
 };
-} // udf
-} // eii
+}  // namespace udfsamples
+}  // namespace eii
 
 extern "C" {
 
@@ -62,5 +62,5 @@ void* initialize_udf(config_t* config) {
     return (void*) udf;
 }
 
-} // extern "C"
+}  // extern "C"
 

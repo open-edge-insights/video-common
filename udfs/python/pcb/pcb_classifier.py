@@ -85,8 +85,6 @@ class Udf:
         self.input_blob = next(iter(self.net.input_info))
         self.output_blob = next(iter(self.net.outputs))
         self.net.batch_size = 1  # change to enable batch loading
-        self.exec_net = self.ie.load_network(network=self.net,
-                                             device_name=self.device.upper())
 
         # Initialize keypoint descriptor
         self.brisk = cv2.BRISK_create()
@@ -157,7 +155,10 @@ class Udf:
             test_crop = test[y:y1, x:x1]
             test_img = cv2.resize(test_crop, (w, h))
             test_img = test_img.transpose((2, 0, 1))
-            res = self.exec_net.infer(inputs={self.input_blob: test_img})
+            exec_net = self.ie.load_network(network=self.net,
+                                             device_name=self.device.upper())
+
+            res = exec_net.infer(inputs={self.input_blob: test_img})
             res = res[self.output_blob]
             probs = np.squeeze(res)
             if d_type == D_MISSING:

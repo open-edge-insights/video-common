@@ -1,20 +1,22 @@
-**Contents**
+# Contents
 
-- [EII UDFLoader](#eii-udfloader)
+- [Contents](#contents)
+  - [OEI UDFLoader](#oei-udfloader)
   - [Dependency Installation](#dependency-installation)
   - [Compilation](#compilation)
   - [Installation](#installation)
   - [Running Unit Tests](#running-unit-tests)
 
-# EII UDFLoader
+## OEI UDFLoader
 
 UDFLoader is a library providing APIs for loading and executing native and python UDFs.
 
 ## Dependency Installation
 
 UDFLoader depends on the below libraries. Follow their documentation to install them.
+
 - OpenCV - Run `source /opt/intel/openvino/bin/setupvars.sh` command
-- [EIIUtils](https://github.com/open-edge-insights/eii-c-utils/blob/master/README.md)
+- [OEIUtils](https://github.com/open-edge-insights/eii-c-utils/blob/master/README.md)
 - [IntelSafeString](https://github.com/open-edge-insights/eii-c-utils/blob/master/IntelSafeString/README.md)
 - Python3 Numpy package
 
@@ -40,8 +42,7 @@ cmake -DCMAKE_BUILD_TYPE=Debug ..
 
 ## Installation
 
-> **NOTE:** This is a mandatory step to use this library in
-> C/C++ EII modules
+> **Note:** This is a mandatory step to use this library in C/C++ OEI modules.
 
 If you wish to install this library on your system, execute the
 following command after building the library:
@@ -59,12 +60,12 @@ be accomplished with the following `export`:
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib/
 ```
 
-> **NOTE:** You can also specify a different library prefix to CMake through
+> **Note:** You can also specify a different library prefix to CMake through
 > the `CMAKE_INSTALL_PREFIX` flag.
 
 ## Running Unit Tests
 
-> **NOTE:** The unit tests will only be compiled if the `WITH_TESTS=ON` option
+> **Note:** The unit tests will only be compiled if the `WITH_TESTS=ON` option
 > is specified when running CMake.
 
 Run the following commands from the `build/tests` folder to cover the unit

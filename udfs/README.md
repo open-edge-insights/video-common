@@ -1,24 +1,28 @@
-**Contents**
+# Contents
 
-- [User Defined Function (UDF)](#user-defined-function-udf)
-- [UDF Configuration](#udf-configuration)
-- [UDF Writing Guide](#udf-writing-guide)
-- [Sample UDFs](#sample-udfs)
-  - [Native UDFs](#native-udfs)
-  - [Python UDFs](#python-udfs)
-- [Construction of Metadata in UDF](#construction-of-metadata-in-udf)
-- [Chaining of UDFs](#chaining-of-udfs)
-  - [Combination of UDFs with ingestors](#combination-of-udfs-with-ingestors)
+- [Contents](#contents)
+  - [OEI Sample UDFs](#oei-sample-udfs)
+  - [User Defined Function (UDF)](#user-defined-function-udf)
+  - [UDF Configuration](#udf-configuration)
+  - [UDF Writing Guide](#udf-writing-guide)
+  - [Sample UDFs](#sample-udfs)
+    - [Native UDFs](#native-udfs)
+    - [Python UDFs](#python-udfs)
+  - [Construction of Metadata in UDF](#construction-of-metadata-in-udf)
+  - [Chaining of UDFs](#chaining-of-udfs)
+    - [Combination of UDFs with ingestors](#combination-of-udfs-with-ingestors)
 
-`EII Sample UDFs`
+## OEI Sample UDFs
 
-EII supports loading and executing of native(c++) and python UDFs. In here,
-one can find the sample native and python UDFs(User Defined Functions) to be used with EII components
+Open Edge Insights (OEI) supports loading and executing of native(c++) and python UDFs. In here,
+one can find the sample native and python UDFs(User Defined Functions) to be used with OEI components
 like VideoIngestion and VideoAnalytics. The UDFs can modify the frame, drop the frame and generate meta-data from the frame.
 
-# User Defined Function (UDF)
+>**Note:** In this document, you will find labels of 'Edge Insights for Industrial (EII)' for filenames, paths, code snippets, and so on. Consider the references of EII as OEI. This is due to the product name change of EII as OEI.
 
-An UDF is a chunk of user code that acts as a filter, preprocessor, or classifier for a given data input coming from the EII. The User Defined Function (UDF) Loader Library provides a common API for loading C++ and Python UDFs.
+## User Defined Function (UDF)
+
+An UDF is a chunk of user code that acts as a filter, preprocessor, or classifier for a given data input coming from the OEI. The User Defined Function (UDF) Loader Library provides a common API for loading C++ and Python UDFs.
 
 The library itself is written in C++ and provides an abstraction layer for loading and calling UDFs. Additionally, the library defines a common interface inheritable by all UDFs (whether written in C++ or Python).
 
@@ -249,7 +253,7 @@ User can refer to [UDF Writing HOW-TO GUIDE](./HOWTO_GUIDE_FOR_WRITING_UDF.md) f
 
 - **Jupyter Connector UDF**
 
-  Accepts the frame and publishes it to the EII JupyterNotebook service which processes the frame and publishes it back to the jupyter_connector UDF.
+  Accepts the frame and publishes it to the OEI JupyterNotebook service which processes the frame and publishes it back to the jupyter_connector UDF.
 
   `UDF config`:
 
@@ -322,7 +326,7 @@ User can refer to [UDF Writing HOW-TO GUIDE](./HOWTO_GUIDE_FOR_WRITING_UDF.md) f
 
 ## Construction of Metadata in UDF
 
-If EII Visualizer/WebVisualizer clients are used for visualizing the classified frames, then please follow the metadata guidelines mentioned in **`Metadata Structure`** in [Visualizer](https://github.com/open-edge-insights/video-native-visualizer/blob/master/README.md) / [WebVisualizer](https://github.com/open-edge-insights/video-web-visualizer/blob/master/README.md) README respectively.
+If OEI Visualizer/WebVisualizer clients are used for visualizing the classified frames, then please follow the metadata guidelines mentioned in **`Metadata Structure`** in [Visualizer](https://github.com/open-edge-insights/video-native-visualizer/blob/master/README.md) / [WebVisualizer](https://github.com/open-edge-insights/video-web-visualizer/blob/master/README.md) README respectively.
 
 **Note**: User has to make sure that the data with in meta data should be of type list, tuple, dict or primitive data types (int, float, string or bool). Also, data with in list, tuple, dict
 must contain only primitive data types.

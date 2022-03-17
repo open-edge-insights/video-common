@@ -1,44 +1,47 @@
-**Contents**
+# Contents
 
-- [How-To GUIDE for writing UDF for EII](#how-to-guide-for-writing-udf-for-eii)
+- [Contents](#contents)
+  - [How-To guide for writing UDF for OEI](#how-to-guide-for-writing-udf-for-oei)
   - [Introduction](#introduction)
   - [Steps for writing native(c++) UDFs](#steps-for-writing-nativec-udfs)
-    - [EII APIs for Writing Native UDFs(c++)](#eii-apis-for-writing-native-udfsc)
-    - [EII APIs for Writing Raw Native UDFs(c++) for Multi Frame Support](#eii-apis-for-writing-raw-native-udfsc-for-multi-frame-support)
-    - [EII INFRASTRUCTURE RELATED CHANGES](#eii-infrastructure-related-changes)
+    - [OEI APIs for Writing Native UDFs (C++)](#oei-apis-for-writing-native-udfs-c)
+    - [OEI APIs for Writing Raw Native UDFs(c++) for Multi Frame Support](#oei-apis-for-writing-raw-native-udfsc-for-multi-frame-support)
+    - [OEI Infrastructure Related Changes](#oei-infrastructure-related-changes)
   - [Steps for writing Python UDFs](#steps-for-writing-python-udfs)
-    - [Python APIs for writing UDF for EII](#python-apis-for-writing-udf-for-eii)
-    - [EII Infrastructure changes](#eii-infrastructure-changes)
-    - [CONCLUSION](#conclusion)
+    - [Python APIs for writing UDF for OEI](#python-apis-for-writing-udf-for-oei)
+    - [OEI Infrastructure changes](#oei-infrastructure-changes)
+    - [Conclusion](#conclusion)
 
-# **How-To GUIDE for writing UDF for EII**
+## How-To guide for writing UDF for OEI
 
-This document describes stepwise instruction for writing a User defined Function(UDF) in C++/Python in order to make it deployable in EII environment. It  explains APIs and configurational changes required in order to write an UDF for EII.
+This document describes stepwise instruction for writing a User defined Function(UDF) in C++/Python in order to make it deployable in OEI environment. It  explains APIs and configurational changes required in order to write an UDF for OEI.
 
-## **Introduction**
+>**Note:** In this document, you will find labels of 'Edge Insights for Industrial (EII)' for filenames, paths, code snippets, and so on. Consider the references of EII as OEI. This is due to the product name change of EII as OEI.
 
-UDFs(User Defined Function) are one of the cardinal feature of EII framework. It enables users to adjoin any pre-processing or post-processing logic in data pipeline defined by EII configuration. As of EII 2.1 release, it supports UDFs to be implemented using following languages.
+## Introduction
 
-- C++  (It is also called **Native** UDF as EII core components are implemented in C++)
+UDFs(User Defined Function) are one of the cardinal feature of OEI framework. It enables users to adjoin any pre-processing or post-processing logic in data pipeline defined by OEI configuration. As of OEI 2.1 release, it supports UDFs to be implemented using following languages.
+
+- C++  (It is also called **Native** UDF as OEI core components are implemented in C++)
 - Python
 
-The order in which the UDFs are defined in EII configuration file is the order in which data will flow across them. Currently there is no support for demux/mux the data flow to/fro the UDFs.
+The order in which the UDFs are defined in OEI configuration file is the order in which data will flow across them. Currently there is no support for demux/mux the data flow to/fro the UDFs.
 
 All configs related to UDFs are to be in `config.json` of apps like VideoIngestion and VideoAnalytics.The UDF schema and description about keys/values in it presented in detail in the [UDF README](./README.md) file.
 
-## **Steps for writing native(c++) UDFs**
+## Steps for writing native(c++) UDFs
 
 Every UDF writing has two major part to it.
 
-- Writing actual pre/post processing logic using EII exposed APIs.
+- Writing actual pre/post processing logic using OEI exposed APIs.
 
-- Adding EII infra specific configuration component for deploying it
+- Adding OEI infra specific configuration component for deploying it
 
-### **EII APIs for Writing Native UDFs(c++)**
+### OEI APIs for Writing Native UDFs (C++)
 
 There are three APIs defined semantically to add the pre/post processing logic. These APIs must be implemented as method of a user defined class inherited from the Udf class named ***BaseUdf***.
 
-- #### **INITIALIZATION & DE-INITIALIZATION**
+- #### Initialization and DeInitialization
 
     ``` C++
         class DummyUdf : public BaseUdf {
@@ -56,7 +59,7 @@ There are three APIs defined semantically to add the pre/post processing logic. 
 
   The **DummyUdf** in the above code snippet is the user defined class and the constructor of the class initialize the UDF's specific data-structure. The only argument passed to this function is **config** which depicts configuration details mentioned in the `config.json` file of apps liks VideoIngestion and VideoAnalytics which process UDFs. The API to consume **config** is defined in [Util README](https://github.com/open-edge-insights/eii-c-utils/blob/master/README.md)
 
-- #### **PROCESSING THE ACTUAL DATA**
+- #### Processing the Actual Data
 
   The API to utilize the ingested input looks as below:
 
@@ -84,7 +87,7 @@ There are three APIs defined semantically to add the pre/post processing logic. 
   - **UDF_DROP_FRAME** - The frame passed to process function need to be dropped.
   - **UDF_ERROR** - it should be returned for any kind of error in UDF.
 
-- #### **LINKING UdfLoader AND CUSTOM-UDF**
+- #### Linking Udfloader and Custom UDFs
 
   The **initialize_udf()** function need to defined as follows to create a link between UdfLoader module and respective UDF. This function ensure UdfLoader to call proper constructor and process() function of respective UDF.
 
@@ -101,11 +104,11 @@ There are three APIs defined semantically to add the pre/post processing logic. 
 
 ---
 
-### **EII APIs for Writing Raw Native UDFs(c++) for Multi Frame Support**
+### OEI APIs for Writing Raw Native UDFs(c++) for Multi Frame Support
 
 There are three APIs defined semantically to add the pre/post processing logic. These APIs must be implemented as method of a user defined class inherited from the Udf class named ***RawUdf***.
 
-- #### **INITIALIZATION & DE-INITIALIZATION**
+- #### Initialization and Deinitialization
 
     ``` C++
         class RealSenseUdf : public RawBaseUdf {
@@ -123,7 +126,7 @@ There are three APIs defined semantically to add the pre/post processing logic. 
 
   The **RealSenseUdf** in the above code snippet is the user defined class and the constructor of the class initialize the UDF's specific data-structure. The only argument passed to this function is **config** which depicts configuration details mentioned in the `config.json` file of apps liks VideoIngestion and VideoAnalytics which process UDFs. The API to consume **config** is defined in [Util README](../common/util/c/README.md)
 
-- #### **PROCESSING THE ACTUAL DATA**
+- #### Processing Actual Data
 
   The API to utilize the ingested input looks as below:
 
@@ -147,7 +150,7 @@ There are three APIs defined semantically to add the pre/post processing logic. 
   - **UDF_DROP_FRAME** - The frame passed to process function need to be dropped.
   - **UDF_ERROR** - it should be returned for any kind of error in UDF.
 
-- #### **LINKING UdfLoader AND CUSTOM-UDF**
+- #### Linking Udfloader and Custom-UDFs
 
   The **initialize_udf()** function need to defined as follows to create a link between UdfLoader module and respective UDF. This function ensure UdfLoader to call proper constructor and process() function of respective UDF.
 
@@ -162,7 +165,7 @@ There are three APIs defined semantically to add the pre/post processing logic. 
 
   The **"RealSenseUdf"** is the class name of the user defined custom UDF.
 
-### **EII INFRASTRUCTURE RELATED CHANGES**
+### OEI Infrastructure Related Changes
 
 This section describes the check-list one has to ensure to be completed before exercising C++ UDF.
 
@@ -174,19 +177,19 @@ This section describes the check-list one has to ensure to be completed before e
 
 3. If the OpenVINO is used kindly follow the [safety_gear_demo](common/video/udfs/native/safety_gear_demo) example for proper linking of  **cpu_extension.so** shared object.
 
-4. An appropriate entry must exist for each UDF that need to be loaded as part of EII deployment. The UDF entry syntax is explained in detail in the following document [UDF README](./README.md)
+4. An appropriate entry must exist for each UDF that need to be loaded as part of OEI deployment. The UDF entry syntax is explained in detail in the following document [UDF README](./README.md)
 
-## **Steps for writing Python UDFs**
+## Steps for writing Python UDFs
 
 This section describes the process of writing a Python UDF. As discussed in the aforementioned scenario, it also has two aspects to it.
 
-- Writing the actual UDF. It needs knowledge EII exposed python APIs
+- Writing the actual UDF. It needs knowledge OEI exposed python APIs
 
-- Adding the UDF to EII framework by altering different configs.
+- Adding the UDF to OEI framework by altering different configs.
 
-### **Python APIs for writing UDF for EII**
+### Python APIs for writing UDF for OEI
 
-- **INITIALIZATION**
+- Initialization
 
    In case of Python the initialization callback is also same as the native case. User must create a ***Udf class*** and the ***\_\_init\_\_()*** function defined in class act as a initialization routine for custom UDF. A dummy constructor code is pasted below:
 
@@ -200,7 +203,7 @@ This section describes the process of writing a Python UDF. As discussed in the 
         # Add the initialization code in this method.
     ```
 
-- **PROCESS ACTUAL DATA**
+- Process Actual Data
 
   The API used to process the actual frame looks as below.
 
@@ -234,9 +237,9 @@ For reference user can find example UDFs code in below mentioned links
 
 - [Dummy UDF](./python/dummy.py)
 
-### **EII Infrastructure changes**
+### OEI Infrastructure changes
 
-For any UDF to be utilized by the EII infrastructure, user must follow the below steps.
+For any UDF to be utilized by the OEI infrastructure, user must follow the below steps.
 
 - Corresponding UDF entry must be added to the `config.json` file of apps like VideoIngestion and VideoAnalytics.
   The UDF entry syntax is explained in detail in the following document [UDF README](./README.md)
@@ -246,6 +249,6 @@ A file present in this path *./python/pcb/pcb_filter.py* must have the *name* fi
 
     >This syntax is described in detail in the [UDF README](./README.md).
 
-### CONCLUSION
+### Conclusion
 
-The UDFs currently supported using python and C++. UDF uses in-memory message passing instead of sockets for the communication between the pipeline and UDFs making it faster in comparison. EII has many sample UDFs can be found in following paths [for C++](./native) & [for python](./python)
+The UDFs currently supported using python and C++. UDF uses in-memory message passing instead of sockets for the communication between the pipeline and UDFs making it faster in comparison. OEI has many sample UDFs can be found in following paths [for C++](./native) & [for python](./python)

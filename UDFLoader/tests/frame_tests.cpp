@@ -167,6 +167,7 @@ TEST_F(frame_tests, basic_serialize_free) {
     ASSERT_EQ(strcmp(blob->body.blob->data, "Hello, World!"), 0);
 
     msgbus_msg_envelope_destroy(msg);
+    delete frame;
 }
 
 // Test that the modification of the data works correctly
@@ -204,6 +205,7 @@ TEST_F(frame_tests, modify_data) {
     ASSERT_EQ(strcmp(blob->body.blob->data, "Goodbye"), 0);
 
     msgbus_msg_envelope_destroy(msg);
+    delete frame;
 }
 
 // Basic deserialization test
@@ -346,6 +348,7 @@ TEST_F(frame_tests, deserialize_reserialize) {
     // Destroy the serialized message, this should ultimately destroy
     // everything
     msgbus_msg_envelope_destroy(s);
+    delete frame;
 }
 
 // Free method for OpenCV read in frame, does nothing
@@ -416,6 +419,7 @@ TEST_F(frame_tests, multi_frame_basic_serialize_free) {
     }
 
     msgbus_msg_envelope_destroy(msg);
+    delete frame;
 }
 
 // Test that the modification of the data works correctly
@@ -462,6 +466,7 @@ TEST_F(frame_tests, multi_frame_modify_data) {
     }
 
     msgbus_msg_envelope_destroy(msg);
+    delete frame;
 }
 
 // Basic deserialization test
@@ -724,6 +729,7 @@ TEST_F(frame_tests, multi_frame_deserialize_reserialize) {
     // Destroy the serialized message, this should ultimately destroy
     // everything
     msgbus_msg_envelope_destroy(s);
+    delete frame;
 }
 
 /**
@@ -763,6 +769,7 @@ TEST_F(frame_tests, encode_decode_png) {
 
     // Clean up
     delete decoded;
+    delete frame;
 }
 
 /**
@@ -798,6 +805,8 @@ TEST_F(frame_tests, encode_decode_jpeg) {
     // Clean up
     // delete decoded;
     msgbus_msg_envelope_destroy(serialized);
+    delete frame;
+    delete decoded;
 }
 
 /**
@@ -845,6 +854,8 @@ void base_set_data_test(int index, EncodeType enc_type, int enc_lvl) {
         // delete decoded;
         LOG_DEBUG_0("Destroying serialized frame");
         msgbus_msg_envelope_destroy(serialized);
+        delete decoded;
+        delete frame;
     } catch (const char* ex) {
         LOG_ERROR("Test failed: %s", ex);
         throw ex;

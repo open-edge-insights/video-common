@@ -421,6 +421,7 @@ TEST(udfloader_tests, ) {
         // Clean up
         msgbus_msg_envelope_destroy(encoded);
         delete manager;
+        delete output_frame;
     } catch(const char* ex) {
         FAIL() << ex;
     }

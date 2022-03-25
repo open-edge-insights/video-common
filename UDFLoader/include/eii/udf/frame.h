@@ -107,8 +107,21 @@ public:
 class FrameData {
 private:
     FrameMetaData* m_meta;
+
+    // This pointer represents the underlying object in which the raw pixel
+    // data for the frame resides. This pointer could be a GstBuffer, cv::Mat
+    // object, or any other representation. The purpose of having this pointer
+    // is to keep the memory of the underlying frame alive while the user needs
+    // to access the underlying bytes for the frame.
     void* m_frame;
+
+    // This pointer points to the underlying bytes for the frame, i.e. the
+    // bytes for the raw pixels of the frame. Note that the memory for this
+    // void* is ultimatly residing in the m_frame's memory, this is just a
+    // pointer to that underlying data provided to the constructor.
     void* m_data;
+
+    // Underlying free method for the frame
     void (*m_free_frame)(void*);
     size_t m_size;
 
@@ -148,70 +161,17 @@ public:
  */
 class Frame : public eii::msgbus::Serializable {
 private:
-    // This pointer represents the underlying object in which the raw pixel
-    // data for the frame resides. This pointer could be a GstBuffer, cv::Mat
-    // object, or any other representation. The purpose of having this pointer
-    // is to keep the memory of the underlying frame alive while the user needs
-    // to access the underlying bytes for the frame.
-    // void* m_frame;
-
-    // Underlying free method for the frame
-    // void (*m_free_frame)(void*);
-
-    // Total number of frames
-    // int m_num_frames;
-
-    // This pointer points to the underlying bytes for the frame, i.e. the
-    // bytes for the raw pixels of the frame. Note that the memory for this
-    // void* is ultimatly residing in the m_frame's memory, this is just a
-    // pointer to that underlying data provided to the constructor.
-    // void** m_data;
+    // Underlying frame data
     std::vector<FrameData*> m_frames;
-
-    // This is only used when the frame was deserialized from a
-    // msg_envelope_t and then reserialized. This keeps track of the actual
-    // underlying blob memory (i.e. the frame's pixel data).
-    // owned_blob_t** m_blob_ptr;
 
     // Meta-data associated with the frame
     msg_envelope_t* m_meta_data;
+
     // Additional frames array in the meta-data (if it exists)
     msg_envelope_elem_body_t* m_additional_frames_arr;
 
-    // Must-have attributes
-    // int m_width;
-    // int m_height;
-    // int m_channels;
-
     // Flag for if the frame has been serailized already
     std::atomic<bool> m_serialized;
-
-    // Encoding type for the frame
-    // EncodeType m_encode_type;
-
-    // Encoding level for the frame
-    // int m_encode_level;
-
-    /**
-     * Private helper function to encode the given frame during serialization.
-     */
-    // void encode_frame();
-
-    /**
-     * Function to be passed to the EII Message Bus for freeing the frame after
-     * it has been transmitted over the bus.
-     */
-    static void msg_free_frame(void* hint) {
-        LOG_DEBUG_0("Freeing frame...");
-        if (hint == NULL) {
-            LOG_ERROR_0("Returning because frame is NULL...");
-            return;
-        }
-
-        // Cast to a frame pointer
-        Frame* frame = (Frame*) hint;
-        delete frame;
-    };
 
     /**
      * Private @c Frame copy constructor.

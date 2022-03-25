@@ -24,11 +24,11 @@
 
 #include <dlfcn.h>
 #include <unistd.h>
+#include <eii/utils/logger.h>
 #include <vector>
 #include <atomic>
 #include <iostream>
 #include <sstream>
-#include <eii/utils/logger.h>
 #include "eii/udf/native_udf_handle.h"
 
 #define DELIM ':'
@@ -36,16 +36,14 @@
 using namespace eii::udf;
 
 NativeUdfHandle::NativeUdfHandle(std::string name, int max_workers) :
-    UdfHandle(name, max_workers)
-{
+    UdfHandle(name, max_workers) {
     m_lib_handle = NULL;
     m_func_initialize_udf = NULL;
     m_udf = NULL;
 }
 
 NativeUdfHandle::NativeUdfHandle(const NativeUdfHandle& src) :
-    UdfHandle(NULL, 0)
-{
+    UdfHandle(NULL, 0) {
     throw "This object should not be copied";
 }
 
@@ -57,17 +55,17 @@ NativeUdfHandle::~NativeUdfHandle() {
     LOG_DEBUG_0("Destroying Native UDF");
 
     m_func_initialize_udf = NULL;
-    if(m_udf != NULL){
+    if (m_udf != NULL) {
         delete m_udf;
         m_udf = NULL;
     }
-    if(m_lib_handle != NULL)
+    if (m_lib_handle != NULL)
         dlclose(m_lib_handle);
 }
 
 bool NativeUdfHandle::initialize(config_t* config) {
     bool res = this->UdfHandle::initialize(config);
-    if(!res)
+    if (!res)
         return false;
     std::string name = get_name();
     LOG_DEBUG("Loading native UDF: %s", name.c_str());
@@ -75,7 +73,7 @@ bool NativeUdfHandle::initialize(config_t* config) {
     LOG_DEBUG_0("Retrieving LD_LIBRARY_PATH");
     char* ld_library_path = getenv("LD_LIBRARY_PATH");
 
-    if(ld_library_path == NULL) {
+    if (ld_library_path == NULL) {
         throw "Failed to retrieve LD_LIBRARY_PATH environmental variable";
     }
 
@@ -90,12 +88,12 @@ bool NativeUdfHandle::initialize(config_t* config) {
     std::string lib = os.str();
     os.str("");
 
-    while(std::getline(stream, path, DELIM)) {
-        if(path.empty())
+    while (std::getline(stream, path, DELIM)) {
+        if (path.empty())
             continue;
         os << path << "/" << lib;
         LOG_DEBUG("Checking if '%s' exists", os.str().c_str());
-        if(access(os.str().c_str(), F_OK) != -1) {
+        if (access(os.str().c_str(), F_OK) != -1) {
             found = true;
             lib = os.str();
             break;
@@ -103,11 +101,11 @@ bool NativeUdfHandle::initialize(config_t* config) {
         os.str("");
     }
 
-    if(found) {
+    if (found) {
         LOG_DEBUG("Found native UDF: %s", lib.c_str());
         m_lib_handle = dlopen(lib.c_str(), RTLD_LAZY);
 
-        if(!m_lib_handle) {
+        if (!m_lib_handle) {
             char* err = dlerror();
             if (err != NULL) {
                 LOG_ERROR("Failed to load UDF library: %s", err);
@@ -115,9 +113,10 @@ bool NativeUdfHandle::initialize(config_t* config) {
             return false;
         } else {
             LOG_DEBUG_0("Successfully loaded UDF library");
-            *(void**)(&m_func_initialize_udf) = dlsym(m_lib_handle, "initialize_udf");
+            *(void**)(&m_func_initialize_udf) = dlsym(m_lib_handle,
+                                                      "initialize_udf");
 
-            if(!m_func_initialize_udf) {
+            if (!m_func_initialize_udf) {
                 char* err = dlerror();
                 if (err != NULL) {
                     LOG_ERROR("Failed to find initialize_udf symbol: %s", err);
@@ -154,7 +153,7 @@ UdfRetCode NativeUdfHandle::process(Frame* frame) {
     int h = frame->get_height();
     int c = frame->get_channels();
 
-    //TODO: Do we want to default to 8bit?
+    // TODO: Do we want to default to 8bit?
 
     cv::Mat* mat_frame = new cv::Mat(h, w, CV_8UC(c), frame->get_data(0));
 
@@ -176,11 +175,12 @@ UdfRetCode NativeUdfHandle::process(Frame* frame) {
         // it was given. In this case, the frame was not actually modified.
         // To avoid potential memory issues, do not tell the Frame object to
         // change the underlying data.
-        if(!output->empty() && output->data != mat_frame->data) {
+        if (!output->empty() && output->data != mat_frame->data) {
             LOG_DEBUG("Setting frame with new UDF frame");
             frame->set_data(
-                    0, (void*) output, free_native_cv_frame, (void*) output->data,
-                    output->cols, output->rows, output->channels());
+                    0, (void*) output, free_native_cv_frame,
+                    (void*) output->data, output->cols,
+                    output->rows, output->channels());
         } else {
             delete output;
         }

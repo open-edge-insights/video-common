@@ -3,14 +3,14 @@
 - [Contents](#contents)
   - [OEI Sample UDFs](#oei-sample-udfs)
   - [User Defined Function (UDF)](#user-defined-function-udf)
-  - [UDF Configuration](#udf-configuration)
-  - [UDF Writing Guide](#udf-writing-guide)
-  - [Sample UDFs](#sample-udfs)
-    - [Native UDFs](#native-udfs)
-    - [Python UDFs](#python-udfs)
-  - [Construction of Metadata in UDF](#construction-of-metadata-in-udf)
-  - [Chaining of UDFs](#chaining-of-udfs)
-    - [Combination of UDFs with ingestors](#combination-of-udfs-with-ingestors)
+    - [UDF Configuration](#udf-configuration)
+    - [UDF Writing Guide](#udf-writing-guide)
+    - [Sample UDFs](#sample-udfs)
+      - [Native UDFs](#native-udfs)
+      - [Python UDFs](#python-udfs)
+    - [Construction of Metadata in UDF](#construction-of-metadata-in-udf)
+    - [Chaining of UDFs](#chaining-of-udfs)
+      - [Combination of UDFs with ingestors](#combination-of-udfs-with-ingestors)
 
 ## OEI Sample UDFs
 
@@ -32,7 +32,7 @@ The overall block diagram for the library is shown in the following figure.
 
 In this case, the VideoIngestion component is also able to execute the video data classifier algorithm by including the classifier UDF into the VideoIngestion configuration. By defining the Classifier UDF in the VideoIngestion component, the VideoAnalytics component become optional
 
-## UDF Configuration
+### UDF Configuration
 
 Below is the JSON schema for UDF json object configuration:
 
@@ -115,16 +115,16 @@ Example UDF configuration:
 }
 ```
 
-## UDF Writing Guide
+### UDF Writing Guide
 
 User can refer to [UDF Writing HOW-TO GUIDE](./HOWTO_GUIDE_FOR_WRITING_UDF.md) for an detailed explanation of process to write an custom UDF.
 
-## Sample UDFs
+### Sample UDFs
 
 > **NOTE:** The UDF config of these go as json objects in the `udfs` key in
 > the overall UDF configuration object
 
-### Native UDFs
+#### Native UDFs
 
 - **Dummy UDF**
 
@@ -216,7 +216,7 @@ User can refer to [UDF Writing HOW-TO GUIDE](./HOWTO_GUIDE_FOR_WRITING_UDF.md) f
 
   ----
 
-### Python UDFs
+#### Python UDFs
 
 > **NOTE:** Additional properties/keys other than `name` and `type` in the UDF
 > config are the parameters of the python UDF constructor
@@ -308,8 +308,7 @@ User can refer to [UDF Writing HOW-TO GUIDE](./HOWTO_GUIDE_FOR_WRITING_UDF.md) f
 
   Refer [python/pcb/README.md](./python/pcb/README.md) for more information.
 
-  **NOTE:**
-  The above config works for both "CPU" and "GPU" devices after setting appropriate `device` value.
+  >**Note:** The above config works for both "CPU" and "GPU" devices after setting appropriate `device` value.
   Please set the "device" value appropriately based on the device used for inferencing.
 
 - **Sample ONNX UDF**
@@ -324,7 +323,7 @@ User can refer to [UDF Writing HOW-TO GUIDE](./HOWTO_GUIDE_FOR_WRITING_UDF.md) f
 
 ----
 
-## Construction of Metadata in UDF
+### Construction of Metadata in UDF
 
 If OEI Visualizer/WebVisualizer clients are used for visualizing the classified frames, then please follow the metadata guidelines mentioned in **`Metadata Structure`** in [Visualizer](https://github.com/open-edge-insights/video-native-visualizer/blob/master/README.md) / [WebVisualizer](https://github.com/open-edge-insights/video-web-visualizer/blob/master/README.md) README respectively.
 
@@ -332,7 +331,7 @@ If OEI Visualizer/WebVisualizer clients are used for visualizing the classified 
 must contain only primitive data types.
 Eg: Any data is of type "numpy.float" or "numpy.int" should be type-casted to float and int respectively.
 
-## Chaining of UDFs
+### Chaining of UDFs
 
 One can chain multiple native/python UDFs in the `udfs` key. The way chaining
 works here is the output of the UDF listed first would send the modified frame
@@ -341,14 +340,14 @@ and metadata to the subsequent UDF and so on. One such classic example is having
 do both the pre-processing and the classification logic without the need of
 VideoAnalytics service.
 
-### Combination of UDFs with ingestors
+#### Combination of UDFs with ingestors
 
 | Ingestor | Chaining UDFs for pcb demo usecase | Chaining UDFs for worker safety gear usecase |
 |:--------:|:----------------------------------:|:--------------------------------------------:|
 | opencv/gstreamer | <br><br>Combination of resize (native), pcb filter (python) and<br>pcb classifier (python) can be used as <br>per the need.  | <br><br><br>Combination of resize (native) and worker safety gear classifier (native/python) <br> can be used as per the need.  |
 | gstreamer with GVA(Gstreamer Video Analytics) elements | Not Applicable | <br>Any post-processing UDFs can be used as all<br>the pre-processing and classification is <br>happening in the gstreamer pipeline itself |
 
-> **NOTE:**
+> **Note:**
 > Dummy UDF can also be used for above use cases for testing chaining UDFs
 > feature but as such there is no value add as it's a do-nothing UDF.
 > In DEV Mode python udfs changes can be tested by restarting containers, no need to rebuild.
